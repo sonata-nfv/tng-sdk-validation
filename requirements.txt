@@ -1,0 +1,6 @@
+setuptools
+coloredlogs
+networkx
+validators
+jsonschema
+flask_restful
