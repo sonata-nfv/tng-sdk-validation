@@ -4,16 +4,19 @@ pipeline {
     stage('Container Build') {
       steps {
         echo 'Building..'
+        sh 'docker build -f ./Dockerfile -t registry.sonata-nfv.eu:5000/tng-sdk-validation .'
       }
     }
     stage('Unit Tests') {
       steps {
         echo 'Unit Testing..'
+        sh 'docker run -i --rm registry.sonata-nfv.eu:5000/tng-sdk-validation pytest -v'
       }
     }
     stage('Code Style check') {
       steps {
-        echo 'Code Style check....'
+        echo 'Checking code style....'
+        sh "pipeline/checkstyle/check.sh"
       }
     }
     stage('Containers Publication') {
