@@ -1,4 +1,6 @@
 setuptools
+pytest
+pyaml
 coloredlogs
 networkx
 validators
