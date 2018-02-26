@@ -30,11 +30,12 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
 
-
 import unittest
+from tngsdk.validation.cli import parse_args
+from tngsdk.validation.validator import Validator
 
+class TngSdkValidationTest(unittest.TestCase):
 
-class TngSdkPackageTest(unittest.TestCase):
-
-    def test_test(self):
-        self.assertTrue(True)
+    def setUp(self):
+        self.args = parse_args()
+        self.v = Validator()

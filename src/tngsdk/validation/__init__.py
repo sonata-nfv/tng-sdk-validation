@@ -30,6 +30,35 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
 
+import logging
+import coloredlogs
+import os
+
+from tngsdk.validation.cli import parse_args, CLI
+from tngsdk.validation.validator import Validator
+
+LOG = logging.getLogger(os.path.basename(__file__))
+
+def logging_setup():
+    os.environ["COLOREDLOGS_LOG_FORMAT"] \
+        = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
 
 def main():
-    print("not implemented")
+    logging_setup()
+    args = parse_args()
+
+    # TODO better log configuration (e.g. file-based logging)
+    if args.verbose:
+        coloredlogs.install(level="DEBUG")
+    else:
+        coloredlogs.install(level="INFO")
+    # TODO validate if args combination makes any sense
+    v = Validator()
+    
+    if args.service:
+        # TODO start package in service mode
+        pass
+    else:
+        # Run package in CLI mode
+        c = CLI(args, v)
+        c.dispatch()

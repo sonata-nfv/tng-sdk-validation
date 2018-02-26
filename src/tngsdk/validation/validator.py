@@ -1,5 +1,4 @@
-#  Copyright (c) 2015 SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
-# ALL RIGHTS RESERVED.
+#  Copyright (c) 2018 SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,36 +29,16 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
 
-from setuptools import setup, find_packages
-import os.path as path
+import logging
+import os
 
-cwd = path.dirname(__file__)
-with open(path.join(cwd, 'requirements.txt')) as f:
-    requirements = f.read().splitlines()
 
-longdesc = """
-Component to validate 5GTANGO SDK projects, services, and
-functions.
-"""
+LOG = logging.getLogger(os.path.basename(__file__))
 
-setup(name='tngsdk.validate',
-      license='Apache License, Version 2.0',
-      version='0.1',
-      url='https://github.com/sonata-nfv/tng-sdk-validation',
-      author='Ana Pol',
-      author_email='ana.pol@quobis.com',
-      long_description=longdesc,
-      package_dir={'': 'src'},
-      packages=find_packages('src'),  # dependency resolution
-      namespace_packages=['tngsdk', ],
-      include_package_data=True,
-      install_requires=requirements,
-      zip_safe=False,
-      entry_points={
-          'console_scripts': [
-              'tng-validate=tngsdk.validation:main'
-          ],
-      },
-      test_suite='tngsdk',
-      setup_requires=[],
-      tests_require=['pytest'])
+
+class Validator(object):
+    def __init__(self):
+        pass
+
+    def workspace(self):
+        LOG.warning("workspace not implemented")

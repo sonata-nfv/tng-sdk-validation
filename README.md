@@ -7,6 +7,7 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 ## Installation
 
 ```bash
+$ apt install python-pip
 $ python setup.py install
 ```
 ## Usage
