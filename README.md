@@ -11,8 +11,27 @@ $ python setup.py install
 ```
 ## Usage
 ### CLI mode
+The CLI interface is designed for developer usage, allowing to quickly validate SDK projects,package descriptors, service descriptors and function descriptors. The different levels of validation, namely syntax, integrity and topology can only be used in the following combinations:
+
+- syntax -s
+- syntax and integrity -si
+- syntax, integrity and topology -sit
+The son-validate CLI tool can be used to validate one of the following components:
+- project - to validate an SDK project, the --workspace parameter must be specified, otherwise the default location $ HOME/.son-workspace is assumed. 
+- package - to validate a package, only the --package should be specified indicating the path for the package file.
+- service - in service validation, if the chosen level of validation comprises more than syntax (integrity or topology), the --dpath argument must be specified in order to indicate the location of the VNF descriptor files, referenced in the service. Has a standalone validation of a service, son-validate is not aware of a directory structure, unlike the project validation.
+Moreover, the --dext parameter should also be specified to indicate the extension of descriptor files.
+- function - this specifies the validation of an individual VNF. It is also possible to validate multiple functions in bulk contained inside a directory. To if the --function is a directory, it will search for descriptor files with the extension specified by parameter --dext
+
 ### Service mode
-Runs the validation tool as a micro service that exposes a RESTful API.
+API overview
+The tng-sdk-validation API provides the following functionalities:
+- validate an SDK project, a package, a service or a function (/validate/<object type>
+[POST])
+- retrieve a list of available and validated objects (/report [GET])
+- retrieve the validation report for a specific object (/report/result/<resource id> [GET])
+- retrieve the validated network topology graph (/report/topology/<resource id> [GET])
+- retrieve the validated forwarding graphs structure (/fwgraphs/<resource id>) [GET])
 
 ## Documentation
 
