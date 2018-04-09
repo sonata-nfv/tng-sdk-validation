@@ -34,7 +34,7 @@ import logging
 import coloredlogs
 import os
 
-from tngsdk.validation.cli import parse_args, CLI
+from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 
 LOG = logging.getLogger(os.path.basename(__file__))
@@ -45,20 +45,22 @@ def logging_setup():
 
 def main():
     logging_setup()
-    args = parse_args()
+    args = cli.parse_args()
 
     # TODO better log configuration (e.g. file-based logging)
     if args.verbose:
         coloredlogs.install(level="DEBUG")
     else:
         coloredlogs.install(level="INFO")
+
     # TODO validate if args combination makes any sense
+
     v = Validator()
     
-    if args.service:
-        # TODO start package in service mode
+    if args.service-mode:
+        # TODO start validator in service mode
         pass
     else:
-        # Run package in CLI mode
-        c = CLI(args, v)
+        # Run validator in CLI mode
+        c = cli(args, v)
         c.dispatch()

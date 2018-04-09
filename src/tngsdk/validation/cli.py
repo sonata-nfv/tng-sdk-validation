@@ -36,37 +36,23 @@ import sys
 
 LOG = logging.getLogger(os.path.basename(__file__))
 
+def dispatch(self):
+    if self._args.workspace:
+        pass
 
-class CLI(object):
-
-    def __init__(self, args, packager):
-        self._args = args
-        self._v = validator
-
-    def dispatch(self):
-        if self._args.workspace:
-            pass
-
-        else:
-            pass
-    #     if self._args.package:
-    #         # package creation
-    #         self._p.package()
-    #     else:
-    #         # un-packaging
-    #         self._p.unpackage()
-
+    else:
+        pass
 
 def parse_args(input_args=None):
     parser = argparse.ArgumentParser(
         description="5GTANGO SDK validator",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Example usage:
-        tng-validate --project /home/sonata/projects/project_X
+        tng-sdk-validate --project /home/sonata/projects/project_X
                      --workspace /home/sonata/.son-workspace
-        tng-validate --service ./nsd_file.yml --path ./vnfds/ --dext yml
-        tng-validate --function ./vnfd_file.yml
-        tng-validate --function ./vnfds/ --dext yml
+        tng-sdk-validate --service ./nsd_file.yml --path ./vnfds/ --dext yml
+        tng-sdk-validate --function ./vnfd_file.yml
+        tng-sdk-validate --function ./vnfds/ --dext yml
         """)
 
     exclusive_parser = parser.add_mutually_exclusive_group(
@@ -158,6 +144,14 @@ def parse_args(input_args=None):
         "--debug",
         help="Sets verbosity level to debug",
         dest="verbose",
+        action="store_true",
+        required=False,
+        default=False
+    )
+    parser.add_argument(
+        "--service-mode",
+        help="Run validator in service mode with REST API.",
+        dest="service-mode",
         action="store_true",
         required=False,
         default=False
