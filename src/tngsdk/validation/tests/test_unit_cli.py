@@ -1,4 +1,4 @@
-#  Copyright (c) 2015 SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
+#  Copyright (c) 2015 SONATA-NFV, 5GTANGO, UBIWHERE, Paderborn University
 # ALL RIGHTS RESERVED.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
+# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, Paderborn University
 # nor the names of its contributors may be used to endorse or promote
 # products derived from this software without specific prior written
 # permission.
@@ -30,12 +30,42 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
 
-import unittest
-from tngsdk.validation.cli import parse_args
-from tngsdk.validation.validator import Validator
 
-class TngSdkValidationTest(unittest.TestCase):
+import unittest
+import tempfile
+import shutil
+import tngsdk.package.cli as cli
+
+
+class TngSdkPackageCliTest(unittest.TestCase):
 
     def setUp(self):
-        self.args = parse_args()
-        self.v = Validator()
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_cli_validation(self):
+        # args = cli.parse_args(
+        #     ["-u", "misc/5gtango-ns-package-example.tgo",
+        #      "-o", tempdir])
+        # r = cli.dispatch(args)
+        # self.assertIsNone(r.error)
+        # shutil.rmtree(tempdir)
+        # TODO
+        pass
+
+    def test_cli_validation_invalid(self):
+        # tempdir = tempfile.mkdtemp()
+        # args = cli.parse_args(
+        #     ["-u", "misc/5gtango-ns-package-example-malformed.tgo",
+        #      "-o", tempdir])
+        # r = cli.dispatch(args)
+        # self.assertIsNotNone(r.error)
+        # shutil.rmtree(tempdir)
+        # TODO
+        pass
+
+    def test_cli_validation_syntax(self):
+        # TODO implement
+        pass
