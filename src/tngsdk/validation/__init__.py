@@ -34,7 +34,7 @@ import logging
 import coloredlogs
 import os
 
-from tngsdk.validation import cli
+from tngsdk.validation import cli, rest
 from tngsdk.validation.validator import Validator
 
 LOG = logging.getLogger(os.path.basename(__file__))
@@ -55,12 +55,17 @@ def main():
 
     # TODO validate if args combination makes any sense
 
-    v = Validator()
+    validator = Validator()
     
-    if args.service-mode:
+    if args.api:
         # TODO start validator in service mode
+        print("Validator started as an API in IP: {} and port {}".format(args.service_address,args.service_port))
+        rest.serve_forever(args)
         pass
-    else:
-        # Run validator in CLI mode
-        c = cli(args, v)
-        c.dispatch()
+    else:    
+        # run validator in CLI mode
+        validator = Validator()
+        result_validator = cli.dispatch(args,validator)
+        if result_validator.error_count > 0:
+            exit(1)  # exit with error code    
+        exit(0)

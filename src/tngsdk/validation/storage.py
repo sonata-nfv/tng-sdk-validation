@@ -31,11 +31,12 @@ import validators
 import requests
 from collections import OrderedDict
 # importing the local event module, fix this ASAP
-import event
-import util
-#from tngsdk.validation.util import descriptor_id, read_descriptor_file
-from util import read_descriptor_file, descriptor_id
-#from tngsdk.validation import event
+#from .event import *
+#import util
+from tngsdk.validation.util import descriptor_id, read_descriptor_file
+#from util import read_descriptor_file, descriptor_id
+from tngsdk.validation import event
+
 
 log = logging.getLogger(__name__)
 evtlog = event.get_logger('validator.events')

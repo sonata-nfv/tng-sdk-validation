@@ -50,8 +50,8 @@ class SchemaValidator(object):
         # Assign parameters
         coloredlogs.install(level=workspace.log_level)
         self._workspace = workspace
-        #self._schemas_local_master = workspace.schemas_local_master
-        self._schemas_local_master = '/home/danifernandez/Documents/workspace2/validatorAnton/tng-schema'
+        self._schemas_local_master = workspace.schemas_local_master
+        #self._schemas_local_master = '/home/danifernandez/Documents/workspace2/validatorAnton/tng-schema'
         #self._schemas_remote_master = workspace.schemas_remote_master
         self._schemas_remote_master = 'https://raw.githubusercontent.com/sonata-nfv/tng-schema/master'
 
@@ -268,13 +268,29 @@ def write_local_schema(schemas_root, filename, schema):
     if not os.path.isdir(schemas_root):
         log.debug("Schema directory '{}' not found. Creating it."
                   .format(schemas_root))
+        print("Schema directory '{}' not found. Creating it."
+                  .format(schemas_root))
 
         os.mkdir(schemas_root)
+    else:
+        print("Schema directory '{}' found. We do not need to create it."
+                  .format(schemas_root))     
 
     if os.path.isfile(filename):
         log.debug("Replacing schema file '{}'".format(filename))
+        print("Replacing schema file '{}'".format(filename))
     else:
         log.debug("Writing schema file '{}'".format(filename))
+        print("Writing schema file '{}'".format(filename))
+
+    if not os.path.exists(os.path.dirname(filename)):
+        log.debug("Schema directory '{}' not found. Creating it."
+                  .format(schemas_root))
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise 
 
     schema_f = open(filename, 'w')
     yaml.dump(schema, schema_f)

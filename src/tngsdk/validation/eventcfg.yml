@@ -154,5 +154,5 @@ evt_duplicate_vlink: error
 # Invalid connection point reference format
 evt_invalid_cpoint_ref: error
 
-# Not a SONATA descriptor
+# Not a 5GTANGO descriptor
 evt_invalid_descriptor: error

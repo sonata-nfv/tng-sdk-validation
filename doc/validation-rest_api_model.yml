@@ -22,7 +22,7 @@ paths:
       summary: searches validation reports
       operationId: searchReport
       description: |
-        By passing in the appropriate options, you can search for
+        (Not yet available) By passing in the appropriate options, you can search for
         available validation report in the history of validations done
         with the tool
       parameters:
@@ -84,7 +84,7 @@ paths:
       summary: searches validation reports
       operationId: searchReport
       description: |
-        By passing in the appropriate options, you can search for
+        (Not yet available) By passing in the appropriate options, you can search for
         available validation report in the history of validations done
         with the tool
       parameters:
@@ -127,7 +127,7 @@ paths:
       summary: searches validation reports
       operationId: searchReport
       description: |
-        By passing in the appropriate options, you can search for
+        (Not yet available) By passing in the appropriate options, you can search for
         available validation report in the history of validations done
         with the tool
       parameters:
@@ -156,7 +156,7 @@ paths:
       summary: searches validation reports
       operationId: searchReport
       description: |
-        By passing in the appropriate options, you can search for
+        (Not yet available) By passing in the appropriate options, you can search for
         available validation report in the history of validations done
         with the tool
       parameters:
@@ -183,18 +183,12 @@ paths:
       tags:
         - developers
       summary: searches validation reports
-      operationId: searchReport
+      operationId: validate
       description: |
         It instructs the validator to perform the validation of the specified object acoording to the specified parameters
         available validation report in the history of validations done
         with the tool
       parameters:
-        - in: query
-          name: source
-          description: pass an optional search string for looking up inventory
-          required: true
-          schema:
-            type: string
         - in: query
           name: path
           description: path of the file which contains the object to be validated
@@ -208,20 +202,31 @@ paths:
           schema:
             type: string
         - in: query
+          name: sync
+          description: |
+            parametyer to indicate if the request must be processed in synchronous way
+            returnig the result of the validation within a 200 OK reply to the POST to create 
+            the validation resource, if this param is omitted or False then the request is 
+            replied with a 202 Accepted and the result of the validation must be requested 
+            against the validation resource passed in the validation uuid
+          required: false
+          schema:
+            type: string
+        - in: query
           name: syntax
           description: indicates that syntax of the object must be validated
           schema:
-            type: string
+            type: boolean
         - in: query
           name: integrity
           description: indicates that integrity must be validated
           schema:
             type: string
         - in: query
-          name: topology
+          name: boolean
           description: indicates that topology must be validated
           schema:
-            type: string
+            type: boolean
         - in: query
           name: pkg_signature
           description: signature of the package to be validated
@@ -243,6 +248,8 @@ paths:
                   $ref: '#/components/schemas/ValidationResult'
         '400':
           description: bad input parameter
+        '400':
+          description: Not possible to validate service and function in the same request
           
   /resources:
     get:
@@ -279,7 +286,7 @@ paths:
       summary: searches validated resources in the cache
       operationId: getResource
       description: |
-        Returns a list of the cached resources by the validation tool
+       (Not yet available) Returns a list of the cached resources by the validation tool
       parameters:
         - in: query
           name: searchString
@@ -301,6 +308,38 @@ paths:
           description: bad input parameter    
 components:
   schemas:
+    ValidationSyncResult:
+      type: object
+      properties:
+        error_count: 
+          type: integer
+        errors:
+          type: array
+          item:
+            $ref: '#/components/schemas/errorItem'
+    errorItem:
+      type: object
+      properties:
+        source_id:
+          type: string
+        event_code:
+          type: string
+        level:
+          type: 
+            enum:
+              - "error"
+              - "warning"
+        event_id:
+          type: string
+          header:
+            type: string
+        detail:
+          type: object
+          properties:
+            message:
+              type: string
+            detail_event_id:
+              type: string
     ValidationResult:
       type: object
       properties:
