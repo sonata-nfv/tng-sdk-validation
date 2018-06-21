@@ -1,4 +1,4 @@
-#  Copyright (c) 2015 SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
+#  Copyright (c) 2018 SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,15 +33,49 @@ import argparse
 import os
 import sys
 
+from tngsdk.validation.validator import Validator 
+
 
 LOG = logging.getLogger(os.path.basename(__file__))
 
-def dispatch(self):
-    if self._args.workspace:
-        pass
+def dispatch(args,validator):
+    print("Printing all the arguments: {}".format(args))
+    if args.vnfd:
+        print("VNFD validation")
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False)
+            # TODO: check if args.vnfd is a valid file path
+        elif args.integrity:
+            print("Syntax and integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False)
+        elif args.topology:
+            print("Syntax, integrity and topology validation")
+            validator.configure(syntax=True, integrity=True, topology=True)
 
-    else:
-        pass
+        validator.validate_function(args.vnfd)
+        if validator.error_count == 0:
+            print("No errors found in the VNFD")
+        return validator
+
+    elif args.nsd:
+        print("NSD validation")
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False)
+        elif args.integrity:
+            print("Syntax and integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False)
+        elif args.topology:
+            print("Syntax, integrity and topology validation")
+            validator.configure(syntax=True, integrity=True, topology=True)
+        
+        validator.validate_service(args.nsd)
+        if validator.error_count == 0:
+            print("No errors found in the NSD")
+        return validator
+        
+   
 
 def parse_args(input_args=None):
     parser = argparse.ArgumentParser(
@@ -105,6 +139,14 @@ def parse_args(input_args=None):
         required=False,
         default=None
     )
+    exclusive_parser.add_argument(
+        "--api",
+        help="Run validator in service mode with REST API.",
+        dest="api",
+        action="store_true",
+        required=False,
+        default=False
+    )
     parser.add_argument(
         "--dpath",
         help="Specify a directory to search for descriptors. Particularly "
@@ -149,15 +191,34 @@ def parse_args(input_args=None):
         default=False
     )
     parser.add_argument(
-        "--service-mode",
-        help="Run validator in service mode with REST API.",
-        dest="service-mode",
-        action="store_true",
+        "--mode",
+        choices=['stateless', 'local'],
+        default='stateless',
+        help="Specify the mode of operation. 'stateless' mode will run as "
+             "a stateless service only. 'local' mode will run as a "
+             "service and will also provide automatic monitoring and "
+             "validation of local SDK projects, services, etc. that are "
+             "configured in the developer workspace",
+        required=False
+    )
+    parser.add_argument(
+        "--host",
+        help="Bind address for this service",
+        default='127.0.0.1',
         required=False,
-        default=False
+        dest="service_address"
+    )
+    parser.add_argument(
+        "--port",
+        default=5001,
+        type=int,
+        help="Bind port number",
+        required=False,
+        dest="service_port"
     )
 
     if input_args is None:
         input_args = sys.argv[1:]
-
+        
+    print("CLI input arguments: {}".format(input_args))
     return parser.parse_args(input_args)

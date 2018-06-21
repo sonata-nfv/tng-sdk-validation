@@ -27,8 +27,8 @@
 import os
 import yaml
 import logging
-#from tngsdk.validation import event
-import event
+from tngsdk.validation import event
+#import event
 
 log = logging.getLogger(__name__)
 evtlog = event.get_logger('validator.events')
