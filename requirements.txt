@@ -5,4 +5,6 @@ coloredlogs
 networkx
 validators
 jsonschema
-flask_restful
+flask_restplus
+flask_cors
+flask_cache

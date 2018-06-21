@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
+# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS 
 # nor the names of its contributors may be used to endorse or promote
 # products derived from this software without specific prior written
 # permission.
@@ -32,7 +32,7 @@
 #Python packages imports
 import logging
 import os
-import event
+#from .event import *
 import coloredlogs
 import networkx as nx
 import zipfile
@@ -47,11 +47,13 @@ import inspect
 from tngsdk.project.workspace import Workspace
 from tngsdk.project.project import Project
 
-#from tngsdk.validate.storage import DescriptorStorage
-from storage import DescriptorStorage
+from tngsdk.validation.storage import DescriptorStorage
+#from storage import DescriptorStorage
 #from son.validate.util import read_descriptor_files, list_files, strip_root, build_descriptor_id
-from util import read_descriptor_files, list_files, strip_root, build_descriptor_id
-from schema.validator import SchemaValidator
+#from util import read_descriptor_files, list_files, strip_root, build_descriptor_id
+from tngsdk.validation.util import read_descriptor_files, list_files, strip_root, build_descriptor_id
+from tngsdk.validation.schema.validator import SchemaValidator
+from tngsdk.validation import event
 
 #LOG = logging.getLogger(os.path.basename(__file__))
 log = logging.getLogger(__name__)
