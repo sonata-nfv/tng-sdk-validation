@@ -33,7 +33,7 @@ import argparse
 import os
 import sys
 
-from tngsdk.validation.validator import Validator 
+from tngsdk.validation.validator import Validator
 
 
 LOG = logging.getLogger(os.path.basename(__file__))
@@ -65,17 +65,17 @@ def dispatch(args,validator):
             validator.configure(syntax=True, integrity=False, topology=False)
         elif args.integrity:
             print("Syntax and integrity validation")
-            validator.configure(syntax=True, integrity=True, topology=False)
+            validator.configure(syntax=True, integrity=True, topology=False, dpath = args.dpath)
         elif args.topology:
             print("Syntax, integrity and topology validation")
-            validator.configure(syntax=True, integrity=True, topology=True)
-        
+            validator.configure(syntax=True, integrity=True, topology=True, dpath = args.dpath)
+
         validator.validate_service(args.nsd)
         if validator.error_count == 0:
             print("No errors found in the NSD")
         return validator
-        
-   
+
+
 
 def parse_args(input_args=None):
     parser = argparse.ArgumentParser(
@@ -219,6 +219,6 @@ def parse_args(input_args=None):
 
     if input_args is None:
         input_args = sys.argv[1:]
-        
+
     print("CLI input arguments: {}".format(input_args))
     return parser.parse_args(input_args)
