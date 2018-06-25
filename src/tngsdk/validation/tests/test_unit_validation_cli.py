@@ -169,10 +169,19 @@ class TngSdkValidationCliTest(unittest.TestCase):
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
         self.assertEqual(result_validator.error_count, 3)
-    
+
     def test_cli_validation_service_integrity_ok(self):
         validator = Validator()
         input_args=['--integrity', '--service', 'samples/services/valid-son/valid.yml', \
+                    '--dpath', 'samples/functions/valid-son/', '--dext', 'yml']
+        args=cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        result_validator = cli.dispatch(args,validator)
+        self.assertEqual(result_validator.error_count, 0)
+
+    def test_cli_validation_service_topology_ok(self):
+        validator = Validator()
+        input_args=['--topology', '--service', 'samples/services/valid-son/valid.yml', \
                     '--dpath', 'samples/functions/valid-son/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
