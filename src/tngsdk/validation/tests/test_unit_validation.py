@@ -70,20 +70,20 @@ class TngSdkValidationTest(unittest.TestCase):
     #     self.assertEqual(validator.error_count, 0)
     #     self.assertEqual(validator.warning_count, 0)
 
-    # def test_validate_service_topology_valid(self):
-    #     """
-    #     Tests the correct validation of a service topology
-    #     """
-    #     service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son', 'valid.yml')
-    #     functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
-    #
-    #     validator = Validator()
-    #     validator.configure(syntax=True, integrity=True, topology=True, dpath = functions_path)
-    #     validator.validate_service(service_path)
-    #
-    #     self.assertEqual(validator.error_count, 0)
-    #     self.assertEqual(validator.warning_count, 0)
-    #
+    def test_validate_service_topology_valid(self):
+        """
+        Tests the correct validation of a service topology
+        """
+        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son', 'valid.yml')
+        functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
+
+        validator = Validator()
+        validator.configure(syntax=True, integrity=True, topology=True, dpath = functions_path)
+        validator.validate_service(service_path)
+
+        self.assertEqual(validator.error_count, 0)
+        self.assertEqual(validator.warning_count, 0)
+
     # def test_validate_service_topology_invalid(self):
     #     """
     #     Tests the incorrect validation of a service topology
@@ -219,7 +219,7 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the incorrect validation of a service syntax with required field in the nsd
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'invalid-syntax-tng', 'required_propertys.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services', 'invalid-syntax-tng', 'required_properties.yml')
 
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
