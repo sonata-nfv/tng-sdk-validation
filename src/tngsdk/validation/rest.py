@@ -55,7 +55,7 @@ log = logging.getLogger(os.path.basename(__file__))
 
 
 app = Flask(__name__)
-app.config.from_pyfile('rest_settings.py') 
+app.config.from_pyfile('rest_settings.py')
 
 if app.config['ENABLE_CORS']:
         CORS(app)
@@ -76,26 +76,27 @@ api.add_namespace(api_v1)
 #Define Redis username and pass
 
 # config cache
-if app.config['CACHE_TYPE'] == 'redis':
-
-    redis_auth = app.config['REDIS_USER'] + ':' + app.config[
-        'REDIS_PASSWD'] + '@' \
-        if app.config['REDIS_USER'] and app.config['REDIS_PASSWD'] else ''
-    redis_url = 'redis://' + redis_auth + app.config['REDIS_HOST'] + \
-                ':' + app.config['REDIS_PORT']
-
-    cache = Cache(app, config={'CACHE_TYPE': 'redis',
-                                'CACHE_DEFAULT_TIMEOUT': 0,
-                                'CACHE_REDIS_URL': redis_url})
-
-elif app.config['CACHE_TYPE'] == 'simple':
-     cache = Cache(app, config={'CACHE_TYPE': 'simple',
-                                'CACHE_DEFAULT_TIMEOUT': 0})
-
-else:
-     print("Invalid cache type.")
-     sys.exit(1)
-
+#comment DANI
+# if app.config['CACHE_TYPE'] == 'redis':
+#
+#     redis_auth = app.config['REDIS_USER'] + ':' + app.config[
+#         'REDIS_PASSWD'] + '@' \
+#         if app.config['REDIS_USER'] and app.config['REDIS_PASSWD'] else ''
+#     redis_url = 'redis://' + redis_auth + app.config['REDIS_HOST'] + \
+#                 ':' + app.config['REDIS_PORT']
+#
+#     cache = Cache(app, config={'CACHE_TYPE': 'redis',
+#                                 'CACHE_DEFAULT_TIMEOUT': 0,
+#                                 'CACHE_REDIS_URL': redis_url})
+#
+# elif app.config['CACHE_TYPE'] == 'simple':
+#      cache = Cache(app, config={'CACHE_TYPE': 'simple',
+#                                 'CACHE_DEFAULT_TIMEOUT': 0})
+#
+# else:
+#      print("Invalid cache type.")
+#      sys.exit(1)
+#Comment DANI
 
 # keep temporary request errors
 # req_errors = []
@@ -183,11 +184,11 @@ validations_parser.add_argument("topology",
                              location="args",
                              type=inputs.boolean,
                              required=False,
-                             help="topology check")                           
+                             help="topology check")
 validations_parser.add_argument("function",
                              location="args",
                              required=False,
-                             help="File URL of the function descriptor to be validated")                             
+                             help="File URL of the function descriptor to be validated")
 validations_parser.add_argument("service",
                              location="args",
                              required=False,
@@ -197,6 +198,11 @@ validations_parser.add_argument("sync",
                              type=inputs.boolean,
                              required=False,
                              help="If True indicates that the request will be handled synchronously")
+validations_parser.add_argument("dpath",
+                             location="args",
+                             required=False,
+                             help="Specify a directory to search for descriptors. Particularly "
+                                  "useful when using the '--service' argument.")
 
 
 @api_v1.route("/validations")
@@ -211,7 +217,7 @@ class Validation(Resource):
     def post(self, **kwargs):
         args = validations_parser.parse_args()
 
-        log.info("POST to /validation w. args: {}".format(args))        
+        log.info("POST to /validation w. args: {}".format(args))
 
         if ((args['function'] is not None) and (args['service']is not None)):
             return {"error_message":"Not possible to validate service and function in the same request"},400
@@ -224,9 +230,10 @@ class Validation(Resource):
             return {"error_message":"Asynchronous processing not yet implemented"},400
 
         validator = Validator()
-        # None or False = False / True or False = True / False or False = False 
-        validator.configure(syntax=(args['syntax'] or False), 
-        integrity=(args['integrity'] or False),topology=(args['topology'] or False))
+        # None or False = False / True or False = True / False or False = False
+        validator.configure(syntax=(args['syntax'] or False),
+        integrity=(args['integrity'] or False),topology=(args['topology'] or False),
+        dpath=(args['dpath'] or False))
 
 
         if args['function'] is not None:
@@ -238,9 +245,9 @@ class Validation(Resource):
             log.info("Validating Service: {}".format(args['service']))
             # TODO check if the function is a valid file path
             validator.validate_service(args.service)
-        
+
         # TODO try to capture exceptions and errors
-        
+
         # TODO store results in redis so that the result can be checked
 
 
