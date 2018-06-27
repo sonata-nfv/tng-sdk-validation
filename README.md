@@ -4,8 +4,6 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 
 `tng-sdk-validation` can be used through the CLI, as service  or as a micro-service running inside a docker container.
 
-> Work in progress. Please do not use this repository until this warning is removed.
-
 ## Installation
 
 This tool has been designed to be executed in Linux system and Python 3.6 or higher.
@@ -138,6 +136,7 @@ To contribute to the development of this 5GTANGO component, you may use the very
 
 ### Testing
 Unit has been added for main classes, the CLI commands and also the REST API. Please make sure relevant unit tests are added when new functions are introduced.
+Valid and invalid function and service descriptors can be found in the `tng-sdk-validation/src/tngsdk/validation/tests/samples/` folder and also in the examples of the [tng-schema](https://github.com/sonata-nfv/tng-schema/) repository.
 
 ## License
 
