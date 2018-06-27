@@ -8,3 +8,4 @@ jsonschema
 flask_restplus
 flask_cors
 flask_cache
+requests
