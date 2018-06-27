@@ -206,6 +206,14 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_topology_ko_dext(self):
         validator = Validator()
+        input_args=['--topology', '--function', 'samples/functions/invalid_topology-son/firewall-vnfd.yml']
+        args=cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        result_validator = cli.dispatch(args,validator)
+        self.assertEqual(result_validator.error_count, 1)
+
+    def test_cli_validation_function_topology_ko_dext(self):
+        validator = Validator()
         input_args=['--topology', '--function', 'samples/functions/invalid_topology-son', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))

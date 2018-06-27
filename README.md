@@ -65,7 +65,7 @@ optional arguments:
 Example usage:
         tng-sdk-validate --project /home/sonata/projects/project_X
                      --workspace /home/sonata/.son-workspace
-        tng-sdk-validate --service ./nsd_file.yml --path ./vnfds/ --dext yml
+        tng-sdk-validate --service ./nsd_file.yml --dpath ./vnfds/ --dext yml
         tng-sdk-validate --function ./vnfd_file.yml
         tng-sdk-validate --function ./vnfds/ --dext yml`
 ```

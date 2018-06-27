@@ -11,3 +11,4 @@ ARTIFACTS_DIR = os.environ.get('VAPI_ARTIFACTS_DIR') or \
                 os.path.join(os.getcwd(), 'artifacts')
 
 DEBUG = os.environ.get('VAPI_DEBUG') or False
+ENABLE_CORS = os.environ.get('ENABLE_CORS') or False

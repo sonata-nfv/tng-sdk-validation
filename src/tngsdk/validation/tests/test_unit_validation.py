@@ -58,17 +58,17 @@ class TngSdkValidationTest(unittest.TestCase):
     #     self.assertEqual(validator.error_count, 0)
     #     self.assertEqual(validator.warning_count, 0)
  # ANTON TODO
-    # def test_validate_function_valid(self):
-    #     """
-    #     Tests the validation of a valid 5GTANGO function.
-    #     """
-    #     functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid')
-    #     validator = Validator()
-    #     validator.configure(syntax=True, integrity=True, topology=True)
-    #     validator.validate_function(functions_path)
+    def test_validate_function_valid(self):
+        """
+        Tests the validation of a valid 5GTANGO function.
+        """
+        functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
+        validator = Validator()
+        validator.configure(syntax=True, integrity=True, topology=True)
+        validator.validate_function(functions_path)
 
-    #     self.assertEqual(validator.error_count, 0)
-    #     self.assertEqual(validator.warning_count, 0)
+        self.assertEqual(validator.error_count, 0)
+        self.assertEqual(validator.warning_count, 0)
 
     def test_validate_service_topology_valid(self):
         """
