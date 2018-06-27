@@ -52,12 +52,15 @@ setup(name='tngsdk.validate',
       package_dir={'': 'src'},
       packages=find_packages('src'),  # dependency resolution
       namespace_packages=['tngsdk', ],
+      package_data= {
+            'tngsdk': ['validation/eventcfg.yml']
+        },
       include_package_data=True,
       install_requires=requirements,
       zip_safe=False,
       entry_points={
           'console_scripts': [
-              'tng-validation=tngsdk.validation:main'
+              'tng-sdk-validate=tngsdk.validation:main'
           ],
       },
       test_suite='tngsdk',

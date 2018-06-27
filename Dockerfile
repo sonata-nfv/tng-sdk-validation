@@ -29,12 +29,30 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
-FROM python:3.6-slim
+FROM python:3.6-alpine
+#FROM python:3.6.5-slim-jessie
 MAINTAINER 5GTANGO
 
+# install git
+RUN apk update && apk upgrade && apk add --no-cache bash git 
+
 RUN pip install pycodestyle
+
+# install tng-sdk-project first
+#WORKDIR /opt
+RUN git clone https://github.com/sonata-nfv/tng-sdk-project.git
+WORKDIR tng-sdk-project
+RUN ls -hall
+RUN pip install -r requirements.txt
+RUN python setup.py install
 
 ADD . /tng-sdk-validation
 
 WORKDIR /tng-sdk-validation
+
+RUN pip install -r requirements.txt
 RUN python setup.py install
+
+# This command leaves the tng-sdk-validate tool running in API mode
+# Listening at por 5001
+RUN tng-sdk-validate --api 
