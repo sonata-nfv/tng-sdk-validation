@@ -37,6 +37,8 @@ import shutil
 from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 
+SAMPLE_DIR='src/tngsdk/validation/tests/'
+
 class TngSdkValidationCliTest(unittest.TestCase):
 
     def setUp(self):
@@ -68,7 +70,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_syntax_ok(self):
         validator = Validator()
-        input_args=['--syntax', '--function', 'samples/functions/valid-syntax-tng/tcpdump-vnfd-tng.yml']
+        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/valid-syntax-tng/tcpdump-vnfd-tng.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -76,7 +78,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_syntax_ko_aditional_properties(self):
         validator = Validator()
-        input_args=['--syntax', '--function', 'samples/functions/invalid-syntax-tng/invalid-default-vnfd-tng.yml']
+        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/invalid-syntax-tng/invalid-default-vnfd-tng.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -84,7 +86,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_syntax_ko_bad_syntax(self):
         validator = Validator()
-        input_args=['--syntax', '--function', 'samples/functions/invalid-syntax-tng/invalid-firewall-vnfd-tng.yml']
+        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/invalid-syntax-tng/invalid-firewall-vnfd-tng.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -92,7 +94,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_syntax_ko_dext(self):
         validator = Validator()
-        input_args=['--syntax', '--function', 'samples/functions/invalid-syntax-tng/', '--dext', 'yml']
+        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/invalid-syntax-tng/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -100,7 +102,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_syntax_ok_dext(self):
         validator = Validator()
-        input_args=['--syntax', '--function', 'samples/functions/valid-syntax-tng/', '--dext', 'yml']
+        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/valid-syntax-tng/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -108,7 +110,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_service_syntax_ok_simplest_nsd(self):
         validator = Validator()
-        input_args=['--syntax', '--service', 'samples/services/valid-syntax-tng/simplest-example.yml']
+        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/valid-syntax-tng/simplest-example.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -116,7 +118,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_service_syntax_ok(self):
         validator = Validator()
-        input_args=['--syntax', '--service', 'samples/services/valid-son/valid.yml']
+        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/valid-son/valid.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -124,7 +126,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_service_syntax_ko_unexpected_field(self):
         validator = Validator()
-        input_args=['--syntax', '--service', 'samples/services/invalid-syntax-tng/unexpected_field.yml']
+        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/invalid-syntax-tng/unexpected_field.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -132,7 +134,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_service_syntax_ko_required_properties(self):
         validator = Validator()
-        input_args=['--syntax', '--service', 'samples/services/invalid-syntax-tng/required_properties.yml']
+        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/invalid-syntax-tng/required_properties.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -140,7 +142,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_integrity_ok(self):
         validator = Validator()
-        input_args=['--integrity', '--function', 'samples/functions/valid-son/firewall-vnfd.yml']
+        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/valid-son/firewall-vnfd.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -148,7 +150,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_integrity_ok_dext(self):
         validator = Validator()
-        input_args=['--integrity', '--function', 'samples/functions/valid-son/', '--dext', 'yml']
+        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -156,7 +158,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_integrity_ko(self):
         validator = Validator()
-        input_args=['--integrity', '--function', 'samples/functions/invalid_integrity-son/firewall-vnfd.yml']
+        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/invalid_integrity-son/firewall-vnfd.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -164,7 +166,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_integrity_ko_dext(self):
         validator = Validator()
-        input_args=['--integrity', '--function', 'samples/functions/invalid_integrity-son/', '--dext', 'yml']
+        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/invalid_integrity-son/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -172,8 +174,8 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_service_integrity_ok(self):
         validator = Validator()
-        input_args=['--integrity', '--service', 'samples/services/valid-son/valid.yml', \
-                    '--dpath', 'samples/functions/valid-son/', '--dext', 'yml']
+        input_args=['--integrity', '--service', SAMPLE_DIR+'samples/services/valid-son/valid.yml', \
+                    '--dpath', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -181,8 +183,8 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_service_topology_ok(self):
         validator = Validator()
-        input_args=['--topology', '--service', 'samples/services/valid-son/valid.yml', \
-                    '--dpath', 'samples/functions/valid-son/', '--dext', 'yml']
+        input_args=['--topology', '--service', SAMPLE_DIR+'samples/services/valid-son/valid.yml', \
+                    '--dpath', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -190,7 +192,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_topology_ok(self):
         validator = Validator()
-        input_args=['--topology', '--function', 'samples/functions/valid-son/firewall-vnfd.yml']
+        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/valid-son/firewall-vnfd.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -198,7 +200,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_topology_ok_dext(self):
         validator = Validator()
-        input_args=['--topology', '--function', 'samples/functions/valid-son/', '--dext', 'yml']
+        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -206,7 +208,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_topology_ko_dext(self):
         validator = Validator()
-        input_args=['--topology', '--function', 'samples/functions/invalid_topology-son/firewall-vnfd.yml']
+        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/invalid_topology-son/firewall-vnfd.yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)
@@ -214,7 +216,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_topology_ko_dext(self):
         validator = Validator()
-        input_args=['--topology', '--function', 'samples/functions/invalid_topology-son', '--dext', 'yml']
+        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/invalid_topology-son', '--dext', 'yml']
         args=cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         result_validator = cli.dispatch(args,validator)

@@ -36,28 +36,10 @@ from tngsdk.validation.cli import parse_args
 from tngsdk.validation.validator import Validator
 
 
-SAMPLES_DIR = os.path.join('samples')
+SAMPLES_DIR = os.path.join('src','tngsdk','validation','tests','samples')
 
 class TngSdkValidationTest(unittest.TestCase):
 
-    # def setUp(self):
-    #     self.args = parse_args()
-    #     self.v = Validator()
-# ANTON TODO
-    # def test_validate_service_valid(self):
-    #     """
-    #     Tests the validation of a valid 5GTANGO service.
-    #     """
-    #     service_path = os.path.join(SAMPLES_DIR, 'services', 'valid.yml')
-    #     functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid')
-    #
-    #     validator = Validator()
-    #     validator.configure(dpath=functions_path)
-    #     validator.validate_service(service_path)
-    #     print("cona")
-    #     self.assertEqual(validator.error_count, 0)
-    #     self.assertEqual(validator.warning_count, 0)
- # ANTON TODO
     def test_validate_function_valid(self):
         """
         Tests the validation of a valid 5GTANGO function.
