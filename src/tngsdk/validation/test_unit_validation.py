@@ -32,10 +32,11 @@
 
 import unittest
 import os
-#from tngsdk.validation.cli import parse_args
-#from tngsdk.validation.validator import Validator
-from validator import Validator
-from cli import parse_args
+from tngsdk.validation.cli import parse_args
+from tngsdk.validation.validator import Validator
+from tngsdk.validation.cli import parse_args
+#from validator import Validator
+#from cli import parse_args
 
 SAMPLES_DIR = os.path.join('tests', 'samples')
 
