@@ -55,4 +55,4 @@ RUN python setup.py install
 
 # This command leaves the tng-sdk-validate tool running in API mode
 # Listening at por 5001
-RUN tng-sdk-validate --api 
+#RUN tng-sdk-validate --api 
