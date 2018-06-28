@@ -26,15 +26,15 @@
 
 import unittest
 from unittest import mock
-from son.schema.validator import load_local_schema, load_remote_schema
+from tngsdk.validation.schema.validator import load_local_schema, load_remote_schema
 from unittest.mock import patch
 
 
 class UnitLoadSchemaTests(unittest.TestCase):
 
-    @patch("son.schema.validator.yaml")
+    @patch("tngsdk.validation.schema.validator.yaml")
     @patch("builtins.open")
-    @patch("son.schema.validator.os.path")
+    @patch("tngsdk.validation.schema.validator.os.path")
     def test_load_local_schema(self, m_os_path, m_open, m_yaml):
         # Ensure that a FileNotFoundError is raised
         # when the file does not exist
@@ -61,8 +61,8 @@ class UnitLoadSchemaTests(unittest.TestCase):
         return_dict = load_local_schema("/some/file/path")
         self.assertEqual(sample_dict, return_dict)
 
-    @patch("son.schema.validator.yaml")
-    @patch("son.schema.validator.requests.get")
+    @patch("tngsdk.validation.schema.validator.yaml")
+    @patch("tngsdk.validation.schema.validator.requests.get")
     def test_load_remote_schema(self, m_urlopen, m_yaml):
 
         sample_dict = {"key": "content"}
