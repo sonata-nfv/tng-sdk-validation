@@ -1,5 +1,7 @@
 # tng-sdk-validation
 
+![5GTango logo](https://github.com/sonata-nfv/tng-sdk-validation/wiki/images/sonata-5gtango-logo-500px.png)
+
 This repository contains the `tng-sdk-validation` component that is part of the European H2020 project [5GTANGO](http://www.5gtango.eu) NFV SDK. This component can be used to validate the syntax, integrity and topology of 5GTANGO SDK packages, projects, services and functions. There is an additional feature to include custom rules in YAML files to validate the descriptors but it is still under development and not available in master.
 
 `tng-sdk-validation` can be used through the CLI, as service  or as a micro-service running inside a docker container.
@@ -130,13 +132,6 @@ The end-points exposed by the API are as follows:
 
 TODO (e.g. link to wiki page)
 
-## Development
-
-To contribute to the development of this 5GTANGO component, you may use the very same development workflow as for any other 5GTANGO Github project. That is, you have to fork the repository and create pull requests.
-
-### Testing
-Unit has been added for main classes, the CLI commands and also the REST API. Please make sure relevant unit tests are added when new functions are introduced.
-Valid and invalid function and service descriptors can be found in the `tng-sdk-validation/src/tngsdk/validation/tests/samples/` folder and also in the examples of the [tng-schema](https://github.com/sonata-nfv/tng-schema/) repository.
 
 ## License
 
