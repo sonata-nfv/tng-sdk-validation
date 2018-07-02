@@ -36,7 +36,8 @@ from tngsdk.validation.cli import parse_args
 from tngsdk.validation.validator import Validator
 
 
-SAMPLES_DIR = os.path.join('src','tngsdk','validation','tests','samples')
+SAMPLES_DIR = os.path.join('src', 'tngsdk', 'validation', 'tests', 'samples')
+
 
 class TngSdkValidationTest(unittest.TestCase):
 
@@ -56,11 +57,13 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the correct validation of a service topology
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son', 'valid.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son',
+                                    'valid.yml')
         functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
 
         validator = Validator()
-        validator.configure(syntax=True, integrity=True, topology=True, dpath = functions_path)
+        validator.configure(syntax=True, integrity=True, topology=True,
+                            dpath=functions_path)
         validator.validate_service(service_path)
 
         self.assertEqual(validator.error_count, 0)
@@ -70,11 +73,13 @@ class TngSdkValidationTest(unittest.TestCase):
     #     """
     #     Tests the incorrect validation of a service topology
     #     """
-    #     service_path = os.path.join(SAMPLES_DIR, 'services', 'invalid_topology.yml')
+    #     service_path = os.path.join(SAMPLES_DIR, 'services',
+    #                                 'invalid_topology.yml')
     #     functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
     #
     #     validator = Validator()
-    #     validator.configure(syntax=True, integrity=True, topology=True, dpath = functions_path)
+    #     validator.configure(syntax=True, integrity=True, topology=True,
+    #                         dpath = functions_path)
     #     validator.validate_service(service_path)
     #
     #     self.assertEqual(validator.error_count, 0)
@@ -84,7 +89,8 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the incorrect validation of a function topology
         """
-        functions_path = os.path.join(SAMPLES_DIR, 'functions', 'invalid_topology-son')
+        functions_path = os.path.join(SAMPLES_DIR, 'functions',
+                                      'invalid_topology-son')
 
         validator = Validator()
         validator.configure(syntax=True, integrity=True, topology=True)
@@ -110,11 +116,13 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the correct validation of a service integrity
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son', 'valid.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son',
+                                    'valid.yml')
         functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
 
         validator = Validator()
-        validator.configure(syntax=True, integrity=True, topology=False, dpath = functions_path)
+        validator.configure(syntax=True, integrity=True, topology=False,
+                            dpath=functions_path)
         validator.validate_service(service_path)
 
         self.assertEqual(validator.error_count, 0)
@@ -124,11 +132,14 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the incorrect validation of a service integrity
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son', 'valid.yml')
-        functions_path = os.path.join(SAMPLES_DIR, 'functions', 'invalid_integrity-son')
+        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son',
+                                    'valid.yml')
+        functions_path = os.path.join(SAMPLES_DIR, 'functions',
+                                      'invalid_integrity-son')
 
         validator = Validator()
-        validator.configure(syntax=True, integrity=True, topology=False, dpath = functions_path)
+        validator.configure(syntax=True, integrity=True, topology=False,
+                            dpath=functions_path)
         validator.validate_service(service_path)
 
         self.assertEqual(validator.error_count, 3)
@@ -150,7 +161,8 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the incorrect validation of a function integrity.
         """
-        functions_path = os .path.join(SAMPLES_DIR, 'functions', 'invalid_integrity-son')
+        functions_path = os .path.join(SAMPLES_DIR, 'functions',
+                                       'invalid_integrity-son')
         validator = Validator()
         validator.configure(syntax=True, integrity=True, topology=False)
         validator.validate_function(functions_path)
@@ -162,7 +174,8 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the correct validation of a service syntax
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son', 'valid.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son',
+                                    'valid.yml')
 
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
@@ -175,7 +188,9 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the correct validation of a service syntax simplest nsd
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-syntax-tng', 'simplest-example.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services',
+                                    'valid-syntax-tng',
+                                    'simplest-example.yml')
 
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
@@ -186,9 +201,12 @@ class TngSdkValidationTest(unittest.TestCase):
 
     def test_validate_service_syntax_invalid_unexpected_field(self):
         """
-        Tests the incorrect validation of a service syntax with a unexpected field in the nsd
+        Tests the incorrect validation of a service syntax with \
+        a unexpected field in the nsd
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'invalid-syntax-tng', 'unexpected_field.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services',
+                                    'invalid-syntax-tng',
+                                    'unexpected_field.yml')
 
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
@@ -199,9 +217,12 @@ class TngSdkValidationTest(unittest.TestCase):
 
     def test_validate_service_syntax_invalid_required_properties(self):
         """
-        Tests the incorrect validation of a service syntax with required field in the nsd
+        Tests the incorrect validation of a service syntax with \
+        required field in the nsd
         """
-        service_path = os.path.join(SAMPLES_DIR, 'services', 'invalid-syntax-tng', 'required_properties.yml')
+        service_path = os.path.join(SAMPLES_DIR, 'services',
+                                    'invalid-syntax-tng',
+                                    'required_properties.yml')
 
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
@@ -214,7 +235,8 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the syntax validation of a valid 5GTANGO function.
         """
-        functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-syntax-tng')
+        functions_path = os.path.join(SAMPLES_DIR, 'functions',
+                                      'valid-syntax-tng')
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
         validator.validate_function(functions_path)
@@ -226,14 +248,14 @@ class TngSdkValidationTest(unittest.TestCase):
         """
         Tests the syntax validation of a valid 5GTANGO function.
         """
-        functions_path = os.path.join(SAMPLES_DIR, 'functions', 'invalid-syntax-tng')
+        functions_path = os.path.join(SAMPLES_DIR, 'functions',
+                                      'invalid-syntax-tng')
         validator = Validator()
         validator.configure(syntax=True, integrity=False, topology=False)
         validator.validate_function(functions_path)
 
         self.assertEqual(validator.error_count, 5)
         self.assertEqual(validator.warning_count, 0)
-
 
 
 if __name__ == "__main__":

@@ -52,7 +52,7 @@ setup(name='tngsdk.validate',
       package_dir={'': 'src'},
       packages=find_packages('src'),  # dependency resolution
       namespace_packages=['tngsdk', ],
-      package_data= {
+      package_data={
             'tngsdk': ['validation/eventcfg.yml']
         },
       include_package_data=True,

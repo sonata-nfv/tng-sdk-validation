@@ -38,7 +38,8 @@ from tngsdk.validation.validator import Validator
 
 LOG = logging.getLogger(os.path.basename(__file__))
 
-def dispatch(args,validator):
+
+def dispatch(args, validator):
     print("Printing all the arguments: {}".format(args))
     if args.vnfd:
         print("VNFD validation")
@@ -65,16 +66,17 @@ def dispatch(args,validator):
             validator.configure(syntax=True, integrity=False, topology=False)
         elif args.integrity:
             print("Syntax and integrity validation")
-            validator.configure(syntax=True, integrity=True, topology=False, dpath = args.dpath)
+            validator.configure(syntax=True, integrity=True, topology=False,
+                                dpath=args.dpath)
         elif args.topology:
             print("Syntax, integrity and topology validation")
-            validator.configure(syntax=True, integrity=True, topology=True, dpath = args.dpath)
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                dpath=args.dpath)
 
         validator.validate_service(args.nsd)
         if validator.error_count == 0:
             print("No errors found in the NSD")
         return validator
-
 
 
 def parse_args(input_args=None):
@@ -95,7 +97,8 @@ def parse_args(input_args=None):
 
     parser.add_argument(
         "-w", "--workspace",
-        help="Specify the directory of the SDK workspace for validating the SDK project.",
+        help="Specify the directory of the SDK workspace for " +
+             "validating the SDK project.",
         # help="Specify the directory of the SDK workspace for validating the "
         #      "SDK project. If not specified will assume the directory: '{}'"
         #      .format(Workspace.DEFAULT_WORKSPACE_DIR),

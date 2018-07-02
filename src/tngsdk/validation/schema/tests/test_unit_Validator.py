@@ -26,7 +26,8 @@
 
 import unittest
 from unittest import mock
-from tngsdk.validation.schema.validator import load_local_schema, load_remote_schema
+from tngsdk.validation.schema.validator import load_local_schema
+from tngsdk.validation.schema.validator import load_remote_schema
 from unittest.mock import patch
 
 
