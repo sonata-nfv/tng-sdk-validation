@@ -1,6 +1,6 @@
 # tng-sdk-validation
 
-![5GTango logo](https://github.com/sonata-nfv/tng-sdk-validation/wiki/images/sonata-5gtango-logo-500px.png)
+<p align="center"><img src="https://github.com/sonata-nfv/tng-sdk-validation/wiki/images/sonata-5gtango-logo-500px.png" /></p>
 
 This repository contains the `tng-sdk-validation` component that is part of the European H2020 project [5GTANGO](http://www.5gtango.eu) NFV SDK. This component can be used to validate the syntax, integrity and topology of 5GTANGO SDK packages, projects, services and functions. There is an additional feature to include custom rules in YAML files to validate the descriptors but it is still under development and not available in master.
 
