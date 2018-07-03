@@ -73,7 +73,7 @@ class Validator(object):
         self._syntax = True
         self._integrity = True
         self._topology = True
-        self._custom = True
+        self._custom = False
         # create "virtual" workspace if not provided (don't actually create
         # file structure)
         if not self._workspace:
@@ -760,8 +760,8 @@ class Validator(object):
         if self._topology and not self._validate_function_topology(func):
             return True
 
-        if self._custom and not validator_custom_rules.process_rules(self._cfile, vnfd_path):
-            return True
+        if self._custom and validator_custom_rules.process_rules(self._cfile, vnfd_path):
+            return False
 
         return True
 

@@ -60,9 +60,11 @@ def dispatch(args, validator):
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile)
             print("Syntax, integrity, topology  and custom rules validation")
-        validator.validate_function(args.vnfd)
-        if validator.error_count == 0:
-            print("No errors found in the VNFD")
+        if validator.validate_function(args.vnfd):
+            if validator.error_count == 0:
+                print("No errors found in the VNFD")
+        else:
+            print("Errors in custom rules validation")
         return validator
 
     elif args.nsd:
@@ -83,6 +85,39 @@ def dispatch(args, validator):
         if validator.error_count == 0:
             print("No errors found in the NSD")
         return validator
+
+
+def check_args(args):
+    if (args.nsd):
+        if (args.integrity or args.topology):
+            if (args.dpath and args.dext):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                          "integrity, topology or custom rules of a service "
+                          "both' --dpath' and '--dext' parameters must be "
+                          "specified.")
+                return False
+        if (args.custom):
+            if (args.dpath and args.dext and args.cfile):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                      "custom rules of a service "
+                      "both' --dpath' and '--dext' parameters must be "
+                      "specified (to validate the topology/integrity) and "
+                      "'--cfile' must be specified")
+                return False
+    if (args.vnfd):
+        if (args.custom):
+            if (args.cfile):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                      "custom rules of a service "
+                      "'--cfile' must be specified")
+                return False
+    return True
 
 
 def parse_args(input_args=None):
