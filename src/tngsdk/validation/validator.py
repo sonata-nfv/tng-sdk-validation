@@ -57,6 +57,8 @@ from tngsdk.validation.util import read_descriptor_files, list_files
 from tngsdk.validation.util import strip_root, build_descriptor_id
 from tngsdk.validation.schema.validator import SchemaValidator
 from tngsdk.validation import event
+from tngsdk.validation.custom_rules import validator_custom_rules
+
 
 # LOG = logging.getLogger(os.path.basename(__file__))
 log = logging.getLogger(__name__)
@@ -71,7 +73,7 @@ class Validator(object):
         self._syntax = True
         self._integrity = True
         self._topology = True
-
+        self._custom = True
         # create "virtual" workspace if not provided (don't actually create
         # file structure)
         if not self._workspace:
@@ -81,7 +83,7 @@ class Validator(object):
         self._dext = self._workspace.default_descriptor_extension
         self._dpath = '.'
         self._log_level = self._workspace.log_level
-
+        self._cfile = '.'
         # # for package signature validation
         # self._pkg_signature = None
         # self._pkg_pubkey = None
@@ -143,14 +145,15 @@ class Validator(object):
         self._dpath = value
 
     def configure(self, syntax=None, integrity=None, topology=None,
-                  dpath=None, dext=None, debug=None, pkg_signature=None,
-                  pkg_pubkey=None):
+                  custom=None, dpath=None, dext=None, debug=None,
+                  cfile=None, pkg_signature=None, pkg_pubkey=None):
         """
         Configure parameters for validation. It is recommended to call this
         function before performing a validation.
         :param syntax: specifies whether to validate syntax
         :param integrity: specifies whether to validate integrity
         :param topology: specifies whether to validate network topology
+        :param custom: specifies whether to validate network custom rules
         :param dpath: directory to search for function descriptors (VNFDs)
         :param dext: extension of descriptor files (default: 'yml')
         :param debug: increase verbosity level of logger
@@ -165,10 +168,14 @@ class Validator(object):
             self._integrity = integrity
         if topology is not None:
             self._topology = topology
+        if custom is not None:
+            self._custom = custom
         if dext is not None:
             self._dext = dext
         if dpath is not None:
             self._dpath = dpath
+        if cfile is not None:
+            self._cfile = cfile
         if debug is True:
             self._workspace.log_level = 'debug'
             coloredlogs.install(level='debug')
@@ -210,6 +217,10 @@ class Validator(object):
                       "validating integrity first. Aborting.")
             return
 
+        if self._custom and not self._topology:
+            log.error("Cannot validate custom rules without " +
+                      "validating topology first. Aborting.")
+
         if not self._syntax:
             log.error("Nothing to validate. Aborting.")
             return
@@ -223,10 +234,17 @@ class Validator(object):
             if ((self._integrity or self._topology) and not
                     (self._dpath and self._dext)):
                 log.error("Invalid validation parameters. To validate the "
-                          "integrity or topology of a service both "
-                          "'--dpath' and '--dext' parameters must be "
+                          "integrity, topology or custom rules of a service "
+                          "both' --dpath' and '--dext' parameters must be "
                           "specified.")
                 return
+            if ((self._custom) and not
+                    (self._dpath and self._dext and self._cfile)):
+                log.error("Invalid validation parameters. To validate the "
+                          "custom rules of a service "
+                          "both' --dpath' and '--dext' parameters must be "
+                          "specified (to validate the topology/integrity) and "
+                          "'--cfile' must be specified")
         elif caller == 'validate_function':
             pass
 
@@ -720,8 +738,10 @@ class Validator(object):
             return True
 
         log.info("Validating function '{0}'".format(vnfd_path))
-        log.info("... syntax: {0}, integrity: {1}, topology: {2}"
-                 .format(self._syntax, self._integrity, self._topology))
+        log.info("... syntax: {0}, integrity: {1}, topology: {2},"
+                 " custom: {3}"
+                 .format(self._syntax, self._integrity, self._topology,
+                         self._custom))
 
         func = self._storage.create_function(vnfd_path)
         if not func:
@@ -738,6 +758,9 @@ class Validator(object):
             return True
 
         if self._topology and not self._validate_function_topology(func):
+            return True
+
+        if self._custom and not validator_custom_rules.process_rules(self._cfile, vnfd_path):
             return True
 
         return True

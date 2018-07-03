@@ -45,15 +45,21 @@ def dispatch(args, validator):
         print("VNFD validation")
         if args.syntax:
             print("Syntax validation")
-            validator.configure(syntax=True, integrity=False, topology=False)
+            validator.configure(syntax=True, integrity=False, topology=False,
+                                custom=False)
             # TODO: check if args.vnfd is a valid file path
         elif args.integrity:
             print("Syntax and integrity validation")
-            validator.configure(syntax=True, integrity=True, topology=False)
+            validator.configure(syntax=True, integrity=True, topology=False,
+                                custom=False)
         elif args.topology:
             print("Syntax, integrity and topology validation")
-            validator.configure(syntax=True, integrity=True, topology=True)
-
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                custom=False)
+        elif args.custom:
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                custom=True, cfile=args.cfile)
+            print("Syntax, integrity, topology  and custom rules validation")
         validator.validate_function(args.vnfd)
         if validator.error_count == 0:
             print("No errors found in the VNFD")
@@ -184,6 +190,20 @@ def parse_args(input_args=None):
         action="store_true",
         required=False,
         default=False
+    )
+    parser.add_argument(
+        "--custom", "-c",
+        help="Perform a network custom rules validation.",
+        action="store_true",
+        required=False,
+        default=False
+    )
+    parser.add_argument(
+        "--cfile",
+        help="Specify the file with the custom rules to validate",
+        dest="cfile",
+        required=False,
+        default=None
     )
     parser.add_argument(
         "--debug",

@@ -60,14 +60,14 @@ class Descriptor(object):
 
         # #TODO use VNFD file as input and populate all the variables
         print(dir(self.func))
-        # print(self.func.content['virtual_deployment_units'][0]['vm_image_format'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['cpu']['vcpus'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['memory']['size'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['memory']['size_unit'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['storage']['size'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['storage']['size_unit'])
-        # print(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id'])
-        # print(type(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id']))
+        print(self.func.content['virtual_deployment_units'][0]['vm_image_format'])
+        print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['cpu']['vcpus'])
+        print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['memory']['size'])
+        print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['memory']['size_unit'])
+        print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['storage']['size'])
+        print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['storage']['size_unit'])
+        print(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id'])
+        print(type(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id']))
 
     def display_error(self, error_text):
         print("Error detected in custom rules: {}".format(error_text))
@@ -195,6 +195,10 @@ def process_rules(custom_rule_file, descriptor_file_name):
 
     # print("DUMP OF RULES: \n"+json.dumps(rules))
     # Execute all the rules
+    print(variables)
+    print('-----------------------------')
+    print(rule_to_export)
+
     run_all(rule_list=rules, defined_variables=DescriptorVariables(descriptor),
             defined_actions=DescriptorActions(descriptor),
             stop_on_first_trigger=False)
