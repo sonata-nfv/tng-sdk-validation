@@ -760,7 +760,8 @@ class Validator(object):
         if self._topology and not self._validate_function_topology(func):
             return True
 
-        if self._custom and validator_custom_rules.process_rules(self._cfile, vnfd_path):
+        if (self._custom and
+                validator_custom_rules.process_rules(self._cfile, vnfd_path)):
             return False
 
         return True

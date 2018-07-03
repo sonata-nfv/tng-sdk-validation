@@ -94,9 +94,9 @@ def check_args(args):
                 return True
             else:
                 print("Invalid parameters. To validate the "
-                          "integrity, topology or custom rules of a service "
-                          "both' --dpath' and '--dext' parameters must be "
-                          "specified.")
+                      "integrity, topology or custom rules of a service "
+                      "both' --dpath' and '--dext' parameters must be "
+                      "specified.")
                 return False
         if (args.custom):
             if (args.dpath and args.dext and args.cfile):

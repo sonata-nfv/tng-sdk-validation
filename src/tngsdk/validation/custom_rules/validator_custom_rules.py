@@ -93,39 +93,44 @@ class DescriptorVariables(BaseVariables):
     def vdu_resource_requirements_ram_size(self):
         # return (self.descriptor.vdu_resource_requirements_memory_size)
         # TODO add checkings if proceed
-        return self.func.content['virtual_deployment_units'][0]\
-        ['resource_requirements']['memory']['size']
+        return (self.func.content['virtual_deployment_units'][0]
+                ['resource_requirements']['memory']
+                ['size'])
 
     @string_rule_variable(label='Unit of RAM')
     def vdu_resource_requirements_ram_size_unit(self):
         # TODO add checkings if proceed
-        return str(self.func.content['virtual_deployment_units'][0]\
-        ['resource_requirements']['memory']['size_unit'])
+        return (str(self.func.content['virtual_deployment_units'][0]
+                ['resource_requirements']['memory']
+                ['size_unit']))
 
     @numeric_rule_variable(label='Number of vCPUs')
     def vdu_resource_requirements_cpu_vcpus(self):
         # return (self.descriptor.vdu_resource_requirements_cpu_vcpus)
         # TODO add checkings if proceed
-        return self.func.content['virtual_deployment_units'][0]\
-        ['resource_requirements']['cpu']['vcpus']
+        return (self.func.content['virtual_deployment_units'][0]
+                ['resource_requirements']['cpu']
+                ['vcpus'])
 
     @numeric_rule_variable(label='Size of storage')
     def vdu_resource_requirements_storage_size(self):
         # TODO add checkings if proceed
-        return self.func.content['virtual_deployment_units'][0]\
-        ['resource_requirements']['storage']['size']
+        return (self.func.content['virtual_deployment_units'][0]
+                ['resource_requirements']['storage']
+                ['size'])
 
     @string_rule_variable(label='Unit of storage')
     def vdu_resource_requirements_storage_size_unit(self):
         # TODO add checkings if proceed
-        return str(self.func.content['virtual_deployment_units'][0]\
-        ['resource_requirements']['storage']['size_unit'])
+        return (str(self.func.content['virtual_deployment_units'][0]
+                ['resource_requirements']['storage']
+                ['size_unit']))
 
     @string_rule_variable(label='Format of VM')
     def vdu_vm_resource_format(self):
         # TODO add checkings if proceed
-        return str(self.func.content['virtual_deployment_units'][0]\
-        ['vm_image_format'])
+        return (str(self.func.content['virtual_deployment_units'][0]
+                ['vm_image_format']))
 
     # @numeric_rule_variable(label='Number of mgmt points')
     # def vdu_resource_connection_points_mng(self):
@@ -166,7 +171,7 @@ def process_rules(custom_rule_file, descriptor_file_name):
         fn_custom_rule = open(custom_rule_file, "r")
     except IOError:
         log.error("Error opening custom rule file: "
-                   "File does not appear to exist.")
+                  "File does not appear to exist.")
         exit(1)
 
     try:
@@ -181,7 +186,7 @@ def process_rules(custom_rule_file, descriptor_file_name):
     func = storage.create_function(descriptor_file_name)
     if not func:
         evtlog.log("Invalid function descriptor, Couldn't store "
-                    "VNF of file '{0}'".format(descriptor_file_name),
+                   "VNF of file '{0}'".format(descriptor_file_name),
                    descriptor_file_name,
                    'evt_function_invalid_descriptor')
         exit(1)
@@ -196,10 +201,12 @@ def process_rules(custom_rule_file, descriptor_file_name):
     # print("DUMP OF RULES: \n"+json.dumps(rules))
     # Execute all the rules
 
-    rule_was_triggered = run_all(rule_list=rules, defined_variables=DescriptorVariables(descriptor),
-            defined_actions=DescriptorActions(descriptor),
-            stop_on_first_trigger=False)
-    return rule_was_triggered
+    triggered = run_all(rule_list=rules,
+                        defined_variables=DescriptorVariables(descriptor),
+                        defined_actions=DescriptorActions(descriptor),
+                        stop_on_first_trigger=False)
+    return triggered
+
 
 if __name__ == "__main__":
 
