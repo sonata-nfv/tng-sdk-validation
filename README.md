@@ -11,7 +11,7 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 This tool has been designed to be executed in Linux system and Python 3.6 or higher.
 
 1. It is necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project) first as *tng-sdk-validation* depends on it. Please follow the instructions provided in the Readme file to install it.
- 
+
 2. Clone the master branch of this repository and access the directory.
 
 3. Then install the Python dependencies.
@@ -30,20 +30,21 @@ $ python3 setup.py install
 
 The CLI interface is designed for developer usage, allowing to quickly validate SDK projects,package descriptors, service descriptors and function descriptors. The different levels of validation, namely syntax, integrity and topology can only be used in the following combinations:
 
-* syntax only: `-s`
-* syntax and integrity `-si`
-* syntax, integrity and topology `-sit`
+* syntax only: `-s` or `--syntax`
+* syntax and integrity `-i` or `--integrity`
+* syntax, integrity and topology `-t` or `--topology`
+* syntax, integrity, topology and custom_rules `-c` or `--custom`
 
 The tng-sdk-validation CLI tool can be used to validate one of the following components:
 `-project` - to validate an SDK project, the `--workspace` parameter must be specified, otherwise the default location `$ HOME/.tng-workspace` is assumed.
 
 * package - to validate a package, only the `--package` should be specified indicating the path for the package file.
-* service - in service validation, if the chosen level of validation comprises more than syntax (integrity or topology), the `--dpath` argument must be specified in order to indicate the location of the VNF descriptor files, referenced in the service. Has a standalone validation of a service, son-validate is not aware of a directory structure, unlike the project validation.
+* service - in service validation, if the chosen level of validation comprises more than syntax (integrity or topology), the `--dpath` argument must be specified in order to indicate the location of the VNF descriptor files, referenced in the service (this mustn't be specified in syntax validation). Has a standalone validation of a service, son-validate is not aware of a directory structure, unlike the project validation.
   Moreover, the `--dext` parameter should also be specified to indicate the extension of descriptor files.
 * function - this specifies the validation of an individual VNF. It is also possible to validate multiple functions in bulk contained inside a directory. To if the `--function` is a directory, it will search for descriptor files with the extension specified by parameter `--dext`.
 
 ```
-5gtango@validation-host:# tng-sdk-validate -h 
+5gtango@validation-host:# tng-sdk-validate -h
 CLI input arguments: []
 usage: tng-sdk-validate [-h] [-w WORKSPACE_PATH]
                         (--project PROJECT_PATH | --package PACKAGE_FILE | --service NSD | --function VNFD | --api)
@@ -84,9 +85,11 @@ optional arguments:
   --dext DEXT           Specify the extension of descriptor files.
                         Particularly useful when using the '--function'
                         argument
+  --cfile               Specify the rules used to validate.
   --syntax, -s          Perform a syntax validation.
   --integrity, -i       Perform an integrity validation.
   --topology, -t        Perform a network topology validation.
+  --custom, -c          Perform a custom rules validation.
   --debug               Sets verbosity level to debug
   --mode {stateless,local}
                         Specify the mode of operation. 'stateless' mode will
@@ -112,7 +115,7 @@ Example usage:
 
 The API is an avolution of the API supported in the [Sonata-NFV *son-cli* project](https://github.com/sonata-nfv/son-cli).
 A new synchronous feature has been added to the API. With this new feature it is possible to validate an object an receive the validation result in the reply of the HTTP POST request.
-**Important:** Currently the descriptors files can not be passed as an attachement in the request but the file path is provided and must be accessible by the `tng-sdk-validate` executable. We plan to add the capability to pass the descriptor as an attachment in the POST request. 
+**Important:** Currently the descriptors files can not be passed as an attachement in the request but the file path is provided and must be accessible by the `tng-sdk-validate` executable. We plan to add the capability to pass the descriptor as an attachment in the POST request.
 
 #### Synchronous queries
 In order to get a synchronous result the query string parameter `sync=true` must be added. This means that if the 200OK reply will contain the result of the validation process. If the sync parameter is not added or is false then the request is processed asynchronously. In any case the validation resource is created so its result can be checked at any moment.
