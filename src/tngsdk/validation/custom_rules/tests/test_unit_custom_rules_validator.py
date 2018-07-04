@@ -50,14 +50,14 @@ class TngSdkValidationCustomRulesTest(unittest.TestCase):
     def test_custom_rules_process_rules_ok(self):
         rules = SAMPLE_DIR + 'custom_rule_1.yml'
         descriptor = SAMPLE_DIR + 'function_1_ok.yml'
-        rules_validation = (validator_custom_rules.process_rules(rules, descriptor))
-        self.assertFalse(rules_validation)
+        val = (validator_custom_rules.process_rules(rules, descriptor))
+        self.assertFalse(val)
 
     def test_custom_rules_process_rules_ko(self):
         rules = SAMPLE_DIR + 'custom_rule_1.yml'
         descriptor = SAMPLE_DIR + 'function_1_ko.yml'
-        rules_validation = (validator_custom_rules.process_rules(rules, descriptor))
-        self.assertTrue(rules_validation)
+        val = (validator_custom_rules.process_rules(rules, descriptor))
+        self.assertTrue(val)
 
 
 if __name__ == "__main__":
