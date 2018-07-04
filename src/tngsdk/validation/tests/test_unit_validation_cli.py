@@ -320,7 +320,8 @@ class TngSdkValidationCliTest(unittest.TestCase):
     def test_cli_validation_function_custom_ko_not_cfile(self):
         validator = Validator()
         input_args = ['--custom', '--function',
-                      SAMPLE_DIR + 'samples/functions/valid-son/firewall-vnfd.yml']
+                      SAMPLE_DIR +
+                      'samples/functions/valid-son/firewall-vnfd.yml']
 
         args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
@@ -382,6 +383,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
         self.assertTrue(check_args)
         result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.customErrors, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
