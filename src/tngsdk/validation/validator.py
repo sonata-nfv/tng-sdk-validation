@@ -74,6 +74,9 @@ class Validator(object):
         self._integrity = True
         self._topology = True
         self._custom = False
+
+        # Variable to delete, only to check custom rules errors
+        self._customErrors = 0
         # create "virtual" workspace if not provided (don't actually create
         # file structure)
         if not self._workspace:
@@ -143,6 +146,14 @@ class Validator(object):
     @dpath.setter
     def dpath(self, value):
         self._dpath = value
+
+    @property
+    def customErrors(self):
+        return self._customErrors
+
+    @customErrors.setter
+    def customErrors(self, value):
+        self._customErrors = value
 
     def configure(self, syntax=None, integrity=None, topology=None,
                   custom=None, dpath=None, dext=None, debug=None,
@@ -762,6 +773,7 @@ class Validator(object):
 
         if (self._custom and
                 validator_custom_rules.process_rules(self._cfile, vnfd_path)):
+            self._customErrors = 1
             return False
 
         return True
