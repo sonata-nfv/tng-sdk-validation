@@ -43,7 +43,7 @@ RUN pip install pycodestyle
 RUN git clone https://github.com/sonata-nfv/tng-sdk-project.git
 WORKDIR tng-sdk-project
 RUN ls -hall
-RUN pip install -r requirements.txt
+#RUN pip install -r requirements.txt
 RUN python setup.py install
 
 ADD . /tng-sdk-validation
