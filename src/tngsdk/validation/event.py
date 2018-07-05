@@ -86,7 +86,6 @@ class EventLogger(object):
         if os.path.isfile(configpath):
             with open(configpath, 'r') as _f:
                 custom_eventdict = yaml.load(_f)
-                
             # check if all events of custom config are valid
             for cevent, cvalue in custom_eventdict.items():
                 cvalue = str(cvalue).lower()

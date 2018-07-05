@@ -1,4 +1,4 @@
-#  Copyright (c) 2015 SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
+#  Copyright (c) 2015 SONATA-NFV, 5GTANGO, UBIWHERE, Paderborn University
 # ALL RIGHTS RESERVED.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS SL.
+# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, Paderborn University
 # nor the names of its contributors may be used to endorse or promote
 # products derived from this software without specific prior written
 # permission.
@@ -29,3 +29,36 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
+
+
+import unittest
+import tempfile
+import shutil
+from tngsdk.validation.custom_rules import validator_custom_rules
+
+SAMPLE_DIR = 'src/tngsdk/validation/custom_rules/tests/samples/'
+
+
+class TngSdkValidationCustomRulesTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_custom_rules_process_rules_ok(self):
+        rules = SAMPLE_DIR + 'custom_rule_1.yml'
+        descriptor = SAMPLE_DIR + 'function_1_ok.yml'
+        val = (validator_custom_rules.process_rules(rules, descriptor))
+        self.assertFalse(val)
+
+    def test_custom_rules_process_rules_ko(self):
+        rules = SAMPLE_DIR + 'custom_rule_1.yml'
+        descriptor = SAMPLE_DIR + 'function_1_ko.yml'
+        val = (validator_custom_rules.process_rules(rules, descriptor))
+        self.assertTrue(val)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -38,24 +38,33 @@ from tngsdk.validation.validator import Validator
 
 LOG = logging.getLogger(os.path.basename(__file__))
 
-def dispatch(args,validator):
+
+def dispatch(args, validator):
     print("Printing all the arguments: {}".format(args))
     if args.vnfd:
         print("VNFD validation")
         if args.syntax:
             print("Syntax validation")
-            validator.configure(syntax=True, integrity=False, topology=False)
+            validator.configure(syntax=True, integrity=False, topology=False,
+                                custom=False)
             # TODO: check if args.vnfd is a valid file path
         elif args.integrity:
             print("Syntax and integrity validation")
-            validator.configure(syntax=True, integrity=True, topology=False)
+            validator.configure(syntax=True, integrity=True, topology=False,
+                                custom=False)
         elif args.topology:
             print("Syntax, integrity and topology validation")
-            validator.configure(syntax=True, integrity=True, topology=True)
-
-        validator.validate_function(args.vnfd)
-        if validator.error_count == 0:
-            print("No errors found in the VNFD")
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                custom=False)
+        elif args.custom:
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                custom=True, cfile=args.cfile)
+            print("Syntax, integrity, topology  and custom rules validation")
+        if validator.validate_function(args.vnfd):
+            if validator.error_count == 0:
+                print("No errors found in the VNFD")
+        else:
+            print("Errors in custom rules validation")
         return validator
 
     elif args.nsd:
@@ -65,16 +74,50 @@ def dispatch(args,validator):
             validator.configure(syntax=True, integrity=False, topology=False)
         elif args.integrity:
             print("Syntax and integrity validation")
-            validator.configure(syntax=True, integrity=True, topology=False, dpath = args.dpath)
+            validator.configure(syntax=True, integrity=True, topology=False,
+                                dpath=args.dpath)
         elif args.topology:
             print("Syntax, integrity and topology validation")
-            validator.configure(syntax=True, integrity=True, topology=True, dpath = args.dpath)
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                dpath=args.dpath)
 
         validator.validate_service(args.nsd)
         if validator.error_count == 0:
             print("No errors found in the NSD")
         return validator
 
+
+def check_args(args):
+    if (args.nsd):
+        if (args.integrity or args.topology):
+            if (args.dpath and args.dext):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                      "integrity, topology or custom rules of a service "
+                      "both' --dpath' and '--dext' parameters must be "
+                      "specified.")
+                return False
+        if (args.custom):
+            if (args.dpath and args.dext and args.cfile):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                      "custom rules of a service "
+                      "both' --dpath' and '--dext' parameters must be "
+                      "specified (to validate the topology/integrity) and "
+                      "'--cfile' must be specified")
+                return False
+    if (args.vnfd):
+        if (args.custom):
+            if (args.cfile):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                      "custom rules of a service "
+                      "'--cfile' must be specified")
+                return False
+    return True
 
 
 def parse_args(input_args=None):
@@ -95,7 +138,8 @@ def parse_args(input_args=None):
 
     parser.add_argument(
         "-w", "--workspace",
-        help="Specify the directory of the SDK workspace for validating the SDK project.",
+        help="Specify the directory of the SDK workspace for " +
+             "validating the SDK project.",
         # help="Specify the directory of the SDK workspace for validating the "
         #      "SDK project. If not specified will assume the directory: '{}'"
         #      .format(Workspace.DEFAULT_WORKSPACE_DIR),
@@ -181,6 +225,20 @@ def parse_args(input_args=None):
         action="store_true",
         required=False,
         default=False
+    )
+    parser.add_argument(
+        "--custom", "-c",
+        help="Perform a network custom rules validation.",
+        action="store_true",
+        required=False,
+        default=False
+    )
+    parser.add_argument(
+        "--cfile",
+        help="Specify the file with the custom rules to validate",
+        dest="cfile",
+        required=False,
+        default=None
     )
     parser.add_argument(
         "--debug",

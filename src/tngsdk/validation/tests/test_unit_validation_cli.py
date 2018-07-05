@@ -37,7 +37,9 @@ import shutil
 from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 
-SAMPLE_DIR='src/tngsdk/validation/tests/'
+
+SAMPLE_DIR = 'src/tngsdk/validation/tests/'
+
 
 class TngSdkValidationCliTest(unittest.TestCase):
 
@@ -70,157 +72,318 @@ class TngSdkValidationCliTest(unittest.TestCase):
 
     def test_cli_validation_function_syntax_ok(self):
         validator = Validator()
-        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/valid-syntax-tng/tcpdump-vnfd-tng.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--function',
+                      SAMPLE_DIR + 'samples/functions/valid-syntax-tng/' +
+                      'tcpdump-vnfd-tng.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_function_syntax_ko_aditional_properties(self):
         validator = Validator()
-        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/invalid-syntax-tng/invalid-default-vnfd-tng.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid-syntax-tng/' +
+                      'invalid-default-vnfd-tng.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
 
     def test_cli_validation_function_syntax_ko_bad_syntax(self):
         validator = Validator()
-        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/invalid-syntax-tng/invalid-firewall-vnfd-tng.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid-syntax-tng/' +
+                      'invalid-firewall-vnfd-tng.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
 
     def test_cli_validation_function_syntax_ko_dext(self):
         validator = Validator()
-        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/invalid-syntax-tng/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid-syntax-tng/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 5)
 
     def test_cli_validation_function_syntax_ok_dext(self):
         validator = Validator()
-        input_args=['--syntax', '--function', SAMPLE_DIR+'samples/functions/valid-syntax-tng/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--function',
+                      SAMPLE_DIR + 'samples/functions/valid-syntax-tng/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_service_syntax_ok_simplest_nsd(self):
         validator = Validator()
-        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/valid-syntax-tng/simplest-example.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--service',
+                      SAMPLE_DIR + 'samples/services/valid-syntax-tng/' +
+                      'simplest-example.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_service_syntax_ok(self):
         validator = Validator()
-        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/valid-son/valid.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--service',
+                      SAMPLE_DIR + 'samples/services/valid-son/valid.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_service_syntax_ko_unexpected_field(self):
         validator = Validator()
-        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/invalid-syntax-tng/unexpected_field.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--service',
+                      SAMPLE_DIR + 'samples/services/invalid-syntax-tng/' +
+                      'unexpected_field.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
 
     def test_cli_validation_service_syntax_ko_required_properties(self):
         validator = Validator()
-        input_args=['--syntax', '--service', SAMPLE_DIR+'samples/services/invalid-syntax-tng/required_properties.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--syntax', '--service',
+                      SAMPLE_DIR + 'samples/services/invalid-syntax-tng/' +
+                      'required_properties.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
 
     def test_cli_validation_function_integrity_ok(self):
         validator = Validator()
-        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/valid-son/firewall-vnfd.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--integrity', '--function',
+                      SAMPLE_DIR + 'samples/functions/valid-son/' +
+                      'firewall-vnfd.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_function_integrity_ok_dext(self):
         validator = Validator()
-        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--integrity', '--function',
+                      SAMPLE_DIR + 'samples/functions/valid-son/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_function_integrity_ko(self):
         validator = Validator()
-        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/invalid_integrity-son/firewall-vnfd.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--integrity', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid_integrity-son/' +
+                      'firewall-vnfd.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
 
     def test_cli_validation_function_integrity_ko_dext(self):
         validator = Validator()
-        input_args=['--integrity', '--function', SAMPLE_DIR+'samples/functions/invalid_integrity-son/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--integrity', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid_integrity-son/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 3)
 
     def test_cli_validation_service_integrity_ok(self):
         validator = Validator()
-        input_args=['--integrity', '--service', SAMPLE_DIR+'samples/services/valid-son/valid.yml', \
-                    '--dpath', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--integrity', '--service',
+                      SAMPLE_DIR + 'samples/services/valid-son/valid.yml',
+                      '--dpath', SAMPLE_DIR + 'samples/functions/valid-son/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
+
+    def test_cli_validation_service_integrity_ko_bad_parameters(self):
+        validator = Validator()
+        input_args = ['--integrity', '--service',
+                      SAMPLE_DIR + 'samples/services/valid-son/valid.yml']
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertFalse(check_args)
 
     def test_cli_validation_service_topology_ok(self):
         validator = Validator()
-        input_args=['--topology', '--service', SAMPLE_DIR+'samples/services/valid-son/valid.yml', \
-                    '--dpath', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--topology', '--service',
+                      SAMPLE_DIR + 'samples/services/valid-son/valid.yml',
+                      '--dpath', SAMPLE_DIR + 'samples/functions/valid-son/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
+
+    def test_cli_validation_service_topology_ko_bad_parameters(self):
+        validator = Validator()
+        input_args = ['--topology', '--service',
+                      SAMPLE_DIR + 'samples/services/valid-son/valid.yml']
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertFalse(check_args)
 
     def test_cli_validation_function_topology_ok(self):
         validator = Validator()
-        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/valid-son/firewall-vnfd.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--topology', '--function',
+                      SAMPLE_DIR + 'samples/functions/valid-son/' +
+                      'firewall-vnfd.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_function_topology_ok_dext(self):
         validator = Validator()
-        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/valid-son/', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--topology', '--function',
+                      SAMPLE_DIR + 'samples/functions/valid-son/',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
     def test_cli_validation_function_topology_ko_dext(self):
         validator = Validator()
-        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/invalid_topology-son/firewall-vnfd.yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--topology', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid_topology-son/' +
+                      'firewall-vnfd.yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
 
     def test_cli_validation_function_topology_ko_dext(self):
         validator = Validator()
-        input_args=['--topology', '--function', SAMPLE_DIR+'samples/functions/invalid_topology-son', '--dext', 'yml']
-        args=cli.parse_args(input_args)
+        input_args = ['--topology', '--function',
+                      SAMPLE_DIR + 'samples/functions/invalid_topology-son',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
-        result_validator = cli.dispatch(args,validator)
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 1)
+
+    def test_cli_validation_function_custom_ko_not_cfile(self):
+        validator = Validator()
+        input_args = ['--custom', '--function',
+                      SAMPLE_DIR +
+                      'samples/functions/valid-son/firewall-vnfd.yml']
+
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertFalse(check_args)
+
+    def test_cli_validation_function_custom_ok(self):
+        validator = Validator()
+        input_args = ['--custom', '--cfile',
+                      SAMPLE_DIR + 'samples/custom_rules/rules/' +
+                      'custom_rule_1.yml', '--function',
+                      SAMPLE_DIR + 'samples/custom_rules/functions/' +
+                      'valid/function_1_ok.yml']
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
+        self.assertEqual(result_validator.customErrors, 0)
+
+    def test_cli_validation_function_custom_ko(self):
+        validator = Validator()
+        input_args = ['--custom', '--cfile',
+                      SAMPLE_DIR + 'samples/custom_rules/rules/' +
+                      'custom_rule_1.yml', '--function',
+                      SAMPLE_DIR + 'samples/custom_rules/functions/' +
+                      'invalid/function_1_ko.yml']
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
+        self.assertEqual(result_validator.customErrors, 1)
+
+    def test_cli_validation_function_custom_ok_dext(self):
+        validator = Validator()
+        input_args = ['--custom', '--cfile',
+                      SAMPLE_DIR + 'samples/custom_rules/rules/' +
+                      'custom_rule_1.yml', '--function',
+                      SAMPLE_DIR + 'samples/custom_rules/functions/valid',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
+        self.assertEqual(result_validator.customErrors, 0)
+
+    def test_cli_validation_function_custom_ko_dext(self):
+        validator = Validator()
+        input_args = ['--custom', '--cfile',
+                      SAMPLE_DIR + 'samples/custom_rules/rules/' +
+                      'custom_rule_1.yml', '--function',
+                      SAMPLE_DIR + 'samples/custom_rules/functions/invalid',
+                      '--dext', 'yml']
+        args = cli.parse_args(input_args)
+        print("Test arguments: {}".format(args))
+        check_args = cli.check_args(args)
+        self.assertTrue(check_args)
+        result_validator = cli.dispatch(args, validator)
+        self.assertEqual(result_validator.customErrors, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

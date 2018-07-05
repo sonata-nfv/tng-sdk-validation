@@ -28,7 +28,8 @@ import unittest
 import pkg_resources
 import os
 from requests.exceptions import HTTPError, MissingSchema
-from tngsdk.validation.schema.validator import load_local_schema, load_remote_schema
+from tngsdk.validation.schema.validator import load_local_schema
+from tngsdk.validation.schema.validator import load_remote_schema
 
 
 class IntLoadSchemaTests(unittest.TestCase):

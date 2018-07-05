@@ -48,8 +48,8 @@ from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 
 # To implement watchdogs to subscribe to changes in any descriptor file
-#from watchdog.observers import Observer
-#from watchdog.events import FileSystemEventHandler
+# from watchdog.observers import Observer
+# from watchdog.events import FileSystemEventHandler
 
 log = logging.getLogger(os.path.basename(__file__))
 
@@ -71,12 +71,13 @@ api = Api(blueprint,
 app.register_blueprint(blueprint)
 api.add_namespace(api_v1)
 
-##This file should be generated with Swagger form an OpenAPI file, shouldn't it?
+# This file should be generated with Swagger form an
+#  OpenAPI file, shouldn't it?
 
-#Define Redis username and pass
+# Define Redis username and pass
 
 # config cache
-#comment DANI
+# comment DANI
 # if app.config['CACHE_TYPE'] == 'redis':
 #
 #     redis_auth = app.config['REDIS_USER'] + ':' + app.config[
@@ -96,7 +97,7 @@ api.add_namespace(api_v1)
 # else:
 #      print("Invalid cache type.")
 #      sys.exit(1)
-#Comment DANI
+# Comment DANI
 
 # keep temporary request errors
 # req_errors = []
@@ -171,38 +172,42 @@ ping_get_return_model = api_v1.model("PingGetReturn", {
 
 validations_parser = api_v1.parser()
 validations_parser.add_argument("syntax",
-                             location="args",
-                             type=inputs.boolean,
-                             required=False,
-                             help="syntax check")
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="syntax check")
 validations_parser.add_argument("integrity",
-                             location="args",
-                             type=inputs.boolean,
-                             required=False,
-                             help="integrity check")
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="integrity check")
 validations_parser.add_argument("topology",
-                             location="args",
-                             type=inputs.boolean,
-                             required=False,
-                             help="topology check")
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="topology check")
 validations_parser.add_argument("function",
-                             location="args",
-                             required=False,
-                             help="File URL of the function descriptor to be validated")
+                                location="args",
+                                required=False,
+                                help="File URL of the function descriptor "
+                                     "to be validated")
 validations_parser.add_argument("service",
-                             location="args",
-                             required=False,
-                             help="File URL of the service descriptor to be validated")
+                                location="args",
+                                required=False,
+                                help="File URL of the service descriptor "
+                                     "to be validated")
 validations_parser.add_argument("sync",
-                             location="args",
-                             type=inputs.boolean,
-                             required=False,
-                             help="If True indicates that the request will be handled synchronously")
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="If True indicates that the request"
+                                     " will be handled synchronously")
 validations_parser.add_argument("dpath",
-                             location="args",
-                             required=False,
-                             help="Specify a directory to search for descriptors. Particularly "
-                                  "useful when using the '--service' argument.")
+                                location="args",
+                                required=False,
+                                help="Specify a directory to search for "
+                                     "descriptors. Particularly useful"
+                                     " when using the '--service' argument.")
 
 
 @api_v1.route("/validations")
@@ -210,31 +215,35 @@ class Validation(Resource):
     """
     Endpoint for validating descriptors.
     """
-    #@api_v1.expect(validations_parser)
-    #@api_v1.marshal_with(packages_status_item_get_return_model)
+    # @api_v1.expect(validations_parser)
+    # @api_v1.marshal_with(packages_status_item_get_return_model)
     @api_v1.response(200, "Successfully validation.")
-    @api_v1.response(400, "Bad request: Could not validate the given descriptor.")
+    @api_v1.response(400, "Bad request: Could not validate"
+                          "the given descriptor.")
     def post(self, **kwargs):
         args = validations_parser.parse_args()
 
         log.info("POST to /validation w. args: {}".format(args))
 
         if ((args['function'] is not None) and (args['service']is not None)):
-            return {"error_message":"Not possible to validate service and function in the same request"},400
+            return {"error_message": "Not possible to validate " +
+                    "service and function in the same request"}, 400
 
         if ((args['function'] is None) and (args['service']is None)):
-            return {"error_message":"Missing service and function parameters"},400
+            return {"error_message": "Missing service and" +
+                    " function parameters"}, 400
 
         # TO BE REMOVED when asynchronous processing is implemented
         if not args['sync']:
-            return {"error_message":"Asynchronous processing not yet implemented"},400
+            return {"error_message": "Asynchronous processing " +
+                    "not yet implemented"}, 400
 
         validator = Validator()
         # None or False = False / True or False = True / False or False = False
         validator.configure(syntax=(args['syntax'] or False),
-        integrity=(args['integrity'] or False),topology=(args['topology'] or False),
-        dpath=(args['dpath'] or False))
-
+                            integrity=(args['integrity'] or False),
+                            topology=(args['topology'] or False),
+                            dpath=(args['dpath'] or False))
 
         if args['function'] is not None:
             log.info("Validating Function: {}".format(args['function']))
@@ -250,12 +259,10 @@ class Validation(Resource):
 
         # TODO store results in redis so that the result can be checked
 
-
-        return {"validation_process_uuid":"test",
+        return {"validation_process_uuid": "test",
                 "status": 200,
-                "error_count":validator.error_count,
+                "error_count": validator.error_count,
                 "errors": validator.errors}
-
 
 
 @api_v1.route("/ping")

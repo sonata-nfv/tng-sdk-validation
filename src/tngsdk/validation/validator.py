@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS 
+# Neither the name of the SONATA-NFV, 5GTANGO, UBIWHERE, QUOBIS
 # nor the names of its contributors may be used to endorse or promote
 # products derived from this software without specific prior written
 # permission.
@@ -29,10 +29,10 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.5gtango.eu).
 
-#Python packages imports
+# Python packages imports
 import logging
 import os
-#from .event import *
+# from .event import *
 import coloredlogs
 import networkx as nx
 import zipfile
@@ -48,14 +48,19 @@ from tngsdk.project.workspace import Workspace
 from tngsdk.project.project import Project
 
 from tngsdk.validation.storage import DescriptorStorage
-#from storage import DescriptorStorage
-#from son.validate.util import read_descriptor_files, list_files, strip_root, build_descriptor_id
-#from util import read_descriptor_files, list_files, strip_root, build_descriptor_id
-from tngsdk.validation.util import read_descriptor_files, list_files, strip_root, build_descriptor_id
+# from storage import DescriptorStorage
+# from son.validate.util import read_descriptor_files, list_files
+# from son.validate.util import strip_root, build_descriptor_id
+# from util import read_descriptor_files, list_files, strip_root
+# from util import build_descriptor_id
+from tngsdk.validation.util import read_descriptor_files, list_files
+from tngsdk.validation.util import strip_root, build_descriptor_id
 from tngsdk.validation.schema.validator import SchemaValidator
 from tngsdk.validation import event
+from tngsdk.validation.custom_rules import validator_custom_rules
 
-#LOG = logging.getLogger(os.path.basename(__file__))
+
+# LOG = logging.getLogger(os.path.basename(__file__))
 log = logging.getLogger(__name__)
 evtlog = event.get_logger('validator.events')
 
@@ -68,7 +73,10 @@ class Validator(object):
         self._syntax = True
         self._integrity = True
         self._topology = True
+        self._custom = False
 
+        # Variable to delete, only to check custom rules errors
+        self._customErrors = 0
         # create "virtual" workspace if not provided (don't actually create
         # file structure)
         if not self._workspace:
@@ -78,7 +86,7 @@ class Validator(object):
         self._dext = self._workspace.default_descriptor_extension
         self._dpath = '.'
         self._log_level = self._workspace.log_level
-
+        self._cfile = '.'
         # # for package signature validation
         # self._pkg_signature = None
         # self._pkg_pubkey = None
@@ -139,15 +147,24 @@ class Validator(object):
     def dpath(self, value):
         self._dpath = value
 
+    @property
+    def customErrors(self):
+        return self._customErrors
+
+    @customErrors.setter
+    def customErrors(self, value):
+        self._customErrors = value
+
     def configure(self, syntax=None, integrity=None, topology=None,
-              dpath=None, dext=None, debug=None, pkg_signature=None,
-              pkg_pubkey=None):
+                  custom=None, dpath=None, dext=None, debug=None,
+                  cfile=None, pkg_signature=None, pkg_pubkey=None):
         """
         Configure parameters for validation. It is recommended to call this
         function before performing a validation.
         :param syntax: specifies whether to validate syntax
         :param integrity: specifies whether to validate integrity
         :param topology: specifies whether to validate network topology
+        :param custom: specifies whether to validate network custom rules
         :param dpath: directory to search for function descriptors (VNFDs)
         :param dext: extension of descriptor files (default: 'yml')
         :param debug: increase verbosity level of logger
@@ -162,10 +179,14 @@ class Validator(object):
             self._integrity = integrity
         if topology is not None:
             self._topology = topology
+        if custom is not None:
+            self._custom = custom
         if dext is not None:
             self._dext = dext
         if dpath is not None:
             self._dpath = dpath
+        if cfile is not None:
+            self._cfile = cfile
         if debug is True:
             self._workspace.log_level = 'debug'
             coloredlogs.install(level='debug')
@@ -190,18 +211,26 @@ class Validator(object):
         """
         # ensure this function is called by specific functions
         caller = inspect.stack()[1][3]
-        if caller != 'validate_function' and caller != 'validate_service' and caller != 'validate_project' and caller != 'validate_package':
-            log.error("Cannot assert a correct configuration. Validation scope couldn't be determined. Aborting")
+        if (caller != 'validate_function' and caller != 'validate_service' and
+                caller != 'validate_project' and caller != 'validate_package'):
+            log.error("Cannot assert a correct configuration." +
+                      " Validation scope couldn't be determined. Aborting")
             return
 
         # general rules - apply to all validations
         if self._integrity and not self._syntax:
-            log.error("Cannot validate integrity without validating syntax first. Aborting.")
+            log.error("Cannot validate integrity without " +
+                      "validating syntax first. Aborting.")
             return
 
         if self._topology and not self._integrity:
-            log.error("Cannot validate topology without validating integrity first. Aborting.")
+            log.error("Cannot validate topology without " +
+                      "validating integrity first. Aborting.")
             return
+
+        if self._custom and not self._topology:
+            log.error("Cannot validate custom rules without " +
+                      "validating topology first. Aborting.")
 
         if not self._syntax:
             log.error("Nothing to validate. Aborting.")
@@ -213,12 +242,20 @@ class Validator(object):
             pass
         elif caller == 'validate_service':
             # check SERVICE validation parameters
-            if (self._integrity or self._topology) and not (self._dpath and self._dext):
+            if ((self._integrity or self._topology) and not
+                    (self._dpath and self._dext)):
                 log.error("Invalid validation parameters. To validate the "
-                  "integrity or topology of a service both "
-                  "'--dpath' and '--dext' parameters must be "
-                  "specified.")
+                          "integrity, topology or custom rules of a service "
+                          "both' --dpath' and '--dext' parameters must be "
+                          "specified.")
                 return
+            if ((self._custom) and not
+                    (self._dpath and self._dext and self._cfile)):
+                log.error("Invalid validation parameters. To validate the "
+                          "custom rules of a service "
+                          "both' --dpath' and '--dext' parameters must be "
+                          "specified (to validate the topology/integrity) and "
+                          "'--cfile' must be specified")
         elif caller == 'validate_function':
             pass
 
@@ -548,8 +585,6 @@ class Validator(object):
         """
 
         log.info("Validating integrity of service '{0}'".format(service.id))
-
-
         # get referenced function descriptors (VNFDs)
         if not self._load_service_functions(service):
             evtlog.log("Function not available",
@@ -697,24 +732,27 @@ class Validator(object):
                           a directory to search for VNFDs
         :return: True if all validations were successful, False otherwise
         """
-        #if not self._assert_configuration():
+        # if not self._assert_configuration():
         #    return
 
         # validate multiple VNFs
         if os.path.isdir(vnfd_path):
             log.info("Validating functions in path '{0}'".format(vnfd_path))
             vnfd_files = list_files(vnfd_path, self._dext)
-            #ANTON
+            # ANTON
             print(*vnfd_files, sep='\n')
             for vnfd_file in vnfd_files:
-                log.info("Detected file {0} order validation...".format(vnfd_file))
+                log.info("Detected file {0} order validation..."
+                         .format(vnfd_file))
                 if not self.validate_function(vnfd_file):
                     return
             return True
 
         log.info("Validating function '{0}'".format(vnfd_path))
-        log.info("... syntax: {0}, integrity: {1}, topology: {2}"
-                 .format(self._syntax, self._integrity, self._topology))
+        log.info("... syntax: {0}, integrity: {1}, topology: {2},"
+                 " custom: {3}"
+                 .format(self._syntax, self._integrity, self._topology,
+                         self._custom))
 
         func = self._storage.create_function(vnfd_path)
         if not func:
@@ -732,6 +770,11 @@ class Validator(object):
 
         if self._topology and not self._validate_function_topology(func):
             return True
+
+        if (self._custom and
+                validator_custom_rules.process_rules(self._cfile, vnfd_path)):
+            self._customErrors = 1
+            return False
 
         return True
 
@@ -874,7 +917,7 @@ class Validator(object):
         log.debug("Built topology graph of function '{0}': {1}"
                   .format(func.id, func.graph.edges()))
         log.info("Built topology graph of function '{0}': {1}"
-                  .format(func.id, func.graph.edges()))
+                 .format(func.id, func.graph.edges()))
 
         return True
 

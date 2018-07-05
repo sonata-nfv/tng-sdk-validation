@@ -2,7 +2,7 @@ openapi: 3.0.0
 servers: []
 info:
   description: This is the API of the 5GTANGO TNG-SDK-VALIDATION tool. This is still a work in progress so the API may be modified
-  version: "0.0.1"
+  version: "1.0.2"
   title: 5GTANGO TNG-SDK-VALIDATION tool API
   contact:
     email: anton.roman@quobis.com
@@ -55,7 +55,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ValidationResult'
+                  $ref: '#/components/schemas/ValidationResource'
         '400':
           description: bad input parameter
     post:
@@ -75,7 +75,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidationResult'
+              $ref: '#/components/schemas/ValidationAsyncResult'
         description: Inventory item to add
   /report/results/{resourceId}:
     get:
@@ -117,7 +117,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ValidationResult'
+                  $ref: '#/components/schemas/ValidationAsyncResult'
         '400':
           description: bad input parameter
   /report/topology/{resourceId}:
@@ -147,8 +147,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/TopologyObject'
         '400':
-          description: bad input parameter        
-  # in the previous version the graph was accesed with path /fwgraphs        
+          description: bad input parameter
+  # in the previous version the graph was accesed with path /fwgraphs
   /report/fwgraphs/{resourceId}:
     get:
       tags:
@@ -176,8 +176,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/FwgraphObject'
         '400':
-          description: bad input parameter         
-          
+          description: bad input parameter
+
   /validation:
     post:
       tags:
@@ -185,29 +185,33 @@ paths:
       summary: searches validation reports
       operationId: validate
       description: |
-        It instructs the validator to perform the validation of the specified object acoording to the specified parameters
+        It instructs the validator to perform the validation of the specified object according to the specified parameters
         available validation report in the history of validations done
         with the tool
       parameters:
         - in: query
-          name: path
-          description: path of the file which contains the object to be validated
+          name: source
+          description: source of the descriptor file. It can take the values 'url' (when the source is a URL), 'local' when the file is a file from the local file system and 'embedded' when the descriptor is included as an attachment in the request. In the first two cases a path parameter is required.
           required: true
+          schema:
+            type: string
+        - in: query
+          name: path
+          description: specifies the local path of the url the file which contains the object to be validated
           schema:
             type: string
         - in: query
           name: file
           description: file name which contains the descriptor of the project, package, service or function to be validated
-          required: true
           schema:
             type: string
         - in: query
           name: sync
           description: |
             parametyer to indicate if the request must be processed in synchronous way
-            returnig the result of the validation within a 200 OK reply to the POST to create 
-            the validation resource, if this param is omitted or False then the request is 
-            replied with a 202 Accepted and the result of the validation must be requested 
+            returnig the result of the validation within a 200 OK reply to the POST to create
+            the validation resource, if this param is omitted or False then the request is
+            replied with a 202 Accepted and the result of the validation must be requested
             against the validation resource passed in the validation uuid
           required: false
           schema:
@@ -227,30 +231,34 @@ paths:
           description: indicates that topology must be validated
           schema:
             type: boolean
-        - in: query
-          name: pkg_signature
-          description: signature of the package to be validated
-          schema:
-            type: string
-        - in: query
-          name: pkg_pubkey
-          description: pubkey of the package to be validated
-          schema:
-            type: string    
+ #       - in: query
+ #         name: pkg_signature
+ #        description: signature of the package to be validated
+ #         schema:
+ #            type: string
+ #       - in: query
+ #          name: pkg_pubkey
+ #        description: pubkey of the package to be validated
+ #       schema:
+ #         type: string
       responses:
         '200':
-          description: results of the validation process
+          description: synchronous answer results of the validation process
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ValidationResult'
+                  $ref: '#/components/schemas/ValidationSyncResult'
+        '202':
+          description: asynchronous with confirms that the validation object has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationAsyncResult'
+
         '400':
-          description: bad input parameter
-        '400':
-          description: Not possible to validate service and function in the same request
-          
+          description: Bad input parameter. A descriptive message will be provided with the error reply
   /resources:
     get:
       tags:
@@ -258,7 +266,7 @@ paths:
       summary: searches validated resources in the cache
       operationId: getResource
       description: |
-        Returns a list of the cached resources by the validation tool
+        (Not yet available) Returns a list of the cached resources by the validation tool
       parameters:
         - in: query
           name: searchString
@@ -275,7 +283,7 @@ paths:
                 type: array
       # fix this
                 items:
-                  $ref: '#/components/schemas/ValidationResult'
+                  $ref: '#/components/schemas/ValidationAsyncResult'
         '400':
           description: bad input parameter
   # to complete
@@ -286,7 +294,7 @@ paths:
       summary: searches validated resources in the cache
       operationId: getResource
       description: |
-       (Not yet available) Returns a list of the cached resources by the validation tool
+       (Not yet available) Returns a list of resources wtahced by the validation tool, it means that they will automatically validated when a modification in the file is detected
       parameters:
         - in: query
           name: searchString
@@ -305,54 +313,22 @@ paths:
                 items:
                   $ref: '#/components/schemas/WatchObject'
         '400':
-          description: bad input parameter    
+          description: bad input parameter
 components:
   schemas:
-    ValidationSyncResult:
+    ValidationAsyncResult:
       type: object
       properties:
-        error_count: 
-          type: integer
-        errors:
-          type: array
-          item:
-            $ref: '#/components/schemas/errorItem'
-    errorItem:
-      type: object
-      properties:
-        source_id:
-          type: string
-        event_code:
-          type: string
-        level:
-          type: 
-            enum:
-              - "error"
-              - "warning"
-        event_id:
-          type: string
-          header:
-            type: string
-        detail:
-          type: object
-          properties:
-            message:
-              type: string
-            detail_event_id:
-              type: string
-    ValidationResult:
-      type: object
-      properties:
-        vid: 
+        vid:
           type: string
         rid:
           type: string
     ValidationResource:
       type: object
       required:
-        - resource_id
+        - rid
       properties:
-        resource_id:
+        rid:
           type: string
         path:
           type: string
@@ -362,27 +338,31 @@ components:
           type: boolean
         integrity:
           type: boolean
-        type:
-          enum:
-            - "project"
-            - "package"
-            - "service"
-            - "function"
+        validation_type:
+            type: string
+            enum:
+              - "project"
+              - "package"
+              - "service"
+              - "function"
     TopologyObject:
       type: object
       properties:
         id:
           type: integer
+
     FwgraphObject:
       type: object
       properties:
         id:
           type: integer
+
     WatchObject:
       type: object
       properties:
-        type:
-           enum:
+        validation_type:
+          type: string
+          enum:
             - "project"
             - "package"
             - "service"
@@ -393,3 +373,38 @@ components:
           type: string
         topology:
           type: string
+
+    ValidationSyncResult:
+      type: object
+      properties:
+        vid:
+          type: string
+        rid:
+          type: string
+        error_count:
+          type: integer
+        errors:
+            type: array
+            items:
+              type: object
+              properties:
+                source_id:
+                  type: string
+                event_code:
+                  type: string
+                level:
+                  type: string
+                  enum:
+                    - "error"
+                    - "warning"
+                event_id:
+                  type: string
+                header:
+                  type: string
+                detail:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    detail_event_id:
+                      type: string

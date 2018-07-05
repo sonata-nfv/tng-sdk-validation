@@ -31,10 +31,10 @@ import validators
 import requests
 from collections import OrderedDict
 # importing the local event module, fix this ASAP
-#from .event import *
-#import util
+# from .event import *
+# import util
 from tngsdk.validation.util import descriptor_id, read_descriptor_file
-#from util import read_descriptor_file, descriptor_id
+# from util import read_descriptor_file, descriptor_id
 from tngsdk.validation import event
 
 
@@ -1167,7 +1167,6 @@ class Function(Descriptor):
 
         if bridges:
             cp_refs += self.vbridge_cp_refs
-        
         for cpr in cp_refs:
             node_attrs = def_node_attrs.copy()
             s_cpr = cpr.split(':')

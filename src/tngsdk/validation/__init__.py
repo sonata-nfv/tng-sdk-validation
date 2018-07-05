@@ -39,9 +39,11 @@ from tngsdk.validation.validator import Validator
 
 LOG = logging.getLogger(os.path.basename(__file__))
 
+
 def logging_setup():
     os.environ["COLOREDLOGS_LOG_FORMAT"] \
         = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+
 
 def main():
     logging_setup()
@@ -56,16 +58,19 @@ def main():
     # TODO validate if args combination makes any sense
 
     validator = Validator()
-    
-    if args.api:
-        # TODO start validator in service mode
-        print("Validator started as an API in IP: {} and port {}".format(args.service_address,args.service_port))
-        rest.serve_forever(args)
-        pass
-    else:    
-        # run validator in CLI mode
-        validator = Validator()
-        result_validator = cli.dispatch(args,validator)
-        if result_validator.error_count > 0:
-            exit(1)  # exit with error code    
-        exit(0)
+    if cli.check_args(args):
+        if args.api:
+            # TODO start validator in service mode
+            print("Validator started as an API in IP: {} and port {}"
+                  .format(args.service_address, args.service_port))
+            rest.serve_forever(args)
+            pass
+        else:
+            # run validator in CLI mode
+            validator = Validator()
+            result_validator = cli.dispatch(args, validator)
+            if result_validator.error_count > 0:
+                exit(1)  # exit with error code
+            exit(0)
+    else:
+        print('Invalid arguments. Please check the help (-h)')
