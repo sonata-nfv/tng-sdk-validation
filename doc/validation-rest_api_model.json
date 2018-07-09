@@ -3,7 +3,7 @@
   "servers" : [ ],
   "info" : {
     "description" : "This is the API of the 5GTANGO TNG-SDK-VALIDATION tool. This is still a work in progress so the API may be modified",
-    "version" : "1.0.2",
+    "version" : "1.0.3",
     "title" : "5GTANGO TNG-SDK-VALIDATION tool API",
     "contact" : {
       "email" : "anton.roman@quobis.com"
@@ -21,211 +21,6 @@
     "description" : "Operations available to regular developers"
   } ],
   "paths" : {
-    "/report" : {
-      "get" : {
-        "tags" : [ "developers" ],
-        "summary" : "searches validation reports",
-        "operationId" : "searchReport",
-        "description" : "(Not yet available) By passing in the appropriate options, you can search for\navailable validation report in the history of validations done\nwith the tool\n",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "searchString",
-          "description" : "pass an optional search string for looking up inventory",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "skip",
-          "description" : "number of records to skip for pagination",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "minimum" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "limit",
-          "description" : "maximum number of records to return",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "minimum" : 0,
-            "maximum" : 50
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "search results matching criteria",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ValidationResource"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "bad input parameter"
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "admins" ],
-        "summary" : "adds an inventory item",
-        "operationId" : "addInventory",
-        "description" : "Adds an item to the system",
-        "responses" : {
-          "201" : {
-            "description" : "item created"
-          },
-          "400" : {
-            "description" : "invalid input, object invalid"
-          },
-          "409" : {
-            "description" : "an existing item already exists"
-          }
-        },
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ValidationAsyncResult"
-              }
-            }
-          },
-          "description" : "Inventory item to add"
-        }
-      }
-    },
-    "/report/results/{resourceId}" : {
-      "get" : {
-        "tags" : [ "developers" ],
-        "summary" : "searches validation reports",
-        "operationId" : "searchReport",
-        "description" : "(Not yet available) By passing in the appropriate options, you can search for\navailable validation report in the history of validations done\nwith the tool\n",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "resourceId",
-          "description" : "pass an optional search string for looking up inventory",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "skip",
-          "description" : "number of records to skip for pagination",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "minimum" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "limit",
-          "description" : "maximum number of records to return",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "minimum" : 0,
-            "maximum" : 50
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "search results matching criteria",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ValidationAsyncResult"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "bad input parameter"
-          }
-        }
-      }
-    },
-    "/report/topology/{resourceId}" : {
-      "get" : {
-        "tags" : [ "developers" ],
-        "summary" : "searches validation reports",
-        "operationId" : "searchReport",
-        "description" : "(Not yet available) By passing in the appropriate options, you can search for\navailable validation report in the history of validations done\nwith the tool\n",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "resourceId",
-          "description" : "pass an optional search string for looking up inventory",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "search results matching criteria",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/TopologyObject"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "bad input parameter"
-          }
-        }
-      }
-    },
-    "/report/fwgraphs/{resourceId}" : {
-      "get" : {
-        "tags" : [ "developers" ],
-        "summary" : "searches validation reports",
-        "operationId" : "searchReport",
-        "description" : "(Not yet available) By passing in the appropriate options, you can search for\navailable validation report in the history of validations done\nwith the tool\n",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "resourceId",
-          "description" : "pass an optional search string for looking up inventory",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "search results matching criteria",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/FwgraphObject"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "bad input parameter"
-          }
-        }
-      }
-    },
     "/validation" : {
       "post" : {
         "tags" : [ "developers" ],
@@ -274,11 +69,11 @@
           "name" : "integrity",
           "description" : "indicates that integrity must be validated",
           "schema" : {
-            "type" : "string"
+            "type" : "boolean"
           }
         }, {
           "in" : "query",
-          "name" : "boolean",
+          "name" : "topology",
           "description" : "indicates that topology must be validated",
           "schema" : {
             "type" : "boolean"
@@ -312,6 +107,65 @@
             "description" : "Bad input parameter. A descriptive message will be provided with the error reply"
           }
         }
+      },
+      "get" : {
+        "tags" : [ "developers" ],
+        "summary" : "searches validation reports",
+        "description" : "(Not yet available) By passing in the appropriate options, you can search for\navailable validation in the history of validations. By default it returns a complete\nlist of validations\n",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "vid",
+          "description" : "validation ID of validation objects to return",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "rid",
+          "description" : "resource ID of validation objects to return",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "skip",
+          "description" : "number of records to skip for pagination",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "description" : "maximum number of records to return",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0,
+            "maximum" : 50
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "search results matching criteria",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/resourceItem"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad input parameter"
+          }
+        }
       }
     },
     "/resources" : {
@@ -319,12 +173,74 @@
         "tags" : [ "developers" ],
         "summary" : "searches validated resources in the cache",
         "operationId" : "getResource",
-        "description" : "(Not yet available) Returns a list of the cached resources by the validation tool\n",
+        "description" : "(Not yet available) It returns a list of the cached resources by the validation tool\n",
         "parameters" : [ {
           "in" : "query",
           "name" : "searchString",
           "description" : "pass an optional search string for looking up inventory",
           "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "rid",
+          "description" : "resource ID to return",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "skip",
+          "description" : "number of records to skip for pagination",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "limit",
+          "description" : "maximum number of records to return",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0,
+            "maximum" : 50
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "search results matching criteria",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ValidationAsyncResult"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad input parameter"
+          }
+        }
+      }
+    },
+    "/resources/{rid}/topology" : {
+      "get" : {
+        "tags" : [ "developers" ],
+        "summary" : "searches validation reports",
+        "operationId" : "searchReport",
+        "description" : "(Not yet available) It returns the topology generated in a valiation identified by vid\n",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "rid",
+          "description" : "resource ID",
+          "required" : true,
           "schema" : {
             "type" : "string"
           }
@@ -337,7 +253,42 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/ValidationAsyncResult"
+                    "$ref" : "#/components/schemas/TopologyObject"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad input parameter"
+          }
+        }
+      }
+    },
+    "/resources/{rid}/fwgraph" : {
+      "get" : {
+        "tags" : [ "developers" ],
+        "summary" : "searches validation reports",
+        "operationId" : "searchReport",
+        "description" : "(Not yet available) it return the last fwgraph for a resource if available\n",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "rid",
+          "description" : "pass an optional search string for looking up inventory",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "search results matching criteria",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/FwgraphObject"
                   }
                 }
               }
@@ -380,6 +331,9 @@
           },
           "400" : {
             "description" : "bad input parameter"
+          },
+          "503" : {
+            "description" : "error in th evalidation service"
           }
         }
       }
@@ -395,18 +349,6 @@
           },
           "rid" : {
             "type" : "string"
-          }
-        }
-      },
-      "ValidationResource" : {
-        "type" : "object",
-        "required" : [ "rid" ],
-        "properties" : {
-          "rid" : {
-            "type" : "string"
-          },
-          "path" : {
-            "type" : "string"
           },
           "syntax" : {
             "type" : "boolean"
@@ -418,8 +360,27 @@
             "type" : "boolean"
           },
           "validation_type" : {
+            "description" : "indicates the type of validations included in this validation instance",
             "type" : "string",
-            "enum" : [ "project", "package", "service", "function" ]
+            "enum" : [ "project", "service", "function" ]
+          }
+        }
+      },
+      "resourceItem" : {
+        "type" : "object",
+        "required" : [ "rid" ],
+        "properties" : {
+          "rid" : {
+            "type" : "string"
+          },
+          "vid" : {
+            "type" : "string",
+            "description" : "indicates the last validation performed for this resource. Empty if no validation available"
+          },
+          "resource_type" : {
+            "description" : "indicates the type of resource",
+            "type" : "string",
+            "enum" : [ "project", "service", "function" ]
           }
         }
       },
@@ -442,18 +403,22 @@
       "WatchObject" : {
         "type" : "object",
         "properties" : {
+          "rid" : {
+            "type" : "string"
+          },
           "validation_type" : {
+            "description" : "indicates the type of validation which is done for this watched resource",
             "type" : "string",
-            "enum" : [ "project", "package", "service", "function" ]
+            "enum" : [ "project", "service", "function" ]
           },
           "syntax" : {
-            "type" : "string"
+            "type" : "boolean"
           },
           "integrity" : {
-            "type" : "string"
+            "type" : "boolean"
           },
           "topology" : {
-            "type" : "string"
+            "type" : "boolean"
           }
         }
       },
@@ -465,6 +430,20 @@
           },
           "rid" : {
             "type" : "string"
+          },
+          "syntax" : {
+            "type" : "boolean"
+          },
+          "topology" : {
+            "type" : "boolean"
+          },
+          "integrity" : {
+            "type" : "boolean"
+          },
+          "validation_type" : {
+            "description" : "indicates the type of validations included in this validation instance",
+            "type" : "string",
+            "enum" : [ "project", "service", "function" ]
           },
           "error_count" : {
             "type" : "integer"
