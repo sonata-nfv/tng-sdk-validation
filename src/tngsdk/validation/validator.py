@@ -261,6 +261,75 @@ class Validator(object):
 
         return True
 
+    def validate_project(self, project):
+        """
+        Validate a SONATA project.
+        By default, it performs the following validations: syntax, integrity
+        and network topology.
+        :param project: SONATA project
+        :return: True if all validations were successful, False otherwise
+        """
+        if not self._assert_configuration():
+            return
+
+        # consider cases when project is a path
+        if type(project) is not Project and os.path.isdir(project):
+            if not self._workspace:
+                log.error("Workspace not defined. Unable to validate project")
+                return
+            print(self._workspace)
+            project = Project.__create_from_descriptor__(self._workspace,
+                                                         project)
+
+        if type(project) is not Project:
+            return
+
+        log.info("Validating project '{0}'".format(project.project_root))
+        log.info("... syntax: {0}, integrity: {1}, topology: {2}"
+                 .format(self._syntax, self._integrity, self._topology))
+
+        # retrieve project configuration
+        self._dpath = project.vnfd_root
+        self._dext = project.descriptor_extension
+        print('cona')
+        print(project.vnfd_root)
+        # load all project descriptors present at source directory
+        log.debug("Loading project service")
+        nsd_file = Validator._load_project_service_file(project)
+        if not nsd_file:
+            return
+
+        return self.validate_service(nsd_file)
+
+    @staticmethod
+    def _load_project_service_file(project):
+        """
+        Load descriptors from a SONATA SDK project.
+        :param project: SDK project
+        :return: True if successful, False otherwise
+        """
+
+        # load project service descriptor (NSD)
+        nsd_files = project.get_ns_descriptor()
+        if not nsd_files:
+            evtlog.log("NSD not found",
+                       "Couldn't find a service descriptor in project '{0}'"
+                       .format(project.project_root),
+                       project.project_root,
+                       'evt_project_service_invalid')
+            return False
+
+        if len(nsd_files) > 1:
+            evtlog.log("Multiple NSDs",
+                       "Found multiple service descriptors in project "
+                       "'{0}': {1}"
+                       .format(project.project_root, nsd_files),
+                       project.project_root,
+                       'evt_project_service_multiple')
+            return False
+
+        return nsd_files[0]
+
     def validate_service(self, nsd_file):
         """
         Validate a 5GTANGO service.

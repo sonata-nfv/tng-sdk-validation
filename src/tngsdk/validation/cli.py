@@ -34,6 +34,7 @@ import os
 import sys
 
 from tngsdk.validation.validator import Validator
+from tngsdk.project.project import Project
 
 
 LOG = logging.getLogger(os.path.basename(__file__))
@@ -84,6 +85,25 @@ def dispatch(args, validator):
         validator.validate_service(args.nsd)
         if validator.error_count == 0:
             print("No errors found in the NSD")
+        return validator
+
+    elif args.project_path:
+        print("Project validation")
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False)
+        elif args.integrity:
+            print("Syntax and integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False,
+                                dpath=args.dpath)
+        elif args.topology:
+            print("Syntax, integrity and topology validation")
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                dpath=args.dpath)
+
+        validator.validate_project(args.project_path)
+        if validator.error_count == 0:
+            print("No errors found in the Project")
         return validator
 
 
