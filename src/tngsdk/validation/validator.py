@@ -87,6 +87,7 @@ class Validator(object):
         self._dpath = '.'
         self._log_level = self._workspace.log_level
         self._cfile = '.'
+        self._workspace_path = '.'
         # # for package signature validation
         # self._pkg_signature = None
         # self._pkg_pubkey = None
@@ -157,7 +158,8 @@ class Validator(object):
 
     def configure(self, syntax=None, integrity=None, topology=None,
                   custom=None, dpath=None, dext=None, debug=None,
-                  cfile=None, pkg_signature=None, pkg_pubkey=None):
+                  cfile=None, pkg_signature=None, pkg_pubkey=None,
+                  workspace_path=None):
         """
         Configure parameters for validation. It is recommended to call this
         function before performing a validation.
@@ -173,6 +175,8 @@ class Validator(object):
         :param pkg_pubkey: String package public key to verify signature
         """
         # assign parameters
+        if workspace_path is not None:
+            self._workspace_path = workspace_path
         if syntax is not None:
             self._syntax = syntax
         if integrity is not None:
@@ -261,6 +265,8 @@ class Validator(object):
 
         return True
 
+
+
     def validate_project(self, project):
         """
         Validate a SONATA project.
@@ -277,7 +283,9 @@ class Validator(object):
             if not self._workspace:
                 log.error("Workspace not defined. Unable to validate project")
                 return
-            print(self._workspace)
+
+            self._workspace.config['projects_config'] = (self._workspace_path +
+                                                        'projects/config.yml')
             project = Project.__create_from_descriptor__(self._workspace,
                                                          project)
 

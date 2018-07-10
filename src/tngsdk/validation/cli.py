@@ -91,15 +91,16 @@ def dispatch(args, validator):
         print("Project validation")
         if args.syntax:
             print("Syntax validation")
-            validator.configure(syntax=True, integrity=False, topology=False)
+            validator.configure(syntax=True, integrity=False, topology=False,
+                                workspace_path=args.workspace_path)
         elif args.integrity:
             print("Syntax and integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False,
-                                dpath=args.dpath)
+                                workspace_path=args.workspace_path)
         elif args.topology:
             print("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
-                                dpath=args.dpath)
+                                workspace_path=args.workspace_path)
 
         validator.validate_project(args.project_path)
         if validator.error_count == 0:
