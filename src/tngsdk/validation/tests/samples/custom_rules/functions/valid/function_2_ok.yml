@@ -22,7 +22,7 @@ description: >
 virtual_deployment_units:
   - id: "vdu01"
     vm_image: "image"
-    vm_image_format: "docker"
+    vm_image_format: "qcow2"
     resource_requirements:
       cpu:
         vcpus: 4

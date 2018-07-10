@@ -265,8 +265,6 @@ class Validator(object):
 
         return True
 
-
-
     def validate_project(self, project):
         """
         Validate a SONATA project.
@@ -285,7 +283,7 @@ class Validator(object):
                 return
 
             self._workspace.config['projects_config'] = (self._workspace_path +
-                                                        'projects/config.yml')
+                                                         'projects/config.yml')
             project = Project.__create_from_descriptor__(self._workspace,
                                                          project)
 
