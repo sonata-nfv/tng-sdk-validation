@@ -271,7 +271,7 @@ class Validator(object):
         """
         if not self._assert_configuration():
             return
-
+        project_path = project
         # consider cases when project is a path
         if type(project) is not Project and os.path.isdir(project):
             if not self._workspace:
@@ -289,16 +289,17 @@ class Validator(object):
                  .format(self._syntax, self._integrity, self._topology))
 
         # retrieve project configuration
-        self._dpath = project.vnfd_root
+        self._dpath = []
+        vnfds_files = project.get_vnfds()
+        for i in vnfds_files:
+            self._dpath.append(project_path + i)
         self._dext = project.descriptor_extension
-        print('cona')
-        print(project.vnfd_root)
         # load all project descriptors present at source directory
         log.debug("Loading project service")
         nsd_file = Validator._load_project_service_file(project)
         if not nsd_file:
             return
-
+        nsd_file = project_path + nsd_file
         return self.validate_service(nsd_file)
 
     @staticmethod
@@ -310,7 +311,7 @@ class Validator(object):
         """
 
         # load project service descriptor (NSD)
-        nsd_files = project.get_ns_descriptor()
+        nsd_files = project.get_nsds()
         if not nsd_files:
             evtlog.log("NSD not found",
                        "Couldn't find a service descriptor in project '{0}'"
@@ -749,9 +750,13 @@ class Validator(object):
         # # get VNFD file list from provided dpath
         if not self._dpath:
             return
-        vnfd_files = list_files(self._dpath, self._dext)
-        log.debug("Found {0} descriptors in dpath='{2}': {1}"
-                  .format(len(vnfd_files), vnfd_files, self._dpath))
+        if type(self._dpath) is list:
+            vnfd_files = list(self._dpath)
+        else:
+            vnfd_files = list_files(self._dpath, self._dext)
+
+            log.debug("Found {0} descriptors in dpath='{2}': {1}"
+                      .format(len(vnfd_files), vnfd_files, self._dpath))
 
         # load all VNFDs
         path_vnfs = read_descriptor_files(vnfd_files)
