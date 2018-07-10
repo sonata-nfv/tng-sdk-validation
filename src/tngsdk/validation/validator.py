@@ -87,6 +87,7 @@ class Validator(object):
         self._dpath = '.'
         self._log_level = self._workspace.log_level
         self._cfile = '.'
+        self._workspace_path = '.'
         # # for package signature validation
         # self._pkg_signature = None
         # self._pkg_pubkey = None
@@ -157,7 +158,8 @@ class Validator(object):
 
     def configure(self, syntax=None, integrity=None, topology=None,
                   custom=None, dpath=None, dext=None, debug=None,
-                  cfile=None, pkg_signature=None, pkg_pubkey=None):
+                  cfile=None, pkg_signature=None, pkg_pubkey=None,
+                  workspace_path=None):
         """
         Configure parameters for validation. It is recommended to call this
         function before performing a validation.
@@ -173,6 +175,8 @@ class Validator(object):
         :param pkg_pubkey: String package public key to verify signature
         """
         # assign parameters
+        if workspace_path is not None:
+            self._workspace_path = workspace_path
         if syntax is not None:
             self._syntax = syntax
         if integrity is not None:
@@ -260,6 +264,80 @@ class Validator(object):
             pass
 
         return True
+
+
+
+    def validate_project(self, project):
+        """
+        Validate a SONATA project.
+        By default, it performs the following validations: syntax, integrity
+        and network topology.
+        :param project: SONATA project
+        :return: True if all validations were successful, False otherwise
+        """
+        if not self._assert_configuration():
+            return
+        project_path = project
+        # consider cases when project is a path
+        if type(project) is not Project and os.path.isdir(project):
+            if not self._workspace:
+                log.error("Workspace not defined. Unable to validate project")
+                return
+
+            self._workspace.config['projects_config'] = (self._workspace_path +
+                                                        'projects/config.yml')
+            project = Project.__create_from_descriptor__(self._workspace,
+                                                         project)
+
+        if type(project) is not Project:
+            return
+
+        log.info("Validating project '{0}'".format(project.project_root))
+        log.info("... syntax: {0}, integrity: {1}, topology: {2}"
+                 .format(self._syntax, self._integrity, self._topology))
+
+        # retrieve project configuration
+        self._dpath = []
+        vnfds_files = project.get_vnfds()
+        for i in vnfds_files:
+            self._dpath.append(project_path + i)
+        self._dext = project.descriptor_extension
+        # load all project descriptors present at source directory
+        log.debug("Loading project service")
+        nsd_file = Validator._load_project_service_file(project)
+        if not nsd_file:
+            return
+        nsd_file = project_path + nsd_file
+        return self.validate_service(nsd_file)
+
+    @staticmethod
+    def _load_project_service_file(project):
+        """
+        Load descriptors from a SONATA SDK project.
+        :param project: SDK project
+        :return: True if successful, False otherwise
+        """
+
+        # load project service descriptor (NSD)
+        nsd_files = project.get_nsds()
+        if not nsd_files:
+            evtlog.log("NSD not found",
+                       "Couldn't find a service descriptor in project '{0}'"
+                       .format(project.project_root),
+                       project.project_root,
+                       'evt_project_service_invalid')
+            return False
+
+        if len(nsd_files) > 1:
+            evtlog.log("Multiple NSDs",
+                       "Found multiple service descriptors in project "
+                       "'{0}': {1}"
+                       .format(project.project_root, nsd_files),
+                       project.project_root,
+                       'evt_project_service_multiple')
+            return False
+
+        return nsd_files[0]
 
     def validate_service(self, nsd_file):
         """
@@ -680,9 +758,13 @@ class Validator(object):
         # # get VNFD file list from provided dpath
         if not self._dpath:
             return
-        vnfd_files = list_files(self._dpath, self._dext)
-        log.debug("Found {0} descriptors in dpath='{2}': {1}"
-                  .format(len(vnfd_files), vnfd_files, self._dpath))
+        if type(self._dpath) is list:
+            vnfd_files = list(self._dpath)
+        else:
+            vnfd_files = list_files(self._dpath, self._dext)
+
+            log.debug("Found {0} descriptors in dpath='{2}': {1}"
+                      .format(len(vnfd_files), vnfd_files, self._dpath))
 
         # load all VNFDs
         path_vnfs = read_descriptor_files(vnfd_files)
