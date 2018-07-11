@@ -102,9 +102,11 @@ def dispatch(args, validator):
             validator.configure(syntax=True, integrity=True, topology=True,
                                 workspace_path=args.workspace_path)
 
-        validator.validate_project(args.project_path)
-        if validator.error_count == 0:
-            print("No errors found in the Project")
+        if not validator.validate_project(args.project_path):
+            print('Cant validate the project')
+        else:
+            if validator.error_count == 0:
+                print("No errors found in the Project")
         return validator
 
 

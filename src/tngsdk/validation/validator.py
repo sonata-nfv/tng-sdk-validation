@@ -275,15 +275,24 @@ class Validator(object):
         """
         if not self._assert_configuration():
             return
-        project_path = project
+        if project.endswith('/'):
+            project_path = project
+        else:
+            project_path = project + '/'  
         # consider cases when project is a path
+        if not os.path.isdir(project):
+            log.error("Incorrect path. Try again with a correct project path")
+            return False
         if type(project) is not Project and os.path.isdir(project):
             if not self._workspace:
                 log.error("Workspace not defined. Unable to validate project")
                 return
-
-            self._workspace.config['projects_config'] = (self._workspace_path +
-                                                         'projects/config.yml')
+            if self._workspace_path.endswith('/'):
+                self._workspace.config['projects_config'] = (self._workspace_path +
+                                                             'projects/config.yml')
+            else:
+                self._workspace.config['projects_config'] = (self._workspace_path +
+                                                             '/projects/config.yml')
             project = Project.__create_from_descriptor__(self._workspace,
                                                          project)
 
