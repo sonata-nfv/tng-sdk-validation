@@ -38,6 +38,7 @@ from flask_restplus import Resource, Api, Namespace
 from flask_restplus import fields, inputs
 from werkzeug.contrib.fixers import ProxyFix
 from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 import requests
 from requests.exceptions import RequestException
 from flask_cors import CORS
@@ -186,16 +187,27 @@ validations_parser.add_argument("topology",
                                 type=inputs.boolean,
                                 required=False,
                                 help="topology check")
+validations_parser.add_argument("custom",
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="custom rules check")
 validations_parser.add_argument("function",
                                 location="args",
+                                type=inputs.boolean,
                                 required=False,
-                                help="File URL of the function descriptor "
-                                     "to be validated")
+                                help="Function validation")
 validations_parser.add_argument("service",
                                 location="args",
+                                type=inputs.boolean,
                                 required=False,
-                                help="File URL of the service descriptor "
-                                     "to be validated")
+                                help="Service validation")
+validations_parser.add_argument("project",
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="If True indicates that the request "
+                                     "if for a project validation")
 validations_parser.add_argument("sync",
                                 location="args",
                                 type=inputs.boolean,
@@ -208,7 +220,32 @@ validations_parser.add_argument("dpath",
                                 help="Specify a directory to search for "
                                      "descriptors. Particularly useful"
                                      " when using the '--service' argument.")
-
+validations_parser.add_argument("path",
+                                location="args",
+                                required=False,
+                                help="Specify a directory to search for "
+                                     "descriptors. Used when the 'source' is"
+                                     " 'local' or 'url'.")
+validations_parser.add_argument("cfile",
+                                location="args",
+                                required=False,
+                                help="Specify a directory to search for "
+                                     "file with custom rules definition. "
+                                     "Particularly useful when using the "
+                                     "'--custom' argument.")
+validations_parser.add_argument("source",
+                                choices=['url', 'local', 'embedded'],
+                                default='local',
+                                help="Specify source of the descriptor file. "
+                                     "It can take the values 'url' (when the "
+                                     "source is a URL), 'local' when the file"
+                                     " is file from the local file system and"
+                                     " 'embedded' when the descriptor is "
+                                     "included as an attachment in the "
+                                     "request. In the first two cases a path "
+                                     "parameter is required",
+                                required=True
+)
 
 @api_v1.route("/validations")
 class Validation(Resource):
@@ -263,6 +300,196 @@ class Validation(Resource):
                 "status": 200,
                 "error_count": validator.error_count,
                 "errors": validator.errors}
+
+req_errors = []
+
+@app.route('/validate/project', methods=['POST'])
+def validate_project():
+    return _validate_object_from_request('project')
+
+
+@app.route('/validate/service', methods=['POST'])
+def validate_service():
+    return _validate_object_from_request('service')
+
+
+@app.route('/validate/function', methods=['POST'])
+def validate_function():
+    return _validate_object_from_request('function')
+
+
+def _validate_object_from_request(object_type):
+
+    assert object_type == 'project' or object_type == 'package' or \
+           object_type == 'service' or object_type == 'function'
+
+    keypath, path = process_request()
+    if not keypath or not path:
+        return render_errors(), 400
+
+    return _validate_object(keypath, path, object_type, args.syntax,
+                            args.integrity, args.topology)
+
+
+def validate_parameters(obj_type, syntax, integrity, topology):
+    assert (obj_type == 'project' or obj_type == 'package' or
+           obj_type == 'service' or obj_type == 'function')
+
+    if obj_type == 'service' and (integrity or topology):
+        return ("Invalid parameters: cannot validate integrity and/or "
+               "topology of a standalone service")
+
+
+def _validate_object(keypath, path, obj_type, syntax, integrity, topology):
+    # protect against incorrect parameters
+    perrors = validate_parameters(obj_type, syntax, integrity, topology)
+    if perrors:
+        return perrors, 400
+
+    # rid = gen_resource_key(keypath, obj_type, syntax, integrity, topology)
+    # vid = gen_validation_key(path)
+    #
+    # resource = get_resource(rid)
+    # validation = get_validation(vid)
+    #
+    # if resource and validation:
+    #     log.info("Returning cached result for '{0}'".format(vid))
+    #     update_resource_validation(rid, vid)
+    #     return validation['result']
+
+    log.info("Starting validation [type={}, path={}, flags={}"
+             .format(obj_type, path, get_flags(syntax, integrity,
+             topology)))
+
+    # set_resource(rid, keypath, obj_type, syntax, integrity, topology)
+
+    validator = Validator()
+    validator.configure(syntax, integrity, topology, debug=app.config['DEBUG'],
+                        pkg_signature=pkg_signature, pkg_pubkey=pkg_pubkey)
+    # remove default dpath
+    validator.dpath = None
+    val_function = getattr(validator, 'validate_' + obj_type)
+
+    result = val_function(path)
+    print_result(validator, result)
+    # json_result = gen_report_result(rid, validator)
+    # net_topology = gen_report_net_topology(validator)
+    # net_fwgraph = gen_report_net_fwgraph(validator)
+    #
+    # set_validation(vid, result=json_result, net_topology=net_topology,
+    #                net_fwgraph=net_fwgraph)
+    # update_resource_validation(rid, vid)
+    #
+    # return json_result
+
+
+
+def process_request():
+    args = validations_parser.parse_args()
+    if args.source == 'local' and args.path:
+        keypath = args.path
+        path = get_local(args.path)
+        if not path:
+            return None, None
+
+    elif source == 'url' and 'path' in request.form:
+        keypath = args.path
+        path = get_url(args.path)
+
+    elif source == 'embedded' and 'file' in request.files:
+        keypath = secure_filename(request.files['file'].filename)
+        path = get_file(request.files['file'])
+
+    else:
+        req_errors.append('Invalid source, path or file parameters')
+        return None, None
+
+    return keypath, path
+
+
+def add_artifact_root():
+    artifact_root = os.path.join(app.config['ARTIFACTS_DIR'],
+                                 str(time.time() * 1000))
+    os.makedirs(artifact_root, exist_ok=False)
+    # set_artifact(artifact_root)
+    return artifact_root
+
+
+# def set_artifact(artifact_path):
+#     log.debug("Caching artifact '{0}'".format(artifact_path))
+#     artifacts = cache.get('artifacts')
+#     if not artifacts:
+#         artifacts = list()
+#     artifacts.append(artifact_path)
+#     cache.set('artifacts', artifacts)
+
+
+def get_file(file):
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(add_artifact_root(), filename)
+    file.save(filepath)
+    # set_artifact(filepath)
+    return filepath
+
+
+def get_url(url):
+    u = urllib2.urlopen(url)
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+    filepath = os.path.join(add_artifact_root(), os.path.basename(path))
+
+    with open(filepath, 'wb') as f:
+        block_sz = 8192
+        while True:
+            buffer = u.read(block_sz)
+            if not buffer:
+                break
+            f.write(buffer)
+
+    # set_artifact(filepath)
+    return filepath
+
+
+def get_local(path):
+    artifact_root = add_artifact_root()
+    if os.path.isfile(path):
+        filepath = os.path.join(artifact_root, os.path.basename(path))
+        # log.debug("Copying local file: '{0}'".format(filepath))
+        # shutil.copyfile(path, filepath)
+        # set_artifact(filepath)
+
+    elif os.path.isdir(path):
+        dirname = os.path.basename(os.path.abspath(path))
+        filepath = os.path.join(artifact_root, dirname)
+        # log.debug("Copying local tree: '{0}'".format(filepath))
+        # shutil.copytree(path, filepath)
+        # set_artifact(filepath)
+        # for root, dirs, files in os.walk(filepath):
+        #     for d in dirs:
+        #         set_artifact(os.path.join(root, d))
+        #     for f in files:
+        #         set_artifact(os.path.join(root, f))
+    else:
+        req_errors.append("Invalid local path: '{0}'".format(path))
+        log.error("Invalid local path: '{0}'".format(path))
+        return
+
+    return filepath
+
+
+def get_flags(syntax, integrity, topology):
+    return ('s' if syntax else '' +
+            'i' if integrity else '' +
+            't' if topology else '')
+
+
+def render_errors():
+    error_str = ''
+    for error in req_errors:
+        error_str += error + '\n'
+    req_errors.clear()
+    return error_str
+
+
 
 
 @api_v1.route("/ping")
