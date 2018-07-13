@@ -32,8 +32,9 @@
 import logging
 import os
 import json
+import time
 import tempfile
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, request
 from flask_restplus import Resource, Api, Namespace
 from flask_restplus import fields, inputs
 from werkzeug.contrib.fixers import ProxyFix
@@ -277,69 +278,84 @@ class Validation(Resource):
         if check_correct_args != True:
             return check_correct_args
 
-        # if ((args['function'] is not None) and (args['service']is not None)):
-        #     return {"error_message": "Not possible to validate " +
-        #             "service and function in the same request"}, 400
-        #
-        # if ((args['function'] is None) and (args['service']is None)):
-        #     return {"error_message": "Missing service and" +
-        #             " function parameters"}, 400
-        #
-        # # TO BE REMOVED when asynchronous processing is implemented
-        # if not args['sync']:
-        #     return {"error_message": "Asynchronous processing " +
-        #             "not yet implemented"}, 400
 
-        validator = Validator()
-        # None or False = False / True or False = True / False or False = False
-        validator.configure(syntax=(args['syntax'] or False),
-                            integrity=(args['integrity'] or False),
-                            topology=(args['topology'] or False),
-                            custom=(args['custom'] or False),
-                            cfile=(args['cfile'] or False),
-                            dext=(args['dext'] or False),
-                            dpath=(args['dpath'] or False),
-                            workspace_path=(args['workspace'] or False))
+        if args.source:
+            log.info('File embedded in request')
+            if 'descriptor' not in request.files:
+                log.degub('Miss descriptor file in the request')
+                if args.custom:
+                    if 'rules' not in request.files:
+                        log.degub('Miss rules file in the request')
+            else:
+                # Save file passed in the request
+                descriptor_path = get_file(request.files['descriptor'])
 
-        if args['function'] == True:
-            log.info("Validating Function: {}".format(args['path']))
-            # TODO check if the function is a valid file path
-            validator.validate_function(args.path)
+                validator = Validator()
+                if not args.custom:
+                # None or False = False / True or False = True / False or False = False
+                    validator.configure(syntax=(args['syntax'] or False),
+                                        integrity=(args['integrity'] or False),
+                                        topology=(args['topology'] or False),
+                                        custom=(args['custom'] or False),
+                                        cfile=(args['cfile'] or False),
+                                        dext=(args['dext'] or False),
+                                        dpath=(args['dpath'] or False),
+                                        workspace_path=(args['workspace'] or False))
+                if args.custom:
+                    rules_path = get_file(request.files['rules'])
+                    validator.configure(syntax=(args['syntax'] or False),
+                                        integrity=(args['integrity'] or False),
+                                        topology=(args['topology'] or False),
+                                        custom=(args['custom'] or False),
+                                        cfile=rules_path,
+                                        dext=(args['dext'] or False),
+                                        dpath=(args['dpath'] or False),
+                                        workspace_path=(args['workspace'] or False))
 
-        elif args['service'] == True:
-            log.info("Validating Service: {}".format(args['path']))
-            # TODO check if the function is a valid file path
-            validator.validate_service(args.path)
+                if args['function'] == True:
+                    log.info("Validating Function: {}".format(descriptor_path))
+                    # TODO check if the function is a valid file path
+                    validator.validate_function(descriptor_path)
+        else:
+            validator = Validator()
+            # None or False = False / True or False = True / False or False = False
+            validator.configure(syntax=(args['syntax'] or False),
+                                integrity=(args['integrity'] or False),
+                                topology=(args['topology'] or False),
+                                custom=(args['custom'] or False),
+                                cfile=(args['cfile'] or False),
+                                dext=(args['dext'] or False),
+                                dpath=(args['dpath'] or False),
+                                workspace_path=(args['workspace'] or False))
 
-        elif args['project'] == True:
-            log.info("Validating Project: {}".format(args['path']))
-            # TODO check if the function is a valid file path
-            validator.validate_project(args.path)
+            if args['function'] == True:
+                log.info("Validating Function: {}".format(args['path']))
+                # TODO check if the function is a valid file path
+                validator.validate_function(args.path)
+
+            elif args['service'] == True:
+                log.info("Validating Service: {}".format(args['path']))
+                # TODO check if the function is a valid file path
+                validator.validate_service(args.path)
+
+            elif args['project'] == True:
+                log.info("Validating Project: {}".format(args['path']))
+                # TODO check if the function is a valid file path
+                validator.validate_project(args.path)
 
 
-        # TODO try to capture exceptions and errors
+            # TODO try to capture exceptions and errors
 
-        # TODO store results in redis so that the result can be checked
+            # TODO store results in redis so that the result can be checked
 
-        return {"validation_process_uuid": "test",
-                "status": 200,
-                "error_count": validator.error_count,
-                "errors": validator.errors}
+            return {"validation_process_uuid": "test",
+                    "status": 200,
+                    "error_count": validator.error_count,
+                    "errors": validator.errors}
 
 
 def check_args(args):
-    # if ((args['function'] is not None) and (args['service']is not None)):
-    #     return {"error_message": "Not possible to validate " +
-    #             "service and function in the same request"}, 400
-    #
-    # if ((args['function'] is None) and (args['service']is None)):
-    #     return {"error_message": "Missing service and" +
-    #             " function parameters"}, 400
-    #
-    # # TO BE REMOVED when asynchronous processing is implemented
-    # if not args['sync']:
-    #     return {"error_message": "Asynchronous processing " +
-    #             "not yet implemented"}, 400
+
     if (args.function == None and args.service == None
         and args.project == None):
         log.info('Need to specify the type of the descriptor that will ' +
@@ -383,7 +399,7 @@ def check_args(args):
                     "(dpath) and the extension of it (dext) to validate " +
                     "service integrity|topology|custom_rules"}, 400
 
-    if (args.custom == True):
+    if (args.custom == True and args.custom == 'local'):
         if (args.cfile == None):
             log.info('With custom rules validation the path of ' +
                      'the file with the rules should be specified ' +
@@ -399,6 +415,25 @@ def check_args(args):
                     "(workspace) to validate project "}, 400
     return True
 
+
+def get_file(file):
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(add_artifact_root(), filename)
+    file.save(filepath)
+    set_artifact(filepath)
+    return filepath
+
+
+def add_artifact_root():
+    artifact_root = os.path.join(app.config['ARTIFACTS_DIR'],
+                                 str(time.time() * 1000))
+    os.makedirs(artifact_root, exist_ok=False)
+    set_artifact(artifact_root)
+    return artifact_root
+
+def set_artifact(artifact_path):
+    artifacts = list()
+    artifacts.append(artifact_path)
 
 
 @api_v1.route("/ping")
