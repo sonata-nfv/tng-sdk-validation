@@ -359,6 +359,10 @@ class Validation(Resource):
 
 def check_args(args):
 
+    if (args.syntax is None and args.integrity is None
+            and args.topology is None):
+        log.info('Need to specify at least one type of validation')
+        return {"error_message": "Missing validation"}, 400
     if (args.function is None and args.service is None
             and args.project is None):
         log.info('Need to specify the type of the descriptor that will ' +
