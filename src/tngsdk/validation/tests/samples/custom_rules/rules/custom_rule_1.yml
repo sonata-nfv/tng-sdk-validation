@@ -22,3 +22,28 @@
     - name: raise_error
       params:
         error_text: The size of RAM must be higher than 4GB!
+
+# rule 3 - RAM size MB
+- conditions:
+    all:
+      - name: vdu_resource_requirements_ram_size
+        operator: less_than_or_equal_to
+        value:  4096
+      - name: vdu_resource_requirements_ram_size_unit
+        operator: equal_to
+        value:  "MB"
+  actions:
+    - name: raise_error
+      params:
+        error_text: The size of RAM must be higher than 4096MB!
+
+#rule 4
+- conditions:
+    all:
+      - name: vdu_vm_resource_format
+        operator: equal_to
+        value: 'docker'
+  actions:
+    - name: raise_warning
+      params:
+        error_text: Docker is not the recommend VM format, use a virtual mahcine instead

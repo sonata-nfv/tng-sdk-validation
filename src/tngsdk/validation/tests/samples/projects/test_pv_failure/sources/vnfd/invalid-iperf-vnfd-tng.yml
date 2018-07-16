@@ -21,13 +21,13 @@ description: >
 ##
 virtual_deployment_units:
   - id: "vdu01"
-    vm_image: "image"
-    vm_image_format: "qcow2"
+    vm_image: "file:///docker_files/iperf/Dockerfile"
+    vm_image_format: "docker"
     resource_requirements:
       cpu:
-        vcpus: 4
+        vcpus: 1
       memory:
-        size: 8
+        size: 2
         size_unit: "GB"
       storage:
         size: 10
@@ -42,7 +42,6 @@ virtual_deployment_units:
       - id: "cp03"
         interface: "ipv4"
         type: "internal"
-
 
 ##
 ## The virtual links that interconnect
@@ -64,17 +63,17 @@ virtual_links:
     connection_points_reference:
       - "vdu01:cp03"
       - "output"
+
 ##
-## The VNF connection points to the
+## The VNF connection points to the 
 ## outside world.
 ##
 connection_points:
   - id: "mgmt"
     interface: "ipv4"
-    type: "internal"
+    type: "management"
   - id: "input"
     interface: "ipv4"
-    type: "internal"
+    type: "external"
   - id: "output"
-    interface: "ipv4"
-    type: "internal"
+    type: "external"
