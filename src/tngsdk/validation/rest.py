@@ -34,6 +34,8 @@ import os
 import json
 import time
 import tempfile
+import urllib.request as urllib2
+import urllib.parse as urlparse
 from flask import Flask, Blueprint, request
 from flask_restplus import Resource, Api, Namespace
 from flask_restplus import fields, inputs
@@ -214,7 +216,7 @@ validations_parser.add_argument("workspace",
                                 required=False,
                                 help="Specify the directory of the SDK " +
                                      "workspace for validating the " +
-                                     " SDK project." )
+                                     " SDK project.")
 validations_parser.add_argument("sync",
                                 location="args",
                                 type=inputs.boolean,
@@ -257,8 +259,8 @@ validations_parser.add_argument("source",
                                      "included as an attachment in the "
                                      "request. In the first two cases a path "
                                      "parameter is required",
-                                required=True
-)
+                                required=True)
+
 
 @api_v1.route("/validations")
 class Validation(Resource):
@@ -275,11 +277,10 @@ class Validation(Resource):
         log.info("POST to /validation w. args: {}".format(args))
 
         check_correct_args = check_args(args)
-        if check_correct_args != True:
+        if not check_correct_args:
             return check_correct_args
 
-
-        if args.source:
+        if args.source == 'embedded':
             log.info('File embedded in request')
             if 'descriptor' not in request.files:
                 log.degub('Miss descriptor file in the request')
@@ -292,7 +293,6 @@ class Validation(Resource):
 
                 validator = Validator()
                 if not args.custom:
-                # None or False = False / True or False = True / False or False = False
                     validator.configure(syntax=(args['syntax'] or False),
                                         integrity=(args['integrity'] or False),
                                         topology=(args['topology'] or False),
@@ -300,7 +300,8 @@ class Validation(Resource):
                                         cfile=(args['cfile'] or False),
                                         dext=(args['dext'] or False),
                                         dpath=(args['dpath'] or False),
-                                        workspace_path=(args['workspace'] or False))
+                                        workspace_path=(args['workspace']
+                                                        or False))
                 if args.custom:
                     rules_path = get_file(request.files['rules'])
                     validator.configure(syntax=(args['syntax'] or False),
@@ -310,15 +311,22 @@ class Validation(Resource):
                                         cfile=rules_path,
                                         dext=(args['dext'] or False),
                                         dpath=(args['dpath'] or False),
-                                        workspace_path=(args['workspace'] or False))
+                                        workspace_path=(args['workspace']
+                                                        or False))
 
-                if args['function'] == True:
+                if args['function']:
                     log.info("Validating Function: {}".format(descriptor_path))
                     # TODO check if the function is a valid file path
                     validator.validate_function(descriptor_path)
         else:
+            if (args.source == 'local'):
+                log.info('Local file')
+                path = args.path
+            elif (args.source == 'url'):
+                log.info('URL file')
+                path = get_url(args.path)
+
             validator = Validator()
-            # None or False = False / True or False = True / False or False = False
             validator.configure(syntax=(args['syntax'] or False),
                                 integrity=(args['integrity'] or False),
                                 topology=(args['topology'] or False),
@@ -328,70 +336,64 @@ class Validation(Resource):
                                 dpath=(args['dpath'] or False),
                                 workspace_path=(args['workspace'] or False))
 
-            if args['function'] == True:
-                log.info("Validating Function: {}".format(args['path']))
+            if args['function']:
+                log.info("Validating Function: {}".format(path))
                 # TODO check if the function is a valid file path
-                validator.validate_function(args.path)
+                validator.validate_function(path)
 
-            elif args['service'] == True:
-                log.info("Validating Service: {}".format(args['path']))
+            elif args['service']:
+                log.info("Validating Service: {}".format(path))
                 # TODO check if the function is a valid file path
-                validator.validate_service(args.path)
+                validator.validate_service(path)
 
-            elif args['project'] == True:
-                log.info("Validating Project: {}".format(args['path']))
+            elif args['project']:
+                log.info("Validating Project: {}".format(path))
                 # TODO check if the function is a valid file path
-                validator.validate_project(args.path)
+                validator.validate_project(path)
 
-
-            # TODO try to capture exceptions and errors
-
-            # TODO store results in redis so that the result can be checked
-
-            return {"validation_process_uuid": "test",
-                    "status": 200,
-                    "error_count": validator.error_count,
-                    "errors": validator.errors}
+        return {"validation_process_uuid": "test",
+                "status": 200,
+                "error_count": validator.error_count,
+                "errors": validator.errors}
 
 
 def check_args(args):
 
-    if (args.function == None and args.service == None
-        and args.project == None):
+    if (args.function is None and args.service is None
+            and args.project is None):
         log.info('Need to specify the type of the descriptor that will ' +
                  'be validated (function, service, project)')
         return {"error_message": "Missing service, function " +
                 "and project parameters"}, 400
 
-    if (args.function == True and args.service == True):
+    if (args.function and args.service):
         log.info("Not possible to validate function and service in the" +
-                " same request")
+                 " same request")
         return {"error_message": "Not possible to validate function" +
                 " and service and project in the same request"}, 400
 
-    if (args.function == True and args.project == True):
+    if (args.function and args.project):
         log.info("Not possible to validate function and project in the" +
-                " same request")
+                 " same request")
         return {"error_message": "Not possible to validate function" +
                 " and project in the same request"}, 400
 
-    if (args.service == True and args.project == True):
+    if (args.service and args.project):
         log.info("Not possible to validate service and project in the" +
-                " same request")
+                 " same request")
         return {"error_message": "Not possible to validate service" +
                 " and project in the same request"}, 400
 
     if (args.source == 'local' or args.source == 'url'):
-        if (args.path == None):
+        if (args.path is None):
             log.info('With local or url source the path of this ' +
                      'source should be specified')
             return {"error_message": "File path need it when local or " +
                     "url source are used"}, 400
 
-    if (args.service == True and
-        (args.integrity == True or args.topology == True
-         or args.custom == True)):
-        if (args.dpath == None or args.dext == None):
+    if (args.service and
+            (args.integrity or args.topology or args.custom)):
+        if (args.dpath is None or args.dext is None):
             log.info('With integrity or topology validation of a service' +
                      ' we need to specify the path of the functions ' +
                      '(dpath) and the extension of it (dext)')
@@ -399,16 +401,16 @@ def check_args(args):
                     "(dpath) and the extension of it (dext) to validate " +
                     "service integrity|topology|custom_rules"}, 400
 
-    if (args.custom == True and args.custom == 'local'):
-        if (args.cfile == None):
+    if (args.custom and args.custom == 'local'):
+        if (args.cfile is None):
             log.info('With custom rules validation the path of ' +
                      'the file with the rules should be specified ' +
                      '(cfile)')
             return {"error_message": "Need rules file path" +
                     " (cfile) to validate custom rules of " +
                     "descriptor"}, 400
-    if (args.project == True):
-        if (args.workspace == None):
+    if (args.project):
+        if (args.workspace is None):
             log.info('With project validation the workspace path ' +
                      'of the project should be specified (workspace)')
             return {"error_message": "Need workspace path " +
@@ -431,9 +433,27 @@ def add_artifact_root():
     set_artifact(artifact_root)
     return artifact_root
 
+
 def set_artifact(artifact_path):
     artifacts = list()
     artifacts.append(artifact_path)
+
+
+def get_url(url):
+    u = urllib2.urlopen(url)
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+    filepath = os.path.join(add_artifact_root(), os.path.basename(path))
+
+    with open(filepath, 'wb') as f:
+        block_sz = 8192
+        while True:
+            buffer = u.read(block_sz)
+            if not buffer:
+                break
+            f.write(buffer)
+
+    set_artifact(filepath)
+    return filepath
 
 
 @api_v1.route("/ping")

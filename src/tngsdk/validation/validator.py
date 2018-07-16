@@ -273,12 +273,13 @@ class Validator(object):
         :param project: SONATA project
         :return: True if all validations were successful, False otherwise
         """
+
         if not self._assert_configuration():
             return
         if project.endswith('/'):
             project_path = project
         else:
-            project_path = project + '/'  
+            project_path = project + '/'
         # consider cases when project is a path
         if not os.path.isdir(project):
             log.error("Incorrect path. Try again with a correct project path")
@@ -288,11 +289,13 @@ class Validator(object):
                 log.error("Workspace not defined. Unable to validate project")
                 return
             if self._workspace_path.endswith('/'):
-                self._workspace.config['projects_config'] = (self._workspace_path +
-                                                             'projects/config.yml')
+                (self._workspace.config
+                 ['projects_config']) = (self._workspace_path +
+                                         'projects/config.yml')
             else:
-                self._workspace.config['projects_config'] = (self._workspace_path +
-                                                             '/projects/config.yml')
+                (self._workspace.config
+                 ['projects_config']) = (self._workspace_path +
+                                         '/projects/config.yml')
             project = Project.__create_from_descriptor__(self._workspace,
                                                          project)
 
