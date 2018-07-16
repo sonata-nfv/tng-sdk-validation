@@ -35,6 +35,8 @@ import unittest
 import json
 import time
 import ast
+import requests
+from requests_toolbelt import MultipartEncoder
 from unittest.mock import patch
 from requests.exceptions import RequestException
 # Do unit test of specific functions
@@ -298,6 +300,102 @@ class TngSdkValidationRestTest(unittest.TestCase):
         d = ast.literal_eval(data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['error_count'], 1)
+
+    def test_rest_validation_ko_many_arguments(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&service=true' +
+                          '&function=true&&project=true&source=local&path=' +
+                          SAMPLES_DIR + 'samples/' +
+                          'functions/valid-son/firewall-vnfd.yml')
+        data = r.data.decode('utf-8')
+        d = ast.literal_eval(data)
+        expected_message = ('Not possible to validate function and service ' +
+                            'and project in the same request')
+        self.assertEqual(d['error_message'], expected_message)
+
+    def test_rest_validation_ko_no_path(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true' +
+                          '&function=true&source=local')
+        data = r.data.decode('utf-8')
+        d = ast.literal_eval(data)
+        expected_message = ('File path need it when local or ' +
+                            'url source are used')
+        self.assertEqual(d['error_message'], expected_message)
+
+    def test_rest_validation_ko_no_descriptor(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&source=local')
+        data = r.data.decode('utf-8')
+        d = ast.literal_eval(data)
+        expected_message = ('Missing service, function and project ' +
+                            'parameters')
+        self.assertEqual(d['error_message'], expected_message)
+
+    def test_rest_validation_ko_no_dpath_dext(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&source=local' +
+                          '&service=true&path=' + SAMPLES_DIR +
+                          'samples/services/valid-son/valid.yml')
+        data = r.data.decode('utf-8')
+        d = ast.literal_eval(data)
+        expected_message = ('Need functions path (dpath) and the extension ' +
+                            'of it (dext) to validate service ' +
+                            'integrity|topology|custom_rules')
+        self.assertEqual(d['error_message'], expected_message)
+
+    def test_rest_validation_ko_no_cfile(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&' +
+                          'source=local&custom=true' +
+                          '&function=true&path=' + SAMPLES_DIR + 'samples/' +
+                          'functions/valid-son/firewall-vnfd.yml')
+        data = r.data.decode('utf-8')
+        d = ast.literal_eval(data)
+        expected_message = ('Need rules file path (cfile) to validate ' +
+                            'custom rules of descriptor')
+        self.assertEqual(d['error_message'], expected_message)
+
+    def test_rest_validation_ko_no_workspace(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'source=local&project=true&path=' +
+                          SAMPLES_DIR + 'samples/' +
+                          'projects/test_pv')
+        data = r.data.decode('utf-8')
+        d = ast.literal_eval(data)
+        expected_message = ('Need workspace path (workspace) ' +
+                            'to validate project')
+        self.assertEqual(d['error_message'], expected_message)
+
+    def test_rest_validation_ok_embedded_descriptor(self):
+        url = ("/api/v1/validations?function=true&" +
+               "source=embedded&sync=true&integrity=true&" +
+               "syntax=true&topology=true")
+        descriptor = open('/home/dani/Documents/firewall-vnfd.yml', 'rb')
+        data = {
+                'descriptor': (descriptor.name, descriptor, 'application/octet-stream'),
+        }
+        m = MultipartEncoder(data)
+        headers = {'Content-Type': m.content_type}
+        response = self.app.post(url, headers=headers, data=m)
+        print(response.status_code)
+        self.assertEqual(response.status_code, 200)
+
+    def test_rest_validation_ok_embedded_descriptor_rules(self):
+        url = ("/api/v1/validations?function=true&" +
+               "source=embedded&sync=true&integrity=true&" +
+               "syntax=true&topology=true&custom=true")
+        descriptor = open('/home/dani/Documents/firewall-vnfd.yml', 'rb')
+        rules = open('/home/dani/Documents/custom_rule_1.yml', 'rb')
+        data = {
+                'descriptor': (descriptor.name, descriptor, 'application/octet-stream'),
+                'rules': (rules.name, rules, 'application/octet-stream')
+        }
+        m = MultipartEncoder(data)
+        headers = {'Content-Type': m.content_type}
+        response = self.app.post(url, headers=headers, data=m)
+        print(response.status_code)
+        self.assertEqual(response.status_code, 200)
 
 
 if __name__ == "__main__":

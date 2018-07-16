@@ -277,7 +277,7 @@ class Validation(Resource):
         log.info("POST to /validation w. args: {}".format(args))
 
         check_correct_args = check_args(args)
-        if not check_correct_args:
+        if check_correct_args != True:
             return check_correct_args
 
         if args.source == 'embedded':
@@ -401,7 +401,7 @@ def check_args(args):
                     "(dpath) and the extension of it (dext) to validate " +
                     "service integrity|topology|custom_rules"}, 400
 
-    if (args.custom and args.custom == 'local'):
+    if (args.custom and args.source == 'local'):
         if (args.cfile is None):
             log.info('With custom rules validation the path of ' +
                      'the file with the rules should be specified ' +
@@ -414,7 +414,7 @@ def check_args(args):
             log.info('With project validation the workspace path ' +
                      'of the project should be specified (workspace)')
             return {"error_message": "Need workspace path " +
-                    "(workspace) to validate project "}, 400
+                    "(workspace) to validate project"}, 400
     return True
 
 
