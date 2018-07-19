@@ -33,7 +33,12 @@ import logging
 import os
 import json
 import time
+import hashlib
 import tempfile
+import requests
+import shutil
+# import ast
+import subprocess
 import urllib.request as urllib2
 import urllib.parse as urlparse
 from flask import Flask, Blueprint, request
@@ -42,14 +47,13 @@ from flask_restplus import fields, inputs
 from werkzeug.contrib.fixers import ProxyFix
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-import requests
 from requests.exceptions import RequestException
 from flask_cors import CORS
-from flask_cache import Cache
-
+from flask_caching import Cache
 
 from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
+from tngsdk.validation.event import EventLogger
 
 # To implement watchdogs to subscribe to changes in any descriptor file
 # from watchdog.observers import Observer
@@ -81,30 +85,28 @@ api.add_namespace(api_v1)
 # Define Redis username and pass
 
 # config cache
-# comment DANI
-# if app.config['CACHE_TYPE'] == 'redis':
-#
-#     redis_auth = app.config['REDIS_USER'] + ':' + app.config[
-#         'REDIS_PASSWD'] + '@' \
-#         if app.config['REDIS_USER'] and app.config['REDIS_PASSWD'] else ''
-#     redis_url = 'redis://' + redis_auth + app.config['REDIS_HOST'] + \
-#                 ':' + app.config['REDIS_PORT']
-#
-#     cache = Cache(app, config={'CACHE_TYPE': 'redis',
-#                                 'CACHE_DEFAULT_TIMEOUT': 0,
-#                                 'CACHE_REDIS_URL': redis_url})
-#
-# elif app.config['CACHE_TYPE'] == 'simple':
-#      cache = Cache(app, config={'CACHE_TYPE': 'simple',
-#                                 'CACHE_DEFAULT_TIMEOUT': 0})
-#
-# else:
-#      print("Invalid cache type.")
-#      sys.exit(1)
-# Comment DANI
+if app.config['CACHE_TYPE'] == 'redis':
+
+    redis_auth = app.config['REDIS_USER'] + ':' + app.config[
+        'REDIS_PASSWD'] + '@' \
+        if app.config['REDIS_USER'] and app.config['REDIS_PASSWD'] else ''
+    redis_url = 'redis://' + redis_auth + app.config['REDIS_HOST'] + \
+                ':' + app.config['REDIS_PORT']
+
+    cache = Cache(app, config={'CACHE_TYPE': 'redis',
+                                'CACHE_DEFAULT_TIMEOUT': 0,
+                                'CACHE_REDIS_URL': redis_url})
+
+elif app.config['CACHE_TYPE'] == 'simple':
+     cache = Cache(app, config={'CACHE_TYPE': 'simple',
+                                'CACHE_DEFAULT_TIMEOUT': 0})
+
+else:
+     print("Invalid cache type.")
+     sys.exit(1)
 
 # keep temporary request errors
-# req_errors = []
+req_errors = []
 
 # class ValidateWatcher(FileSystemEventHandler):
 #     def __init__(self, path, callback, filename=None):
@@ -126,23 +128,23 @@ api.add_namespace(api_v1)
 #         self.callback(self.path)
 
 
-# def initialize(debug=False):
-#     log.info("Initializing validator service")
+def initialize(debug=False):
+    log.info("Initializing validator service")
 
-#     try:
-#         cache.clear()
-#     except:
-#         sys.exit(1)
+    try:
+        cache.clear()
+    except:
+        sys.exit(1)
 
-#     cache.add('debug', debug)
-#     cache.add('artifacts', list())
-#     cache.add('validations', dict())
-#     cache.add('resources', dict())
-#     cache.add('latest', dict())
-#     cache.add('watches', dict())
+    cache.add('debug', debug)
+    cache.add('artifacts', list())
+    cache.add('validations', dict())
+    cache.add('resources', dict())
+    cache.add('latest', dict())
+    cache.add('watches', dict())
 
-#     os.makedirs(app.config['ARTIFACTS_DIR'], exist_ok=True)
-#     set_artifact(app.config['ARTIFACTS_DIR'])
+    os.makedirs(app.config['ARTIFACTS_DIR'], exist_ok=True)
+    set_artifact(app.config['ARTIFACTS_DIR'])
 
 # def dump_swagger(args):
 #     # TODO replace this with the URL of a real tng-package service
@@ -261,6 +263,41 @@ validations_parser.add_argument("source",
                                      "parameter is required",
                                 required=True)
 
+@api_v1.route("/validations/<string:validation_id>/topology")
+class ValidationGetNetTopology(Resource):
+    @api_v1.response(200, "Successfully validation.")
+    @api_v1.response(400, "Bad request: Could not validate"
+                          "the given descriptor.")
+
+    def get(self, validation_id):
+        vid = get_validation(validation_id)
+        print(vid)
+        if (not vid):
+            return ('Validation with id {} does not exist'
+                    .format(validation_id), 404)
+        if (('net_topology' not in vid) or (vid['net_topology'] == '[]')):
+            return ('Validation with id {} does not have net_topology '
+                    'report'.format(validation_id), 404)
+        return vid['net_topology']
+
+
+@api_v1.route("/validations/<string:validation_id>/fwgraph")
+class ValidationGetNetFWGraph(Resource):
+    @api_v1.response(200, "Successfully validation.")
+    @api_v1.response(400, "Bad request: Could not validate"
+                          "the given descriptor.")
+
+    def get(self, validation_id):
+        vid = get_validation(validation_id)
+        print(vid)
+        if (not vid):
+            return ('Validation with id {} does not exist'
+                    .format(validation_id), 404)
+        if (('net_fwgraph' not in vid) or (vid['net_fwgraph'] == '[]')):
+            return ('Validation with id {} does not have net_fwgraph '
+                    'report'.format(validation_id), 404)
+        return vid['net_fwgraph']
+
 
 @api_v1.route("/validations")
 class Validation(Resource):
@@ -272,13 +309,58 @@ class Validation(Resource):
     @api_v1.response(200, "Successfully validation.")
     @api_v1.response(400, "Bad request: Could not validate"
                           "the given descriptor.")
+
+    def get(self):
+        validations = cache.get('validations')
+        if not validations:
+            return ('No validations in cache', 404)
+        return validations, 200
+
+
+
     def post(self, **kwargs):
         args = validations_parser.parse_args()
         log.info("POST to /validation w. args: {}".format(args))
-
+        # flush_validations()
+        # flush_resources()
         check_correct_args = check_args(args)
         if check_correct_args != True:
             return check_correct_args
+
+        keypath, path = process_request(args)
+        if not keypath or not path:
+            return render_errors(), 400
+
+        obj_type = check_obj_type(args)
+        rid = gen_resource_key(path)
+
+        vid = gen_validation_key(keypath, obj_type, args.syntax,
+                               args.integrity, args.topology, args.custom)
+        resource = get_resource(rid)
+        validation = get_validation(vid)
+
+        if resource and validation:
+            log.info("Returning cached result for '{0}'".format(vid))
+            update_resource_validation(rid, vid)
+            # validation_dict = cached_validation_to_dict(validation['result'])
+            if validation['result']["error_count"]:
+                return {"validation_process_uuid": "test",
+                        "status": 200,
+                        "validation_id": validation['result']["validation_id"],
+                        "error_count": validation['result']["error_count"],
+                        "errors": validation['result']["errors"]}
+            else:
+                    return {"validation_process_uuid": "test",
+                            "status": 200,
+                            "validation_id": validation['result']["validation_id"],
+                            "error_count": validation['result']["error_count"]}
+
+        log.info("Starting validation [type={}, path={}, syntax={}, "
+                 "integrity={}, topology={}, custom={}, "
+                 "resource_id:={}, validation_id={}]"
+                 .format(obj_type, path, args.syntax, args.integrity,
+                         args.topology, args.custom, rid, vid))
+        set_resource(rid, keypath)
 
         if args.source == 'embedded':
             log.info('File embedded in request')
@@ -351,10 +433,308 @@ class Validation(Resource):
                 # TODO check if the function is a valid file path
                 validator.validate_project(path)
 
+        json_result = gen_report_result(vid, validator)
+        net_topology = gen_report_net_topology(validator)
+        net_fwgraph = gen_report_net_fwgraph(validator)
+
+        log.info(net_topology)
+        log.info(net_fwgraph)
+        set_validation(vid, rid, path, obj_type, args.syntax,
+                       args.integrity, args.topology, args.custom,
+                       result=json_result, net_topology=net_topology,
+                       net_fwgraph=net_fwgraph)
+        update_resource_validation(rid, vid)
+
+        # return json_result
         return {"validation_process_uuid": "test",
                 "status": 200,
                 "error_count": validator.error_count,
                 "errors": validator.errors}
+
+
+
+
+
+def cached_validation_to_dict(str):
+    list_dict_str = str.split()
+    dict_str = ''.join(list_dict_str)
+    dict = ast.literal_eval(dict_str)
+    return dict
+
+
+def flush_validations():
+    cache.set('validations', dict())
+    return 'ok', 200
+
+
+def flush_resources():
+    cache.set('resources', dict())
+    return 'ok', 200
+
+
+def gen_report_result(validation_id, validator):
+
+    print("building result report for {0}".format(validation_id))
+    report = dict()
+    report['validation_id'] = validation_id
+    report['error_count'] = validator.error_count
+    report['warning_count'] = validator.warning_count
+
+    if validator.error_count:
+        report['errors'] = validator.errors
+    if validator.warning_count:
+        report['warnings'] = validator.warnings
+    return report
+
+
+def gen_report_net_topology(validator):
+
+    print(validator.storage.services.items())
+    report = list()
+    for sid, service in validator.storage.services.items():
+        graph_repr = ''
+        if not service.complete_graph:
+            return
+        for line in service.complete_graph:
+            if not line:
+                continue
+            graph_repr += line
+        report.append(graph_repr)
+
+    # TODO: temp patch for returning only the topology of the first service
+    if len(report) > 0:
+        report = report[0]
+        return report
+
+    return report
+
+
+def gen_report_net_fwgraph(validator):
+    print("building result report net fwgraph")
+    report = list()
+    for sid, service in validator.storage.services.items():
+        report.append(service.fw_graphs)
+
+    # TODO: temp patch for returning only the fwgraph of the first service
+    if len(report) > 0:
+        report = report[0]
+
+    return report
+
+
+def set_resource(rid, path):
+
+    log.info("Caching resource {0}".format(rid))
+    resources = cache.get('resources')
+    if not resources:
+        resources = dict()
+
+    if not resource_exists(rid):
+        resources[rid] = dict()
+
+    resources[rid]['path'] = path
+    # resources[rid]['type'] = obj_type
+    # resources[rid]['syntax'] = syntax
+    # resources[rid]['integrity'] = integrity
+    # resources[rid]['topology'] = topology
+    # resources[rid]['custom'] = custom
+
+    cache.set('resources', resources)
+
+
+def get_resource(rid):
+    if not resource_exists(rid):
+        return
+    return cache.get('resources')[rid]
+
+
+def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
+                   custom, result=None, net_topology=None, net_fwgraph=None):
+
+    log.info("Caching validation '{0}'".format(vid))
+    validations = cache.get('validations')
+    if not validations:
+        validations = dict()
+
+    if vid not in validations.keys():
+        validations[vid] = dict()
+
+    validations[vid]['path'] = path
+    validations[vid]['type'] = obj_type
+    validations[vid]['syntax'] = syntax
+    validations[vid]['integrity'] = integrity
+    validations[vid]['topology'] = topology
+    validations[vid]['custom'] = custom
+    validations[vid]['rid'] = rid
+
+
+    if result:
+        validations[vid]['result'] = result
+    if net_topology:
+        validations[vid]['net_topology'] = net_topology
+    if net_fwgraph:
+        validations[vid]['net_fwgraph'] = net_fwgraph
+
+    cache.set('validations', validations)
+
+
+def get_validation(vid):
+    if not validation_exists(vid):
+        return
+    return cache.get('validations')[vid]
+
+
+def get_resources():
+
+    #resource_id {type | path | syntax | integrity | topology}
+    report = dict()
+    resources = cache.get('resources')
+    validations = cache.get('validations')
+
+    if not resources or not validations:
+        return '', 204
+
+    for rid, resource in resources.items():
+
+        report[rid] = dict()
+        report[rid]['type'] = resource['type']
+        report[rid]['path'] = resource['path']
+        report[rid]['syntax'] = resource['syntax']
+        report[rid]['integrity'] = resource['integrity']
+        report[rid]['topology'] = resource['topology']
+
+    return json.dumps(report, sort_keys=true,
+                      indent=4, separators=(',', ': ')).encode('utf-8')
+
+
+def check_obj_type(args):
+    if (args.function):
+        return 'function'
+    elif (args.service):
+        return 'service'
+    elif (args.project):
+        return 'project'
+
+
+def gen_validation_key(path, otype, s, i, t, c):
+    val_hash = hashlib.md5()
+    val_hash.update(path.encode('utf-8'))
+    val_hash.update(otype.encode('utf-8'))
+    if s:
+        val_hash.update('syntax'.encode('utf-8'))
+    if i:
+        val_hash.update('integrity'.encode('utf-8'))
+    if t:
+        val_hash.update('topology'.encode('utf-8'))
+    if c:
+        val_hash.update('custom'.encode('utf-8'))
+
+    return val_hash.hexdigest()
+
+
+def update_resource_validation(rid, vid):
+    if not validation_exists(vid):
+        log.error("Internal error: failed to update resource")
+        return
+
+    if not resource_exists(rid):
+        return
+
+    log.debug("Updating resource '{0}' to: '{1}'".format(rid, vid))
+    resources = cache.get('resources')
+    resources[rid]['latest_vid'] = vid
+    cache.set('resources', resources)
+
+
+def resource_exists(rid):
+    if not cache.get('resources'):
+        return False
+    return rid in cache.get('resources').keys()
+
+
+def validation_exists(vid):
+    if not cache.get('validations'):
+        return False
+    return vid in cache.get('validations').keys()
+
+
+def gen_resource_key(path):
+    # assert (type(path) == str and type(otype) == str)
+
+    res_hash = hashlib.md5()
+    # res_hash.update(path.encode('utf-8'))
+    # res_hash.update(otype.encode('utf-8'))
+    # if s:
+    #     print('sintaxe')
+    #     res_hash.update('syntax'.encode('utf-8'))
+    # if i:
+    #     print('integrity')
+    #     res_hash.update('integrity'.encode('utf-8'))
+    # if t:
+    #     print('topology')
+    #     res_hash.update('topology'.encode('utf-8'))
+    # if c:
+    #     print('custom')
+    #     res_hash.update('custom'.encode('utf-8'))
+    #
+    # print(res_hash.hexdigest())
+    # generate path hash
+    res_hash.update(str(generate_hash(os.path.abspath(path)))
+                    .encode('utf-8'))
+    # validation event config must also be included
+    res_hash.update(repr(sorted(EventLogger.load_eventcfg().items()))
+                    .encode('utf-8'))
+    return res_hash.hexdigest()
+
+
+def process_request(args):
+    source = args.source
+    if source == 'local' and args.path:
+        keypath = args.path
+        path = get_local(args.path)
+        if not path:
+            return None, None
+
+    elif source == 'url' and args.path:
+        keypath = request.form['path']
+        path = get_url(request.form['path'])
+
+    elif source == 'embedded' and 'descriptor' in request.files:
+        keypath = secure_filename(request.files['descriptor'].filename)
+        path = get_file(request.files['descriptor'])
+
+    else:
+        req_errors.append('Invalid source, path or file parameters')
+        return None, None
+
+    return keypath, path
+
+
+def get_local(path):
+    artifact_root = add_artifact_root()
+    if os.path.isfile(path):
+        filepath = os.path.join(artifact_root, os.path.basename(path))
+        log.debug("Copying local file: '{0}'".format(filepath))
+        shutil.copyfile(path, filepath)
+        set_artifact(filepath)
+
+    elif os.path.isdir(path):
+        dirname = os.path.basename(os.path.abspath(path))
+        filepath = os.path.join(artifact_root, dirname)
+        log.debug("Copying local tree: '{0}'".format(filepath))
+        shutil.copytree(path, filepath)
+        set_artifact(filepath)
+        for root, dirs, files in os.walk(filepath):
+            for d in dirs:
+                set_artifact(os.path.join(root, d))
+            for f in files:
+                set_artifact(os.path.join(root, f))
+    else:
+        req_errors.append("Invalid local path: '{0}'".format(path))
+        log.error("Invalid local path: '{0}'".format(path))
+        return
+
+    return filepath
 
 
 def check_args(args):
@@ -439,8 +819,12 @@ def add_artifact_root():
 
 
 def set_artifact(artifact_path):
-    artifacts = list()
+    log.debug("Caching artifact '{0}'".format(artifact_path))
+    artifacts = cache.get('artifacts')
+    if not artifacts:
+        artifacts = list()
     artifacts.append(artifact_path)
+    cache.set('artifacts', artifacts)
 
 
 def get_url(url):
@@ -460,16 +844,42 @@ def get_url(url):
     return filepath
 
 
-@api_v1.route("/ping")
+def generate_hash(f, cs=128):
+    return __generate_hash__(f, cs) \
+        if os.path.isfile(f) \
+        else __generate_hash_path__(f, cs)
+
+
+def __generate_hash__(f, cs=128):
+    hash = hashlib.md5()
+    with open(f, "rb") as file:
+        for chunk in iter(lambda: file.read(cs), b''):
+            hash.update(chunk)
+    return hash.hexdigest()
+
+
+def __generate_hash_path__(p, cs=128):
+    hashes = []
+    for root, dirs, files in os.walk(p):
+        for f in sorted(files):  # guarantee same order to obtain same hash
+            hashes.append(__generate_hash__(os.path.join(root, f), cs))
+        for d in sorted(dirs):  # guarantee same order to obtain same hash
+            hashes.append(__generate_hash_path__(os.path.join(root, d), cs))
+        break
+    return _reduce_hash(hashes)
+
+
+def _reduce_hash(hashlist):
+    hash = hashlib.md5()
+    for hashvalue in sorted(hashlist):
+        hash.update(hashvalue.encode('utf-8'))
+    return hash.hexdigest()
+
+
+@api_v1.route("/pings")
 class Ping(Resource):
 
-    @api_v1.marshal_with(ping_get_return_model)
+    # @api_v1.marshal_with(ping_get_return_model)
     @api_v1.response(200, "OK")
     def get(self):
-        ut = None
-        try:
-            ut = str(subprocess.check_output("uptime")).strip()
-        except BaseException as e:
-            log.warning(str(e))
-        return {"ping": "pong",
-                "uptime": ut}
+        return 'OK', 200
