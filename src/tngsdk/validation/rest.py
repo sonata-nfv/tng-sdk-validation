@@ -48,6 +48,8 @@ from werkzeug.contrib.fixers import ProxyFix
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from requests.exceptions import RequestException
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 from flask_cors import CORS
 from flask_caching import Cache
 
@@ -108,24 +110,24 @@ else:
 # keep temporary request errors
 req_errors = []
 
-# class ValidateWatcher(FileSystemEventHandler):
-#     def __init__(self, path, callback, filename=None):
-#         self.path = path
-#         self.filename = filename
-#         self.callback = callback
-#         self.observer = Observer()
-#         self.observer.schedule(self, self.path,
-#                                recursive=False if self.filename else True)
-#         self.observer.start()
-#         # self.observer.join()
+class ValidateWatcher(FileSystemEventHandler):
+    def __init__(self, path, callback, filename=None):
+        self.path = path
+        self.filename = filename
+        self.callback = callback
+        self.observer = Observer()
+        self.observer.schedule(self, self.path,
+                               recursive=False if self.filename else True)
+        self.observer.start()
+        # self.observer.join()
 
-#     def on_modified(self, event):
-#         print(self.filename)
-#         print(event.src_path)
-#         print(event)
+    def on_modified(self, event):
+        print(self.filename)
+        print(event.src_path)
+        print(event)
 
-#         self.observer.stop()
-#         self.callback(self.path)
+        self.observer.stop()
+        self.callback(self.path + '/' + self.filename)
 
 
 def initialize(debug=False):
@@ -263,11 +265,70 @@ validations_parser.add_argument("source",
                                      "parameter is required",
                                 required=True)
 
+watches_parser = api_v1.parser()
+watches_parser.add_argument("watch_path",
+                            help="Specify the path of the watcher that will "
+                                 "will be created.",
+                            required=True)
+watches_parser.add_argument("obj_type",
+                            choices=['function', 'service', 'project'],
+                            help="Specify the type of the validation that "
+                                 "will be watched.",
+                            required=True)
+watches_parser.add_argument("syntax",
+                            location="args",
+                            type=inputs.boolean,
+                            help="Specify the syntax of the validation that "
+                                 "will be watched.",
+                            required=False)
+watches_parser.add_argument("integrity",
+                            location="args",
+                            type=inputs.boolean,
+                            help="Specify the integrity of the validation "
+                                 "that will be watched.",
+                            required=False)
+watches_parser.add_argument("topology",
+                            location="args",
+                            type=inputs.boolean,
+                            help="Specify the topology of the validation "
+                                 "that will be watched.",
+                            required=False)
+watches_parser.add_argument("custom",
+                            location="args",
+                            type=inputs.boolean,
+                            help="Specify the custom of the validation that "
+                                 "will be watched.",
+                            required=False)
+
+flushes_parser = api_v1.parser()
+flushes_parser.add_argument("type",
+                          location="args",
+                          choices=['validations', 'resources', 'watches'],
+                          required=True,
+                          help="Specify the cache that will be reseted.")
+
+@api_v1.route("/flushes")
+class FlushCaches(Resource):
+
+    def post(self, **kwargs):
+        args = flushes_parser.parse_args()
+        if args.type == 'validations':
+            log.info('Reseting validations.')
+            flush_validations()
+        elif args.type == 'resources':
+            log.info('Reseting resources')
+            flush_resources()
+        elif args.type == 'watches':
+            log.info('Reseting watches')
+            flush_watches()
+
+        return 200
+
 @api_v1.route("/validations/<string:validation_id>/topology")
 class ValidationGetNetTopology(Resource):
-    @api_v1.response(200, "Successfully validation.")
-    @api_v1.response(400, "Bad request: Could not validate"
-                          "the given descriptor.")
+    @api_v1.response(200, "Successfully operation.")
+    @api_v1.response(400, "Bad request: Could not get"
+                          "the net topology of requested validation.")
 
     def get(self, validation_id):
         vid = get_validation(validation_id)
@@ -283,9 +344,9 @@ class ValidationGetNetTopology(Resource):
 
 @api_v1.route("/validations/<string:validation_id>/fwgraph")
 class ValidationGetNetFWGraph(Resource):
-    @api_v1.response(200, "Successfully validation.")
-    @api_v1.response(400, "Bad request: Could not validate"
-                          "the given descriptor.")
+    @api_v1.response(200, "Successfully operation.")
+    @api_v1.response(400, "Bad request: Could not get"
+                          "the fwgraph of requested validation.")
 
     def get(self, validation_id):
         vid = get_validation(validation_id)
@@ -316,8 +377,6 @@ class Validation(Resource):
             return ('No validations in cache', 404)
         return validations, 200
 
-
-
     def post(self, **kwargs):
         args = validations_parser.parse_args()
         log.info("POST to /validation w. args: {}".format(args))
@@ -332,138 +391,345 @@ class Validation(Resource):
             return render_errors(), 400
 
         obj_type = check_obj_type(args)
-        rid = gen_resource_key(path)
+        result = _validate_object(args, path, keypath, obj_type)
+        return result
 
-        vid = gen_validation_key(keypath, obj_type, args.syntax,
-                               args.integrity, args.topology, args.custom)
-        resource = get_resource(rid)
-        validation = get_validation(vid)
 
-        if resource and validation:
-            log.info("Returning cached result for '{0}'".format(vid))
-            update_resource_validation(rid, vid)
-            # validation_dict = cached_validation_to_dict(validation['result'])
-            if validation['result']["error_count"]:
-                return {"validation_process_uuid": "test",
-                        "status": 200,
-                        "validation_id": validation['result']["validation_id"],
-                        "error_count": validation['result']["error_count"],
-                        "errors": validation['result']["errors"]}
-            else:
-                    return {"validation_process_uuid": "test",
-                            "status": 200,
-                            "validation_id": validation['result']["validation_id"],
-                            "error_count": validation['result']["error_count"]}
+@api_v1.route("/watches")
+class Watch(Resource):
+    @api_v1.response(200, "Successfully operation.")
+    @api_v1.response(400, "Bad request.")
 
+    def get(self):
+        watches = cache.get('watches')
+        if not watches:
+            return ('No watches in cache', 204)
+        return watches, 200
+
+    def post(self, **kwargs):
+        args = watches_parser.parse_args()
+        result = install_watcher(args.watch_path,
+                                 args.obj_type,
+                                 syntax=(args.syntax or False),
+                                 integrity=(args.integrity or False),
+                                 topology=(args.topology or False),
+                                 custom=(args.custom or False))
+
+        return result
+
+
+def _validate_object(args, path, keypath, obj_type):
+    # protect against incorrect parameters
+
+    rid = gen_resource_key(path)
+    vid = gen_validation_key(keypath, obj_type, args['syntax'],
+                             args['integrity'], args['topology'],
+                             args['custom'])
+    resource = get_resource(rid)
+    validation = get_validation(vid)
+
+    if resource and validation:
+        log.info("Returning cached result for '{0}'".format(vid))
+        update_resource_validation(rid, vid)
+        if validation['result']["error_count"]:
+            # return {"validation_process_uuid": "test",
+            #         "status": 200,
+            #         "validation_id": validation['result']["validation_id"],
+            #         "error_count": validation['result']["error_count"],
+            #         "errors": validation['result']["errors"]}
+            return validation
+        else:
+            # return {"validation_process_uuid": "test",
+            #         "status": 200,
+            #         "validation_id": validation['result']["validation_id"],
+            #         "error_count": validation['result']["error_count"]}
+            return validation
+
+    log.info("Starting validation [type={}, path={}, syntax={}, "
+             "integrity={}, topology={}, custom={}, "
+             "resource_id:={}, validation_id={}]"
+             .format(obj_type, path, args['syntax'],
+                     args['integrity'], args['topology'],
+                     args['custom'], rid, vid))
+
+    set_resource(rid, keypath)
+
+    if args['source'] == 'embedded':
+        log.info('File embedded in request')
+        if 'descriptor' not in request.files:
+            log.degub('Miss descriptor file in the request')
+            if args['custom']:
+                if 'rules' not in request.files:
+                    log.degub('Miss rules file in the request')
+        else:
+            # Save file passed in the request
+            descriptor_path = get_file(request.files['descriptor'])
+
+            validator = Validator()
+            if not args['custom']:
+                validator.configure(syntax=(args['syntax'] or False),
+                                    integrity=(args['integrity'] or False),
+                                    topology=(args['topology'] or False),
+                                    custom=(args['custom'] or False),
+                                    cfile=(args['cfile'] or False),
+                                    dext=(args['dext'] or False),
+                                    dpath=(args['dpath'] or False),
+                                    workspace_path=(args['workspace']
+                                                    or False))
+            if args['custom']:
+                rules_path = get_file(request.files['rules'])
+                validator.configure(syntax=(args['syntax'] or False),
+                                    integrity=(args['integrity'] or False),
+                                    topology=(args['topology'] or False),
+                                    custom=(args['custom'] or False),
+                                    cfile=rules_path,
+                                    dext=(args['dext'] or False),
+                                    dpath=(args['dpath'] or False),
+                                    workspace_path=(args['workspace']
+                                                    or False))
+
+            if args['function']:
+                log.info("Validating Function: {}".format(descriptor_path))
+                # TODO check if the function is a valid file path
+                validator.validate_function(descriptor_path)
+    else:
+        if (args['source'] == 'local'):
+            log.info('Local file')
+            path = args['path']
+        elif (args['source'] == 'url'):
+            log.info('URL file')
+            path = get_url(args['path'])
+
+        validator = Validator()
+        validator.configure(syntax=(args['syntax'] or False),
+                            integrity=(args['integrity'] or False),
+                            topology=(args['topology'] or False),
+                            custom=(args['custom'] or False),
+                            cfile=(args['cfile'] or False),
+                            dext=(args['dext'] or False),
+                            dpath=(args['dpath'] or False),
+                            workspace_path=(args['workspace'] or False))
+
+        if args['function']:
+            log.info("Validating Function: {}".format(path))
+            # TODO check if the function is a valid file path
+            validator.validate_function(path)
+
+        elif args['service']:
+            log.info("Validating Service: {}".format(path))
+            # TODO check if the function is a valid file path
+            validator.validate_service(path)
+
+        elif args['project']:
+            log.info("Validating Project: {}".format(path))
+            # TODO check if the function is a valid file path
+            validator.validate_project(path)
+
+    json_result = gen_report_result(vid, validator)
+    net_topology = gen_report_net_topology(validator)
+    net_fwgraph = gen_report_net_fwgraph(validator)
+
+    set_validation(vid, rid, path, obj_type, args['syntax'],
+                   args['integrity'], args['topology'], args['custom'],
+                   result=json_result, net_topology=net_topology,
+                   net_fwgraph=net_fwgraph)
+    update_resource_validation(rid, vid)
+
+    # return json_result
+    return {"validation_process_uuid": "test",
+            "status": 200,
+            "error_count": validator.error_count,
+            "errors": validator.errors}
+
+
+def install_watcher(watch_path, obj_type, syntax, integrity, topology,
+                    custom):
+    log.info("Setting watcher for {0} validation on path: {1}"
+              .format(obj_type, watch_path))
+    if os.path.isdir(watch_path):
+        ValidateWatcher(watch_path, _validate_object_from_watch)
+        set_watch(watch_path, obj_type, syntax, integrity, topology, custom)
+        return 'Dir watcher cached', 200
+    elif os.path.isfile(watch_path):
+        filename = os.path.basename(watch_path)
+        dirname = os.path.dirname(watch_path)
+        ValidateWatcher(dirname, _validate_object_from_watch,
+                        filename=filename)
+        set_watch(watch_path, obj_type, syntax, integrity, topology, custom)
+        return 'File watcher cached', 200
+    else:
+        return 'Incorrect path for be watched', 400
+
+
+def load_watch_dirs(workspace):
+    if not workspace:
+        return
+
+    log.info("Loading validator watchers")
+
+    for watch_path, watch in workspace.validate_watchers.items():
+        if watch_exists(watch_path):
+            log.warning("Watcher path '{0}' does not exist. Ignoring."
+                        .format(watch_path))
+            continue
+
+        log.debug("Loading validator watcher: {0}".format(watch_path))
+
+        assert (watch['type'] == 'project' or watch['type'] == 'package' or
+                watch['type'] == 'service' or watch['type'] == 'function')
+
+        install_watcher(watch_path, watch['type'], watch['syntax'],
+                        watch['integrity'], watch['topology'],
+                        watch['custom'])
+
+        _validate_object(watch, path, path, watch['type'])
+
+
+def set_watch(path, obj_type, syntax, integrity, topology, custom):
+    log.debug("Caching watch '{0}".format(path))
+    watches = cache.get('watches')
+
+    if not watches:
+        watches = dict()
+
+    if not watch_exists(path):
+        watches[path] = dict()
+
+    watches[path]['type'] = obj_type
+    watches[path]['syntax'] = syntax
+    watches[path]['integrity'] = integrity
+    watches[path]['topology'] = topology
+    watches[path]['custom'] = custom
+
+    cache.set('watches', watches)
+
+
+def watch_exists(path):
+    if not cache.get('watches'):
+        return False
+    return path in cache.get('watches').keys()
+
+
+def get_watch(path):
+    if not watch_exists(path):
+        return
+    return cache.get('watches')[path]
+
+
+def _validate_object_from_watch(path):
+    log.info(path)
+    if not watch_exists(path):
+        log.error("Invalid cached watch. Cannot proceed with validation")
+        return
+
+    watch = get_watch(path)
+    log.info("Validating {0} from watch: {1}".format(watch['type'], path))
+    # result = _validate_object(watch, path, path, watch['type'])
+    rid = gen_resource_key(path)
+    vid = gen_validation_key(path, watch['type'], watch['syntax'],
+                             watch['integrity'], watch['topology'],
+                             watch['custom'])
+    resource = get_resource(rid)
+    validation = get_validation(vid)
+    if resource and validation:
+        log.info("Returning cached result for '{0}'".format(vid))
+        update_resource_validation(rid, vid)
+        if validation['result']["error_count"]:
+            result =  {"validation_process_uuid": "test",
+                       "status": 200,
+                       "validation_id": validation['result']["validation_id"],
+                       "error_count": validation['result']["error_count"],
+                       "errors": validation['result']["errors"]}
+        else:
+            result =  {"validation_process_uuid": "test",
+                       "status": 200,
+                       "validation_id": validation['result']["validation_id"],
+                       "error_count": validation['result']["error_count"]}
+    else:
         log.info("Starting validation [type={}, path={}, syntax={}, "
                  "integrity={}, topology={}, custom={}, "
                  "resource_id:={}, validation_id={}]"
-                 .format(obj_type, path, args.syntax, args.integrity,
-                         args.topology, args.custom, rid, vid))
-        set_resource(rid, keypath)
+                 .format(watch['type'], path, watch['syntax'],
+                         watch['integrity'], watch['topology'],
+                         watch['custom'], rid, vid))
 
-        if args.source == 'embedded':
-            log.info('File embedded in request')
-            if 'descriptor' not in request.files:
-                log.degub('Miss descriptor file in the request')
-                if args.custom:
-                    if 'rules' not in request.files:
-                        log.degub('Miss rules file in the request')
-            else:
-                # Save file passed in the request
-                descriptor_path = get_file(request.files['descriptor'])
+        set_resource(rid, path)
+        validator = Validator()
+        validator.configure(syntax=(watch['syntax'] or False),
+                            integrity=(watch['integrity'] or False),
+                            topology=(watch['topology'] or False),
+                            custom=(watch['custom'] or False))
 
-                validator = Validator()
-                if not args.custom:
-                    validator.configure(syntax=(args['syntax'] or False),
-                                        integrity=(args['integrity'] or False),
-                                        topology=(args['topology'] or False),
-                                        custom=(args['custom'] or False),
-                                        cfile=(args['cfile'] or False),
-                                        dext=(args['dext'] or False),
-                                        dpath=(args['dpath'] or False),
-                                        workspace_path=(args['workspace']
-                                                        or False))
-                if args.custom:
-                    rules_path = get_file(request.files['rules'])
-                    validator.configure(syntax=(args['syntax'] or False),
-                                        integrity=(args['integrity'] or False),
-                                        topology=(args['topology'] or False),
-                                        custom=(args['custom'] or False),
-                                        cfile=rules_path,
-                                        dext=(args['dext'] or False),
-                                        dpath=(args['dpath'] or False),
-                                        workspace_path=(args['workspace']
-                                                        or False))
+        if watch['type'] == 'function':
+            log.info("Validating Function: {}".format(path))
+            # TODO check if the function is a valid file path
+            validator.validate_function(path)
 
-                if args['function']:
-                    log.info("Validating Function: {}".format(descriptor_path))
-                    # TODO check if the function is a valid file path
-                    validator.validate_function(descriptor_path)
-        else:
-            if (args.source == 'local'):
-                log.info('Local file')
-                path = args.path
-            elif (args.source == 'url'):
-                log.info('URL file')
-                path = get_url(args.path)
+        elif watch['type'] == 'service':
+            log.info("Validating Service: {}".format(path))
+            # TODO check if the function is a valid file path
+            validator.validate_service(path)
 
-            validator = Validator()
-            validator.configure(syntax=(args['syntax'] or False),
-                                integrity=(args['integrity'] or False),
-                                topology=(args['topology'] or False),
-                                custom=(args['custom'] or False),
-                                cfile=(args['cfile'] or False),
-                                dext=(args['dext'] or False),
-                                dpath=(args['dpath'] or False),
-                                workspace_path=(args['workspace'] or False))
+        elif watch['type'] == 'project':
+            log.info("Validating Project: {}".format(path))
+            # TODO check if the function is a valid file path
+            validator.validate_project(path)
 
-            if args['function']:
-                log.info("Validating Function: {}".format(path))
-                # TODO check if the function is a valid file path
-                validator.validate_function(path)
-
-            elif args['service']:
-                log.info("Validating Service: {}".format(path))
-                # TODO check if the function is a valid file path
-                validator.validate_service(path)
-
-            elif args['project']:
-                log.info("Validating Project: {}".format(path))
-                # TODO check if the function is a valid file path
-                validator.validate_project(path)
-
-        json_result = gen_report_result(vid, validator)
+        json_result = gen_report_result(rid, validator)
         net_topology = gen_report_net_topology(validator)
         net_fwgraph = gen_report_net_fwgraph(validator)
 
-        log.info(net_topology)
-        log.info(net_fwgraph)
-        set_validation(vid, rid, path, obj_type, args.syntax,
-                       args.integrity, args.topology, args.custom,
+        set_validation(vid, rid, path, watch['type'], watch['syntax'],
+                       watch['integrity'], watch['topology'], watch['custom'],
                        result=json_result, net_topology=net_topology,
                        net_fwgraph=net_fwgraph)
         update_resource_validation(rid, vid)
 
-        # return json_result
-        return {"validation_process_uuid": "test",
-                "status": 200,
-                "error_count": validator.error_count,
-                "errors": validator.errors}
+        result = {"validation_process_uuid": "test",
+                  "status": 200,
+                  "error_count": validator.error_count,
+                  "errors": validator.errors}
+
+    # re-schedule watcher
+    install_watcher(path, watch['type'], watch['syntax'], watch['integrity'],
+                    watch['topology'], watch['custom'])
+
+    if not result:
+        return
+    log.info(result)
 
 
+def gen_watches():
+    # retrieve dictionary of watched resources, in the format:
+    # path: { type | syntax | integrity | topology }
+    report = dict()
+    watches = cache.get('watches')
+    if not watches:
+        return '', 204
+    for path, watch in watches.items():
+        report[path] = dict()
+        report[path]['type'] = watch['type']
+        report[path]['syntax'] = watch['syntax']
+        report[path]['integrity'] = watch['integrity']
+        report[path]['topology'] = watch['topology']
 
+    return json.dumps(report)
 
-
-def cached_validation_to_dict(str):
-    list_dict_str = str.split()
-    dict_str = ''.join(list_dict_str)
-    dict = ast.literal_eval(dict_str)
-    return dict
-
+#
+# def cached_validation_to_dict(str):
+#     list_dict_str = str.split()
+#     dict_str = ''.join(list_dict_str)
+#     dict = ast.literal_eval(dict_str)
+#     return dict
+#
 
 def flush_validations():
     cache.set('validations', dict())
+    return 'ok', 200
+
+
+def flush_watches():
+    cache.set('watches', dict())
     return 'ok', 200
 
 
@@ -476,7 +742,7 @@ def gen_report_result(validation_id, validator):
 
     print("building result report for {0}".format(validation_id))
     report = dict()
-    report['validation_id'] = validation_id
+    report['validation_id'] = '/validations/vid/' + validation_id
     report['error_count'] = validator.error_count
     report['warning_count'] = validator.warning_count
 
@@ -565,7 +831,7 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     validations[vid]['integrity'] = integrity
     validations[vid]['topology'] = topology
     validations[vid]['custom'] = custom
-    validations[vid]['rid'] = rid
+    validations[vid]['rid'] = '/resources/rid/' + rid
 
 
     if result:
