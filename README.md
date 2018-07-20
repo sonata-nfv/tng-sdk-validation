@@ -133,8 +133,7 @@ The end-points exposed by the API are as follows:
 
 ## Documentation
 
-TODO (e.g. link to wiki page)
-
+Please refer to the [wiki](https://github.com/sonata-nfv/tng-sdk-validation/wiki) of the project for a more detailed documentation. 
 
 ## License
 
