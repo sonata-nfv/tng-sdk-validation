@@ -51,7 +51,7 @@ from requests.exceptions import RequestException
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from flask_cors import CORS
-from flask_caching import Cache
+from flask_caching import Cache, make_template_fragment_key
 
 from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
@@ -324,41 +324,54 @@ class FlushCaches(Resource):
 
         return 200
 
-@api_v1.route("/validations/<string:validation_id>/topology")
+@api_v1.route("/validations/<string:validationId>/topology")
 class ValidationGetNetTopology(Resource):
     @api_v1.response(200, "Successfully operation.")
     @api_v1.response(400, "Bad request: Could not get"
                           "the net topology of requested validation.")
 
-    def get(self, validation_id):
-        vid = get_validation(validation_id)
+    def get(self, validationId):
+        vid = get_validation(validationId)
         print(vid)
         if (not vid):
             return ('Validation with id {} does not exist'
-                    .format(validation_id), 404)
+                    .format(validationId), 404)
         if (('net_topology' not in vid) or (vid['net_topology'] == '[]')):
             return ('Validation with id {} does not have net_topology '
-                    'report'.format(validation_id), 404)
+                    'report'.format(validationId), 404)
         return vid['net_topology']
 
 
-@api_v1.route("/validations/<string:validation_id>/fwgraph")
+@api_v1.route("/validations/<string:validationId>/fwgraph")
 class ValidationGetNetFWGraph(Resource):
     @api_v1.response(200, "Successfully operation.")
     @api_v1.response(400, "Bad request: Could not get"
                           "the fwgraph of requested validation.")
 
-    def get(self, validation_id):
-        vid = get_validation(validation_id)
+    def get(self, validationId):
+        vid = get_validation(validationId)
         print(vid)
         if (not vid):
             return ('Validation with id {} does not exist'
-                    .format(validation_id), 404)
+                    .format(validationId), 404)
         if (('net_fwgraph' not in vid) or (vid['net_fwgraph'] == '[]')):
             return ('Validation with id {} does not have net_fwgraph '
-                    'report'.format(validation_id), 404)
+                    'report'.format(validationId), 404)
         return vid['net_fwgraph']
 
+@api_v1.route("/validations/<string:validationId>")
+class DeleteValidation(Resource):
+    def delete(self, validationId):
+        vid = get_validation(validationId)
+        if (not vid):
+            return ('Validation with id {} does not exist'
+                    .format(validationId), 404)
+        else:
+            log.info('Deleting validation {}'.format(validationId))
+            validations = cache.get('validations')
+            del validations[validationId]
+            cache.set('validations', validations)
+            return 200
 
 @api_v1.route("/validations")
 class Validation(Resource):
@@ -370,6 +383,11 @@ class Validation(Resource):
     @api_v1.response(200, "Successfully validation.")
     @api_v1.response(400, "Bad request: Could not validate"
                           "the given descriptor.")
+
+    def delete(self):
+        log.info('Deleting cached validations.')
+        flush_validations()
+        return 200
 
     def get(self):
         validations = cache.get('validations')
@@ -434,25 +452,25 @@ def _validate_object(args, path, keypath, obj_type):
         if validation['result']["error_count"]:
             # return {"validation_process_uuid": "test",
             #         "status": 200,
-            #         "validation_id": validation['result']["validation_id"],
+            #         "validationId": validation['result']["validationId"],
             #         "error_count": validation['result']["error_count"],
             #         "errors": validation['result']["errors"]}
             return validation
         else:
             # return {"validation_process_uuid": "test",
             #         "status": 200,
-            #         "validation_id": validation['result']["validation_id"],
+            #         "validationId": validation['result']["validationId"],
             #         "error_count": validation['result']["error_count"]}
             return validation
 
     log.info("Starting validation [type={}, path={}, syntax={}, "
              "integrity={}, topology={}, custom={}, "
-             "resource_id:={}, validation_id={}]"
+             "resource_id:={}, validationId={}]"
              .format(obj_type, path, args['syntax'],
                      args['integrity'], args['topology'],
                      args['custom'], rid, vid))
 
-    set_resource(rid, keypath)
+    set_resource(rid, keypath, obj_type)
 
     if args['source'] == 'embedded':
         log.info('File embedded in request')
@@ -637,23 +655,23 @@ def _validate_object_from_watch(path):
         if validation['result']["error_count"]:
             result =  {"validation_process_uuid": "test",
                        "status": 200,
-                       "validation_id": validation['result']["validation_id"],
+                       "validationId": validation['result']["validationId"],
                        "error_count": validation['result']["error_count"],
                        "errors": validation['result']["errors"]}
         else:
             result =  {"validation_process_uuid": "test",
                        "status": 200,
-                       "validation_id": validation['result']["validation_id"],
+                       "validationId": validation['result']["validationId"],
                        "error_count": validation['result']["error_count"]}
     else:
         log.info("Starting validation [type={}, path={}, syntax={}, "
                  "integrity={}, topology={}, custom={}, "
-                 "resource_id:={}, validation_id={}]"
+                 "resource_id:={}, validationId={}]"
                  .format(watch['type'], path, watch['syntax'],
                          watch['integrity'], watch['topology'],
                          watch['custom'], rid, vid))
 
-        set_resource(rid, path)
+        set_resource(rid, path, 'function')
         validator = Validator()
         validator.configure(syntax=(watch['syntax'] or False),
                             integrity=(watch['integrity'] or False),
@@ -738,11 +756,11 @@ def flush_resources():
     return 'ok', 200
 
 
-def gen_report_result(validation_id, validator):
+def gen_report_result(validationId, validator):
 
-    print("building result report for {0}".format(validation_id))
+    print("building result report for {0}".format(validationId))
     report = dict()
-    report['validation_id'] = '/validations/vid/' + validation_id
+    report['validationId'] = '/validations/' + validationId
     report['error_count'] = validator.error_count
     report['warning_count'] = validator.warning_count
 
@@ -788,7 +806,7 @@ def gen_report_net_fwgraph(validator):
     return report
 
 
-def set_resource(rid, path):
+def set_resource(rid, path, obj_type):
 
     log.info("Caching resource {0}".format(rid))
     resources = cache.get('resources')
@@ -799,13 +817,22 @@ def set_resource(rid, path):
         resources[rid] = dict()
 
     resources[rid]['path'] = path
-    # resources[rid]['type'] = obj_type
+    resources[rid]['type'] = obj_type
+    resources[rid]['hashFile'] = get_file_hash(path)
     # resources[rid]['syntax'] = syntax
     # resources[rid]['integrity'] = integrity
     # resources[rid]['topology'] = topology
     # resources[rid]['custom'] = custom
-
+    log.info(resources[rid])
     cache.set('resources', resources)
+
+
+def get_file_hash(path):
+    hashFile = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hashFile.update(chunk)
+    return hashFile.hexdigest()
 
 
 def get_resource(rid):
@@ -831,7 +858,8 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     validations[vid]['integrity'] = integrity
     validations[vid]['topology'] = topology
     validations[vid]['custom'] = custom
-    validations[vid]['rid'] = '/resources/rid/' + rid
+    validations[vid]['rid'] = '/resources/' + rid
+    validations[vid]['resourceHash'] = get_file_hash(path)
 
 
     if result:
