@@ -473,10 +473,10 @@ def _validate_object(args, path, keypath, obj_type):
         custom_resource = get_resource(custom_rid)
 
     if resource and validation:
-        if(validation['resourceHash'] == hashFile):
+        if(validation['resources']['vnfd']['hashFile'] == hashFile):
             if(args['custom']):
                 if(custom_resource):
-                    if(validation['customHashFile'] == custom_hashFile):
+                    if(validation['resources']['customRules']['hashFile'] == custom_hashFile):
                         log.info("Returning cached result for '{0}'".format(vid))
                         update_resource_validation(rid, vid)
                         return validation
@@ -896,13 +896,12 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     validations[vid]['integrity'] = integrity or False
     validations[vid]['topology'] = topology or False
     validations[vid]['custom'] = custom or False
-    validations[vid]['resources'] = []
-    validations[vid]['resources'].append({'vnfd' : {'id' : '/resources/' + rid,
-                                  'hashFile' : hashFile}})
+    validations[vid]['resources'] = dict()
+    validations[vid]['resources']['vnfd'] = {'id' : '/resources/' + rid,
+                                             'hashFile' : hashFile}
     if custom_rid:
-        validations[vid]['resources'].append({'customRules' :
-                                          {'id' : '/resources/' + custom_rid,
-                                          'hashFile' : custom_hashFile}})
+        validations[vid]['resources']['customRules'] = {'id' : '/resources/' + custom_rid,
+                                                        'hashFile' : custom_hashFile}
     if result:
         validations[vid]['result'] = result
     if net_topology:
