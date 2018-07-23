@@ -492,11 +492,11 @@ def _validate_object(args, path, keypath, obj_type):
                      args['integrity'], args['topology'],
                      args['custom'], rid, vid))
     if args['custom']:
-        set_resource(rid, keypath, obj_type, hashFile)
+        set_resource(rid, keypath, obj_type, hashFile, vid)
         set_resource(custom_rid, args['cfile'], 'custom_rule',
-                     custom_hashFile)
+                     custom_hashFile, vid)
     else:
-        set_resource(rid, keypath, obj_type, hashFile)
+        set_resource(rid, keypath, obj_type, hashFile, vid)
     if args['source'] == 'embedded':
         log.info('File embedded in request')
         if 'descriptor' not in request.files:
@@ -841,7 +841,7 @@ def gen_report_net_fwgraph(validator):
     return report
 
 
-def set_resource(rid, path, obj_type, hashFile):
+def set_resource(rid, path, obj_type, hashFile, vid_related):
 
     log.info("Caching resource {0}".format(rid))
     resources = cache.get('resources')
@@ -854,6 +854,12 @@ def set_resource(rid, path, obj_type, hashFile):
     resources[rid]['path'] = path
     resources[rid]['type'] = obj_type
     resources[rid]['hashFile'] = hashFile
+    # resources[rid]['validations'] = []
+    if 'validations' in resources[rid]:
+        resources[rid]['validations'].append('/validations/' + vid_related)
+    else:
+        resources[rid]['validations'] = []
+        resources[rid]['validations'].append('/validations/' + vid_related)
     # resources[rid]['syntax'] = syntax
     # resources[rid]['integrity'] = integrity
     # resources[rid]['topology'] = topology
