@@ -854,16 +854,11 @@ def set_resource(rid, path, obj_type, hashFile, vid_related):
     resources[rid]['path'] = path
     resources[rid]['type'] = obj_type
     resources[rid]['hashFile'] = hashFile
-    # resources[rid]['validations'] = []
     if 'validations' in resources[rid]:
         resources[rid]['validations'].append('/validations/' + vid_related)
     else:
         resources[rid]['validations'] = []
         resources[rid]['validations'].append('/validations/' + vid_related)
-    # resources[rid]['syntax'] = syntax
-    # resources[rid]['integrity'] = integrity
-    # resources[rid]['topology'] = topology
-    # resources[rid]['custom'] = custom
     log.info(resources[rid])
     cache.set('resources', resources)
 
@@ -901,12 +896,13 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     validations[vid]['integrity'] = integrity or False
     validations[vid]['topology'] = topology or False
     validations[vid]['custom'] = custom or False
-    validations[vid]['rid'] = '/resources/' + rid
-    validations[vid]['resourceHash'] = hashFile
-
+    validations[vid]['resources'] = []
+    validations[vid]['resources'].append({'vnfd' : {'id' : '/resources/' + rid,
+                                  'hashFile' : hashFile}})
     if custom_rid:
-        validations[vid]['customRid'] = '/resources/' + custom_rid
-        validations[vid]['customHashFile'] = custom_hashFile
+        validations[vid]['resources'].append({'customRules' :
+                                          {'id' : '/resources/' + custom_rid,
+                                          'hashFile' : custom_hashFile}})
     if result:
         validations[vid]['result'] = result
     if net_topology:
