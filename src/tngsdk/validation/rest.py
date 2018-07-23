@@ -342,6 +342,15 @@ class ValidationGetNetTopology(Resource):
         return vid['net_topology']
 
 
+@api_v1.route("/resources")
+class Resources(Resource):
+    def get(self):
+        resources = cache.get('resources')
+        if not resources:
+            return ('No resources in cache', 404)
+        return resources, 200
+
+
 @api_v1.route("/validations/<string:validationId>/fwgraph")
 class ValidationGetNetFWGraph(Resource):
     @api_v1.response(200, "Successfully operation.")
@@ -359,6 +368,7 @@ class ValidationGetNetFWGraph(Resource):
                     'report'.format(validationId), 404)
         return vid['net_fwgraph']
 
+
 @api_v1.route("/validations/<string:validationId>")
 class DeleteValidation(Resource):
     def delete(self, validationId):
@@ -372,6 +382,7 @@ class DeleteValidation(Resource):
             del validations[validationId]
             cache.set('validations', validations)
             return 200
+
 
 @api_v1.route("/validations")
 class Validation(Resource):
@@ -406,7 +417,7 @@ class Validation(Resource):
 
         keypath, path = process_request(args)
         if not keypath or not path:
-            return render_errors(), 400
+            return 'Dont find descriptor in this path', 404
 
         obj_type = check_obj_type(args)
         result = _validate_object(args, path, keypath, obj_type)
@@ -442,26 +453,29 @@ def _validate_object(args, path, keypath, obj_type):
     rid = gen_resource_key(path)
     vid = gen_validation_key(keypath, obj_type, args['syntax'],
                              args['integrity'], args['topology'],
-                             args['custom'])
+                             args['custom'], args['cfile'] or False)
     resource = get_resource(rid)
     validation = get_validation(vid)
+    hashFile = get_file_hash(path)
+    if(args['custom']):
+        custom_rid = gen_resource_key(args['cfile'])
+        print(custom_rid)
+        custom_hashFile = get_file_hash(args['cfile'])
+        print(custom_hashFile)
+        custom_resource = get_resource(custom_rid)
 
     if resource and validation:
-        log.info("Returning cached result for '{0}'".format(vid))
-        update_resource_validation(rid, vid)
-        if validation['result']["error_count"]:
-            # return {"validation_process_uuid": "test",
-            #         "status": 200,
-            #         "validationId": validation['result']["validationId"],
-            #         "error_count": validation['result']["error_count"],
-            #         "errors": validation['result']["errors"]}
-            return validation
-        else:
-            # return {"validation_process_uuid": "test",
-            #         "status": 200,
-            #         "validationId": validation['result']["validationId"],
-            #         "error_count": validation['result']["error_count"]}
-            return validation
+        if(validation['resourceHash'] == hashFile):
+            if(args['custom']):
+                if(custom_resource):
+                    if(validation['customHashFile'] == custom_hashFile):
+                        log.info("Returning cached result for '{0}'".format(vid))
+                        update_resource_validation(rid, vid)
+                        return validation
+            else:
+                log.info("Returning cached result for '{0}'".format(vid))
+                update_resource_validation(rid, vid)
+                return validation
 
     log.info("Starting validation [type={}, path={}, syntax={}, "
              "integrity={}, topology={}, custom={}, "
@@ -469,9 +483,12 @@ def _validate_object(args, path, keypath, obj_type):
              .format(obj_type, path, args['syntax'],
                      args['integrity'], args['topology'],
                      args['custom'], rid, vid))
-
-    set_resource(rid, keypath, obj_type)
-
+    if args['custom']:
+        set_resource(rid, keypath, obj_type, hashFile)
+        set_resource(custom_rid, args['cfile'], 'custom_rule',
+                     custom_hashFile)
+    else:
+        set_resource(rid, keypath, obj_type, hashFile)
     if args['source'] == 'embedded':
         log.info('File embedded in request')
         if 'descriptor' not in request.files:
@@ -482,7 +499,6 @@ def _validate_object(args, path, keypath, obj_type):
         else:
             # Save file passed in the request
             descriptor_path = get_file(request.files['descriptor'])
-
             validator = Validator()
             if not args['custom']:
                 validator.configure(syntax=(args['syntax'] or False),
@@ -546,11 +562,17 @@ def _validate_object(args, path, keypath, obj_type):
     json_result = gen_report_result(vid, validator)
     net_topology = gen_report_net_topology(validator)
     net_fwgraph = gen_report_net_fwgraph(validator)
-
-    set_validation(vid, rid, path, obj_type, args['syntax'],
-                   args['integrity'], args['topology'], args['custom'],
-                   result=json_result, net_topology=net_topology,
-                   net_fwgraph=net_fwgraph)
+    if(args['custom']):
+        set_validation(vid, rid, path, obj_type, args['syntax'],
+                       args['integrity'], args['topology'], args['custom'],
+                       hashFile, custom_rid, custom_hashFile,
+                       result=json_result, net_topology=net_topology,
+                       net_fwgraph=net_fwgraph)
+    else:
+        set_validation(vid, rid, path, obj_type, args['syntax'],
+                       args['integrity'], args['topology'], args['custom'],
+                       hashFile, result=json_result, net_topology=net_topology,
+                       net_fwgraph=net_fwgraph)
     update_resource_validation(rid, vid)
 
     # return json_result
@@ -648,21 +670,26 @@ def _validate_object_from_watch(path):
                              watch['integrity'], watch['topology'],
                              watch['custom'])
     resource = get_resource(rid)
+    hashFile = get_file_hash(path)
     validation = get_validation(vid)
     if resource and validation:
-        log.info("Returning cached result for '{0}'".format(vid))
-        update_resource_validation(rid, vid)
-        if validation['result']["error_count"]:
-            result =  {"validation_process_uuid": "test",
-                       "status": 200,
-                       "validationId": validation['result']["validationId"],
-                       "error_count": validation['result']["error_count"],
-                       "errors": validation['result']["errors"]}
-        else:
-            result =  {"validation_process_uuid": "test",
-                       "status": 200,
-                       "validationId": validation['result']["validationId"],
-                       "error_count": validation['result']["error_count"]}
+        if(resource['hashFile'] == hashFile):
+            log.info("Returning cached result for '{0}'".format(vid))
+            update_resource_validation(rid, vid)
+            if validation['result']["error_count"]:
+                return validation
+
+                # result =  {"validation_process_uuid": "test",
+                #            "status": 200,
+                #            "validationId": validation['result']["validationId"],
+                #            "error_count": validation['result']["error_count"],
+                #            "errors": validation['result']["errors"]}
+            else:
+                return validation
+                # result =  {"validation_process_uuid": "test",
+                #            "status": 200,
+                #            "validationId": validation['result']["validationId"],
+                #            "error_count": validation['result']["error_count"]}
     else:
         log.info("Starting validation [type={}, path={}, syntax={}, "
                  "integrity={}, topology={}, custom={}, "
@@ -671,7 +698,7 @@ def _validate_object_from_watch(path):
                          watch['integrity'], watch['topology'],
                          watch['custom'], rid, vid))
 
-        set_resource(rid, path, 'function')
+        set_resource(rid, path, 'function', hashFile)
         validator = Validator()
         validator.configure(syntax=(watch['syntax'] or False),
                             integrity=(watch['integrity'] or False),
@@ -699,8 +726,8 @@ def _validate_object_from_watch(path):
 
         set_validation(vid, rid, path, watch['type'], watch['syntax'],
                        watch['integrity'], watch['topology'], watch['custom'],
-                       result=json_result, net_topology=net_topology,
-                       net_fwgraph=net_fwgraph)
+                       hashFile, result=json_result,
+                       net_topology=net_topology, net_fwgraph=net_fwgraph)
         update_resource_validation(rid, vid)
 
         result = {"validation_process_uuid": "test",
@@ -806,7 +833,7 @@ def gen_report_net_fwgraph(validator):
     return report
 
 
-def set_resource(rid, path, obj_type):
+def set_resource(rid, path, obj_type, hashFile):
 
     log.info("Caching resource {0}".format(rid))
     resources = cache.get('resources')
@@ -818,7 +845,7 @@ def set_resource(rid, path, obj_type):
 
     resources[rid]['path'] = path
     resources[rid]['type'] = obj_type
-    resources[rid]['hashFile'] = get_file_hash(path)
+    resources[rid]['hashFile'] = hashFile
     # resources[rid]['syntax'] = syntax
     # resources[rid]['integrity'] = integrity
     # resources[rid]['topology'] = topology
@@ -842,7 +869,9 @@ def get_resource(rid):
 
 
 def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
-                   custom, result=None, net_topology=None, net_fwgraph=None):
+                   custom, hashFile, custom_rid=None,
+                   custom_hashFile=None, result=None, net_topology=None,
+                   net_fwgraph=None):
 
     log.info("Caching validation '{0}'".format(vid))
     validations = cache.get('validations')
@@ -854,14 +883,16 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
 
     validations[vid]['path'] = path
     validations[vid]['type'] = obj_type
-    validations[vid]['syntax'] = syntax
-    validations[vid]['integrity'] = integrity
-    validations[vid]['topology'] = topology
-    validations[vid]['custom'] = custom
+    validations[vid]['syntax'] = syntax or False
+    validations[vid]['integrity'] = integrity or False
+    validations[vid]['topology'] = topology or False
+    validations[vid]['custom'] = custom or False
     validations[vid]['rid'] = '/resources/' + rid
-    validations[vid]['resourceHash'] = get_file_hash(path)
+    validations[vid]['resourceHash'] = hashFile
 
-
+    if custom_rid:
+        validations[vid]['customRid'] = '/resources/' + custom_rid
+        validations[vid]['customHashFile'] = custom_hashFile
     if result:
         validations[vid]['result'] = result
     if net_topology:
@@ -910,7 +941,7 @@ def check_obj_type(args):
         return 'project'
 
 
-def gen_validation_key(path, otype, s, i, t, c):
+def gen_validation_key(path, otype, s, i, t, c, cfile=None):
     val_hash = hashlib.md5()
     val_hash.update(path.encode('utf-8'))
     val_hash.update(otype.encode('utf-8'))
@@ -922,7 +953,8 @@ def gen_validation_key(path, otype, s, i, t, c):
         val_hash.update('topology'.encode('utf-8'))
     if c:
         val_hash.update('custom'.encode('utf-8'))
-
+    if cfile:
+        val_hash.update(cfile.encode('utf-8'))
     return val_hash.hexdigest()
 
 
@@ -973,6 +1005,7 @@ def gen_resource_key(path):
     #
     # print(res_hash.hexdigest())
     # generate path hash
+    print(os.path.abspath(path))
     res_hash.update(str(generate_hash(os.path.abspath(path)))
                     .encode('utf-8'))
     # validation event config must also be included
