@@ -110,7 +110,7 @@ else:
 # keep temporary request errors
 req_errors = []
 
-class ValidateWatcher(FileSystemEventHandler):
+class Validatewatchers(FileSystemEventHandler):
     def __init__(self, path, callback, filename=None):
         self.path = path
         self.filename = filename
@@ -267,7 +267,7 @@ validations_parser.add_argument("source",
 
 watches_parser = api_v1.parser()
 watches_parser.add_argument("watch_path",
-                            help="Specify the path of the watcher that will "
+                            help="Specify the path of the watchers that will "
                                  "will be created.",
                             required=True)
 watches_parser.add_argument("obj_type",
@@ -371,6 +371,7 @@ class ValidationGetNetFWGraph(Resource):
 
 @api_v1.route("/validations/<string:validationId>")
 class DeleteValidation(Resource):
+
     def delete(self, validationId):
         vid = get_validation(validationId)
         if (not vid):
@@ -383,6 +384,13 @@ class DeleteValidation(Resource):
             cache.set('validations', validations)
             return 200
 
+    def get(self, validationId):
+        vid = get_validation(validationId)
+        if (not vid):
+            return ('Validation with id {} does not exist'
+                    .format(validationId), 404)
+        else:
+            return vid, 200
 
 @api_v1.route("/validations")
 class Validation(Resource):
@@ -437,7 +445,7 @@ class Watch(Resource):
 
     def post(self, **kwargs):
         args = watches_parser.parse_args()
-        result = install_watcher(args.watch_path,
+        result = install_watchers(args.watch_path,
                                  args.obj_type,
                                  syntax=(args.syntax or False),
                                  integrity=(args.integrity or False),
@@ -582,21 +590,21 @@ def _validate_object(args, path, keypath, obj_type):
             "errors": validator.errors}
 
 
-def install_watcher(watch_path, obj_type, syntax, integrity, topology,
+def install_watchers(watch_path, obj_type, syntax, integrity, topology,
                     custom):
-    log.info("Setting watcher for {0} validation on path: {1}"
+    log.info("Setting watchers for {0} validation on path: {1}"
               .format(obj_type, watch_path))
     if os.path.isdir(watch_path):
-        ValidateWatcher(watch_path, _validate_object_from_watch)
+        Validatewatchers(watch_path, _validate_object_from_watch)
         set_watch(watch_path, obj_type, syntax, integrity, topology, custom)
-        return 'Dir watcher cached', 200
+        return 'Dir watchers cached', 200
     elif os.path.isfile(watch_path):
         filename = os.path.basename(watch_path)
         dirname = os.path.dirname(watch_path)
-        ValidateWatcher(dirname, _validate_object_from_watch,
+        Validatewatchers(dirname, _validate_object_from_watch,
                         filename=filename)
         set_watch(watch_path, obj_type, syntax, integrity, topology, custom)
-        return 'File watcher cached', 200
+        return 'File watchers cached', 200
     else:
         return 'Incorrect path for be watched', 400
 
@@ -605,20 +613,20 @@ def load_watch_dirs(workspace):
     if not workspace:
         return
 
-    log.info("Loading validator watchers")
+    log.info("Loading validator watcherss")
 
-    for watch_path, watch in workspace.validate_watchers.items():
+    for watch_path, watch in workspace.validate_watcherss.items():
         if watch_exists(watch_path):
-            log.warning("Watcher path '{0}' does not exist. Ignoring."
+            log.warning("watchers path '{0}' does not exist. Ignoring."
                         .format(watch_path))
             continue
 
-        log.debug("Loading validator watcher: {0}".format(watch_path))
+        log.debug("Loading validator watchers: {0}".format(watch_path))
 
         assert (watch['type'] == 'project' or watch['type'] == 'package' or
                 watch['type'] == 'service' or watch['type'] == 'function')
 
-        install_watcher(watch_path, watch['type'], watch['syntax'],
+        install_watchers(watch_path, watch['type'], watch['syntax'],
                         watch['integrity'], watch['topology'],
                         watch['custom'])
 
@@ -735,8 +743,8 @@ def _validate_object_from_watch(path):
                   "error_count": validator.error_count,
                   "errors": validator.errors}
 
-    # re-schedule watcher
-    install_watcher(path, watch['type'], watch['syntax'], watch['integrity'],
+    # re-schedule watchers
+    install_watchers(path, watch['type'], watch['syntax'], watch['integrity'],
                     watch['topology'], watch['custom'])
 
     if not result:
