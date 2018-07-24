@@ -10,23 +10,28 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 
 `tng-sdk-validation` can be used through the CLI, as service  or as a micro-service running inside a docker container.
 
+## Dependencies
+
+* This tool has been designed to be executed in Linux system and Python 3.6 or higher.
+
+* It is necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project) first as *tng-sdk-validation* depends on it. Please follow the instructions provided in the Readme file to install it.
+
+
 ## Installation
 
-This tool has been designed to be executed in Linux system and Python 3.6 or higher.
 
-1. It is necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project) first as *tng-sdk-validation* depends on it. Please follow the instructions provided in the Readme file to install it.
+1. Clone the master branch of this repository and access the directory.
 
-2. Clone the master branch of this repository and access the directory.
-
-3. Then install the Python dependencies.
+2. Then install the Python dependencies defined in requierements file.
 ```bash
 $ pip3 install requirements.txt
 ```
-4. The last step is to install *tng-sdk-validation*
+3. The last step is to install *tng-sdk-validation* tool.
 ```bash
 $ python3 setup.py install
 ```
-5. Once installed the command `tng-sdk-validate` should be available in your Linux system.
+4. Once installed, the command `tng-sdk-validate` should be available in your Linux system.
+
 
 ## Usage
 
@@ -143,8 +148,9 @@ The tng-sdk-validation is published under Apache 2.0 license. Please see the LIC
 
 The following lead developers are responsible for this repository and have admin rights. They can, for example, merge pull requests.
 
-* Antón Román Portabales
-* Ana Pol González
+* Antón Román Portabales <anton.roman@quobis.com>
+* Ana Pol González <ana.pol@quobis.com>
+* Daniel Fernández Calvo <daniel.fernandez@quobis.es>
 
 #### Feedback-Chanel
 
