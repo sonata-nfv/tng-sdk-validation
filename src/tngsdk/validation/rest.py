@@ -350,6 +350,10 @@ class Resources(Resource):
             return ('No resources in cache', 404)
         return resources, 200
 
+    def delete(self):
+        log.info('Deleting cached resources.')
+        flush_resources()
+        return 200
 
 @api_v1.route("/validations/<string:validationId>/fwgraph")
 class ValidationGetNetFWGraph(Resource):
@@ -476,7 +480,8 @@ def _validate_object(args, path, keypath, obj_type):
         if(validation['resources']['vnfd']['hashFile'] == hashFile):
             if(args['custom']):
                 if(custom_resource):
-                    if(validation['resources']['customRules']['hashFile'] == custom_hashFile):
+                    if(validation['resources']['customRules']
+                       ['hashFile'] == custom_hashFile):
                         log.info("Returning cached result for '{0}'".format(vid))
                         update_resource_validation(rid, vid)
                         return validation
