@@ -52,6 +52,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from flask_cors import CORS
 from flask_caching import Cache, make_template_fragment_key
+from threading import Thread
 
 from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
@@ -124,10 +125,6 @@ class Validatewatchers(FileSystemEventHandler):
         # self.observer.join()
 
     def on_modified(self, event):
-        print(self.filename)
-        print(event.src_path)
-        print(event)
-
         self.observer.stop()
         self.callback(self.path + '/' + self.filename)
 
@@ -324,7 +321,6 @@ class ValidationGetNetTopology(Resource):
     def get(self, validationId):
 
         vid = get_validation(validationId)
-        print(vid)
         if (not vid):
             return ('Validation with id {} does not exist'
                     .format(validationId), 404)
@@ -358,7 +354,6 @@ class ValidationGetNetFWGraph(Resource):
                           "the fwgraph of requested validation.")
     def get(self, validationId):
         vid = get_validation(validationId)
-        print(vid)
         if (not vid):
             return ('Validation with id {} does not exist'
                     .format(validationId), 404)
@@ -419,14 +414,23 @@ class Validation(Resource):
         # flush_validations()
         # flush_resources()
         check_correct_args = check_args(args)
-        if check_correct_args == True:
+        if check_correct_args is True:
             keypath, path = process_request(args)
             if not keypath or not path:
                 return 'Dont find descriptor in this path', 404
 
             obj_type = check_obj_type(args)
-            result = _validate_object(args, path, keypath, obj_type)
-            return result
+            if not args['sync']:
+                vid = gen_validation_key(keypath, obj_type, args['syntax'],
+                                         args['integrity'], args['topology'],
+                                         args['custom'],
+                                         args['cfile'] or False)
+                Thread(target=_validate_object(args, path, keypath,
+                       obj_type))
+                return '/validations/' + vid, 201
+            else:
+                result = _validate_object(args, path, keypath, obj_type)
+                return result
         else:
             return check_correct_args
 
@@ -457,6 +461,7 @@ class Watch(Resource):
         flush_watchers()
         return 200
 
+
 def _validate_object(args, path, keypath, obj_type):
     # protect against incorrect parameters
 
@@ -479,7 +484,6 @@ def _validate_object(args, path, keypath, obj_type):
             log.degub('Miss rules file in the request')
             return 'Miss rules file in the request', 400
         rules_path = get_file(request.files['rules'])
-        print(rules_path)
         custom_rid = gen_resource_key(rules_path)
         custom_hashFile = get_file_hash(rules_path)
         custom_resource = get_resource(custom_rid)
@@ -885,7 +889,7 @@ def flush_resources():
 
 def gen_report_result(validationId, validator):
 
-    print("building result report for {0}".format(validationId))
+    log.info("Building result report for {0}".format(validationId))
     report = dict()
     report['validationId'] = '/validations/' + validationId
     report['error_count'] = validator.error_count
@@ -900,7 +904,7 @@ def gen_report_result(validationId, validator):
 
 def gen_report_net_topology(validator):
 
-    print(validator.storage.services.items())
+    log.info("Building result report net topology")
     report = list()
     for sid, service in validator.storage.services.items():
         graph_repr = ''
@@ -921,7 +925,7 @@ def gen_report_net_topology(validator):
 
 
 def gen_report_net_fwgraph(validator):
-    print("building result report net fwgraph")
+    log.info("Building result report net fwgraph")
     report = list()
     for sid, service in validator.storage.services.items():
         report.append(service.fw_graphs)
@@ -1087,25 +1091,9 @@ def validation_exists(vid):
 
 
 def gen_resource_key(path):
-    # assert (type(path) == str and type(otype) == str)
 
     res_hash = hashlib.md5()
-    # res_hash.update(path.encode('utf-8'))
-    # res_hash.update(otype.encode('utf-8'))
-    # if s:
-    #     print('sintaxe')
-    #     res_hash.update('syntax'.encode('utf-8'))
-    # if i:
-    #     print('integrity')
-    #     res_hash.update('integrity'.encode('utf-8'))
-    # if t:
-    #     print('topology')
-    #     res_hash.update('topology'.encode('utf-8'))
-    # if c:
-    #     print('custom')
-    #     res_hash.update('custom'.encode('utf-8'))
-    #
-    # print(res_hash.hexdigest())
+
     # generate path hash
     res_hash.update(str(generate_hash(os.path.abspath(path)))
                     .encode('utf-8'))
