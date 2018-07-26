@@ -10,3 +10,4 @@ flask_cors
 flask_cache
 requests
 business_rules
+watchdog
