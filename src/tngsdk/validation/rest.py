@@ -97,19 +97,20 @@ if app.config['CACHE_TYPE'] == 'redis':
                 ':' + app.config['REDIS_PORT']
 
     cache = Cache(app, config={'CACHE_TYPE': 'redis',
-                                'CACHE_DEFAULT_TIMEOUT': 0,
-                                'CACHE_REDIS_URL': redis_url})
+                               'CACHE_DEFAULT_TIMEOUT': 0,
+                               'CACHE_REDIS_URL': redis_url})
 
 elif app.config['CACHE_TYPE'] == 'simple':
-     cache = Cache(app, config={'CACHE_TYPE': 'simple',
-                                'CACHE_DEFAULT_TIMEOUT': 0})
+    cache = Cache(app, config={'CACHE_TYPE': 'simple',
+                               'CACHE_DEFAULT_TIMEOUT': 0})
 
 else:
-     print("Invalid cache type.")
-     sys.exit(1)
+    print("Invalid cache type.")
+    sys.exit(1)
 
 # keep temporary request errors
 req_errors = []
+
 
 class Validatewatchers(FileSystemEventHandler):
     def __init__(self, path, callback, filename=None):
@@ -134,11 +135,7 @@ class Validatewatchers(FileSystemEventHandler):
 def initialize(debug=False):
     log.info("Initializing validator service")
 
-    try:
-        cache.clear()
-    except:
-        sys.exit(1)
-
+    cache.clear()
     cache.add('debug', debug)
     cache.add('artifacts', list())
     cache.add('validations', dict())
@@ -278,45 +275,46 @@ validations_parser.add_argument("source",
 
 watchers_parser = api_v1.parser()
 watchers_parser.add_argument("watch_path",
-                            help="Specify the path of the watchers that will "
-                                 "will be created.",
-                            required=True)
+                             help="Specify the path of the watchers that will "
+                                  "will be created.",
+                             required=True)
 watchers_parser.add_argument("obj_type",
-                            choices=['function', 'service', 'project'],
-                            help="Specify the type of the validation that "
-                                 "will be watched.",
-                            required=True)
+                             choices=['function', 'service', 'project'],
+                             help="Specify the type of the validation that "
+                                  "will be watched.",
+                             required=True)
 watchers_parser.add_argument("syntax",
-                            location="args",
-                            type=inputs.boolean,
-                            help="Specify the syntax of the validation that "
-                                 "will be watched.",
-                            required=False)
+                             location="args",
+                             type=inputs.boolean,
+                             help="Specify the syntax of the validation that "
+                                  "will be watched.",
+                             required=False)
 watchers_parser.add_argument("integrity",
-                            location="args",
-                            type=inputs.boolean,
-                            help="Specify the integrity of the validation "
-                                 "that will be watched.",
-                            required=False)
+                             location="args",
+                             type=inputs.boolean,
+                             help="Specify the integrity of the validation "
+                                  "that will be watched.",
+                             required=False)
 watchers_parser.add_argument("topology",
-                            location="args",
-                            type=inputs.boolean,
-                            help="Specify the topology of the validation "
-                                 "that will be watched.",
-                            required=False)
+                             location="args",
+                             type=inputs.boolean,
+                             help="Specify the topology of the validation "
+                                  "that will be watched.",
+                             required=False)
 watchers_parser.add_argument("custom",
-                            location="args",
-                            type=inputs.boolean,
-                            help="Specify the custom of the validation that "
-                                 "will be watched.",
-                            required=False)
+                             location="args",
+                             type=inputs.boolean,
+                             help="Specify the custom of the validation that "
+                                  "will be watched.",
+                             required=False)
 
 flushes_parser = api_v1.parser()
 flushes_parser.add_argument("type",
-                          location="args",
-                          choices=['validations', 'resources', 'watchers'],
-                          required=True,
-                          help="Specify the cache that will be reseted.")
+                            location="args",
+                            choices=['validations', 'resources', 'watchers'],
+                            required=True,
+                            help="Specify the cache that will be reseted.")
+
 
 @api_v1.route("/flushes")
 class FlushCaches(Resource):
@@ -341,8 +339,8 @@ class ValidationGetNetTopology(Resource):
     @api_v1.response(200, "Successfully operation.")
     @api_v1.response(400, "Bad request: Could not get"
                           "the net topology of requested validation.")
-
     def get(self, validationId):
+
         vid = get_validation(validationId)
         print(vid)
         if (not vid):
@@ -356,13 +354,16 @@ class ValidationGetNetTopology(Resource):
 
 @api_v1.route("/resources")
 class Resources(Resource):
+
     def get(self):
+
         resources = cache.get('resources')
         if not resources:
             return ('No resources in cache', 404)
         return resources, 200
 
     def delete(self):
+
         log.info('Deleting cached resources.')
         flush_resources()
         return 200
@@ -373,7 +374,6 @@ class ValidationGetNetFWGraph(Resource):
     @api_v1.response(200, "Successfully operation.")
     @api_v1.response(400, "Bad request: Could not get"
                           "the fwgraph of requested validation.")
-
     def get(self, validationId):
         vid = get_validation(validationId)
         print(vid)
@@ -409,6 +409,7 @@ class DeleteValidation(Resource):
         else:
             return vid, 200
 
+
 @api_v1.route("/validations")
 class Validation(Resource):
     """
@@ -419,7 +420,6 @@ class Validation(Resource):
     @api_v1.response(200, "Successfully validation.")
     @api_v1.response(400, "Bad request: Could not validate"
                           "the given descriptor.")
-
     def delete(self):
         log.info('Deleting cached validations.')
         flush_validations()
@@ -437,23 +437,24 @@ class Validation(Resource):
         # flush_validations()
         # flush_resources()
         check_correct_args = check_args(args)
-        if check_correct_args != True:
+        if check_correct_args == True:
+            keypath, path = process_request(args)
+            if not keypath or not path:
+                return 'Dont find descriptor in this path', 404
+
+            obj_type = check_obj_type(args)
+            result = _validate_object(args, path, keypath, obj_type)
+            return result
+        else:
             return check_correct_args
 
-        keypath, path = process_request(args)
-        if not keypath or not path:
-            return 'Dont find descriptor in this path', 404
 
-        obj_type = check_obj_type(args)
-        result = _validate_object(args, path, keypath, obj_type)
-        return result
 
 
 @api_v1.route("/watchers")
 class Watch(Resource):
     @api_v1.response(200, "Successfully operation.")
     @api_v1.response(400, "Bad request.")
-
     def get(self):
         watchers = cache.get('watchers')
         if not watchers:
@@ -463,11 +464,11 @@ class Watch(Resource):
     def post(self, **kwargs):
         args = watchers_parser.parse_args()
         result = install_watchers(args.watch_path,
-                                 args.obj_type,
-                                 syntax=(args.syntax or False),
-                                 integrity=(args.integrity or False),
-                                 topology=(args.topology or False),
-                                 custom=(args.custom or False))
+                                  args.obj_type,
+                                  syntax=(args.syntax or False),
+                                  integrity=(args.integrity or False),
+                                  topology=(args.topology or False),
+                                  custom=(args.custom or False))
 
         return result
 
@@ -505,7 +506,8 @@ def _validate_object(args, path, keypath, obj_type):
                 if(custom_resource):
                     if(validation['resources']['customRules']
                        ['hashFile'] == custom_hashFile):
-                        log.info("Returning cached result for '{0}'".format(vid))
+                        log.info("Returning cached result "
+                                 "for '{0}'".format(vid))
                         update_resource_validation(rid, vid)
                         return validation
             else:
@@ -610,9 +612,9 @@ def _validate_object(args, path, keypath, obj_type):
 
 
 def install_watchers(watch_path, obj_type, syntax, integrity, topology,
-                    custom):
+                     custom):
     log.info("Setting watchers for {0} validation on path: {1}"
-              .format(obj_type, watch_path))
+             .format(obj_type, watch_path))
     if os.path.isdir(watch_path):
         Validatewatchers(watch_path, _validate_object_from_watch)
         set_watch(watch_path, obj_type, syntax, integrity, topology, custom)
@@ -621,7 +623,7 @@ def install_watchers(watch_path, obj_type, syntax, integrity, topology,
         filename = os.path.basename(watch_path)
         dirname = os.path.dirname(watch_path)
         Validatewatchers(dirname, _validate_object_from_watch,
-                        filename=filename)
+                         filename=filename)
         set_watch(watch_path, obj_type, syntax, integrity, topology, custom)
         return 'File watchers cached', 200
     else:
@@ -645,17 +647,17 @@ def load_watch_dirs(workspace):
         assert (watch['type'] == 'project' or watch['type'] == 'package' or
                 watch['type'] == 'service' or watch['type'] == 'function')
 
-        if not 'cfile' in watch:
+        if 'cfile' not in watch:
             watch['cfile'] = None
-        if not 'dpath' in watch:
+        if 'dpath' not in watch:
             watch['dpath'] = None
-        if not 'dext' in watch:
+        if 'dext' not in watch:
             watch['dext'] = None
-        if not 'workspace' in watch:
+        if 'workspace' not in watch:
             watch['workspace'] = None
         install_watchers(watch_path, watch['type'], watch['syntax'],
-                        watch['integrity'], watch['topology'],
-                        watch['custom'])
+                         watch['integrity'], watch['topology'],
+                         watch['custom'])
 
         _validate_object_watcher(watch, watch_path, watch_path, watch['type'])
 
@@ -681,7 +683,8 @@ def _validate_object_watcher(args, path, keypath, obj_type):
                 if(custom_resource):
                     if(validation['resources']['customRules']
                        ['hashFile'] == custom_hashFile):
-                        log.info("Returning cached result for '{0}'".format(vid))
+                        log.info("Returning cached result "
+                                 "for '{0}'".format(vid))
                         update_resource_validation(rid, vid)
                         return validation
             else:
@@ -766,7 +769,6 @@ def set_watch(path, obj_type, syntax, integrity, topology, custom):
     watchers[path]['topology'] = topology
     watchers[path]['custom'] = custom
 
-
     cache.set('watchers', watchers)
 
 
@@ -850,7 +852,7 @@ def _validate_object_from_watch(path):
 
     # re-schedule watchers
     install_watchers(path, watch['type'], watch['syntax'], watch['integrity'],
-                    watch['topology'], watch['custom'])
+                     watch['topology'], watch['custom'])
 
     if not result:
         return
@@ -880,6 +882,7 @@ def gen_watchers():
 #     dict = ast.literal_eval(dict_str)
 #     return dict
 #
+
 
 def flush_validations():
     cache.set('validations', dict())
@@ -1002,11 +1005,12 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     validations[vid]['topology'] = topology or False
     validations[vid]['custom'] = custom or False
     validations[vid]['resources'] = dict()
-    validations[vid]['resources']['vnfd'] = {'id' : '/resources/' + rid,
-                                             'hashFile' : hashFile}
+    validations[vid]['resources']['vnfd'] = {'id': '/resources/' + rid,
+                                             'hashFile': hashFile}
     if custom_rid:
-        validations[vid]['resources']['customRules'] = {'id' : '/resources/' + custom_rid,
-                                                        'hashFile' : custom_hashFile}
+        validations[vid]['resources']['customRules'] = (
+            {'id': '/resources/' + custom_rid,
+             'hashFile': custom_hashFile})
     if result:
         validations[vid]['result'] = result
     if net_topology:
@@ -1025,7 +1029,7 @@ def get_validation(vid):
 
 def get_resources():
 
-    #resource_id {type | path | syntax | integrity | topology}
+    # resource_id {type | path | syntax | integrity | topology}
     report = dict()
     resources = cache.get('resources')
     validations = cache.get('validations')

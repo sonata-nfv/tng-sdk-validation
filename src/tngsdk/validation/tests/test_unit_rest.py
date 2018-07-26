@@ -172,7 +172,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 0)
 
-
     def test_rest_validation_function_integrity_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&function=true' +
@@ -352,7 +351,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
                "syntax=true&topology=true")
         descriptor = open('/home/dani/Documents/firewall-vnfd.yml', 'rb')
         data = {
-                'descriptor': (descriptor.name, descriptor, 'application/octet-stream'),
+                'descriptor': (descriptor.name, descriptor,
+                               'application/octet-stream'),
         }
         m = MultipartEncoder(data)
         headers = {'Content-Type': m.content_type}
@@ -367,7 +367,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
         descriptor = open('/home/dani/Documents/firewall-vnfd.yml', 'rb')
         rules = open('/home/dani/Documents/custom_rule_1.yml', 'rb')
         data = {
-                'descriptor': (descriptor.name, descriptor, 'application/octet-stream'),
+                'descriptor': (descriptor.name, descriptor,
+                               'application/octet-stream'),
                 'rules': (rules.name, rules, 'application/octet-stream')
         }
         m = MultipartEncoder(data)
