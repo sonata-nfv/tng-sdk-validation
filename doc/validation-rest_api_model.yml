@@ -16,7 +16,7 @@ tags:
     description: Operations available to regular developers
 paths:
           
-  /validation:
+  /validations:
     post:
       tags:
         - developers
@@ -33,14 +33,30 @@ paths:
           required: true
           schema:
             type: string
+            enum: [embedded, local, url]
         - in: query
           name: path
           description: specifies the local path of the url the file which contains the object to be validated
           schema:
             type: string
         - in: query
+          name: dpath
+          description: specifies the local directory to search for function descriptors. Usefull when using the service validation.
+          schema:
+            type: string
+        - in: query
+          name: dext
+          description: indicates the extension of the function files when a folder of functions will be validated
+          schema:
+            type: string
+        - in: query
           name: file
           description: file name which contains the descriptor of the project, package, service or function to be validated
+          schema:
+            type: string
+        - in: query
+          name: cfile
+          description: indicates the file where the custom rules will be defined
           schema:
             type: string
         - in: query
@@ -67,6 +83,31 @@ paths:
         - in: query
           name: topology
           description: indicates that topology must be validated
+          schema:
+            type: boolean
+        - in: query
+          name: custom
+          description: indicates that custom rules must be validated
+          schema:
+            type: boolean
+        - in: query
+          name: workspace
+          description: indicates the workspace path of the project to be validated
+          schema:
+            type: string
+        - in: query
+          name: function
+          description: indicates if the descriptor to be validated corresponds to a function
+          schema:
+            type: boolean
+        - in: query
+          name: project
+          description: indicates if the request want to validate a project
+          schema:
+            type: boolean
+        - in: query
+          name: service
+          description: indicates if the descriptor to be validated corresponds to a service
           schema:
             type: boolean
  #       - in: query
@@ -97,7 +138,7 @@ paths:
           
         '400':
           description: Bad input parameter. A descriptive message will be provided with the error reply
-          
+  
     get:
       tags:
         - developers
@@ -108,32 +149,27 @@ paths:
         list of validations
       parameters:
         - in: query
-          name: vid
-          description: validation ID of validation objects to return 
-          required: false
-          schema:
-            type: string
-        - in: query
           name: rid
-          description: resource ID of validation objects to return 
+          description: (Not available yet) resource ID to return
           required: false
           schema:
-            type: string
+            type: string  
         - in: query
           name: skip
-          description: number of records to skip for pagination
+          description: (Not available yet)  number of records to skip for pagination
           schema:
             type: integer
             format: int32
             minimum: 0
         - in: query
           name: limit
-          description: maximum number of records to return
+          description: (Not available yet) maximum number of records to return
           schema:
             type: integer
             format: int32
             minimum: 0
             maximum: 50
+
       responses:
         '200':
           description: search results matching criteria
@@ -145,59 +181,68 @@ paths:
                   $ref: '#/components/schemas/resourceItem'
         '400':
           description: bad input parameter      
-          
-                   
-  /resources:
+  
+    delete:
+      tags:
+        - developers
+      summary: delete all validations cached 
+      description: |
+        This endpoint delete all validations cached 
+      responses:
+        '200': 
+          description: if the validations wares deleted
+    
+    
+  /validations/{validationId}:  
     get:
       tags:
         - developers
-      summary: searches validated resources in the cache
-      operationId: getResource
+      summary: returns a validation reports
       description: |
-        (Not yet available) It returns a list of the cached resources by the validation tool
+        This endpoint returns validation report for the specified validationId
       parameters:
-        - in: query
-          name: searchString
-          description: pass an optional search string for looking up inventory
-          required: false
+        - in: path
+          name: validationId
+          description: validation ID of validation objects to return 
+          required: true
           schema:
             type: string
-        - in: query
-          name: rid
-          description: resource ID to return
-          required: false
-          schema:
-            type: string  
-        - in: query
-          name: skip
-          description: number of records to skip for pagination
-          schema:
-            type: integer
-            format: int32
-            minimum: 0
-        - in: query
-          name: limit
-          description: maximum number of records to return
-          schema:
-            type: integer
-            format: int32
-            minimum: 0
-            maximum: 50
       responses:
-        '200':
-          description: search results matching criteria
+        '200': 
+          description: returns a validation report
           content:
             application/json:
               schema:
                 type: array
-      # fix this
                 items:
-                  $ref: '#/components/schemas/ValidationAsyncResult'
-        '400':
-          description: bad input parameter
+                  $ref: '#/components/schemas/ValidationSyncResult'
+        '404':
+          description: If the validation specified by validationId was not exist in cache
+          
+    delete:
+      tags:
+        - developers
+      summary: delete a validation cached specified by validationId
+      description: |
+        This endpoint delete validation cached specified by validationId 
+      parameters:
+        - in: path
+          name: validationId
+          description: validation ID of validation objects to delete 
+          required: true
+          schema:
+            type: string
+      responses:
+        '200': 
+          description: if the validation was deleted
+        '404':
+          description: If the validation specified by validationId was not exist in cache
+ 
+        
+ 
   # to complete        
           
-  /resources/{rid}/topology:
+  /validations/{validationId}/topology:
     get:
       tags:
         - developers
@@ -207,7 +252,7 @@ paths:
         (Not yet available) It returns the topology generated in a valiation identified by vid
       parameters:
         - in: path
-          name: rid
+          name: validationId
           description: resource ID
           required: true
           schema:
@@ -225,7 +270,7 @@ paths:
           description: bad input parameter
           
    # in the previous version the graph was accesed with path /fwgraphs        
-  /resources/{rid}/fwgraph:
+  /validations/{validationId}/fwgraph:
     get:
       tags:
         - developers
@@ -235,7 +280,7 @@ paths:
         (Not yet available) it return the last fwgraph for a resource if available
       parameters:
         - in: path
-          name: rid
+          name: validationId
           description: pass an optional search string for looking up inventory
           required: true
           schema:
@@ -252,22 +297,71 @@ paths:
         '400':
           description: bad input parameter
           
- 
-  /watches:
+  /resources:
     get:
       tags:
         - developers
       summary: searches validated resources in the cache
       operationId: getResource
       description: |
-       (Not yet available) Returns a list of resources wtahced by the validation tool, it means that they will automatically validated when a modification in the file is detected
+        (Not yet available) It returns a list of the cached resources by the validation tool
       parameters:
         - in: query
           name: searchString
-          description: pass an optional search string for looking up inventory
+          description: (Not available yet) pass an optional search string for looking up inventory
           required: false
           schema:
             type: string
+        - in: query
+          name: resourceId
+          description: (Not available yet) resource ID to return
+          required: false
+          schema:
+            type: string  
+        - in: query
+          name: skip
+          description: (Not available yet) number of records to skip for pagination
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          description: (Not available yet)  number of records to return
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 50
+      responses:
+        '200':
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                type: array
+      # fix this
+                items:
+                  $ref: '#/components/schemas/ValidationAsyncResult'
+        '400':
+          description: bad input parameter
+ 
+  /watchers:
+    get:
+      tags:
+        - developers
+      summary: searches validated resources in the cache
+      operationId: getResource
+      description: |
+       (Not yet available) Returns a list of resources watched by the validation tool, it means that they will automatically validated when a modification in the file is detected
+      parameters:
+        - in: query
+          name: searchString
+          description: (Not implemented yet) pass an optional search string for looking up inventory
+          required: false
+          schema:
+            type: string
+          # missing parameters for pagination  
       responses:
         '200':
           description: search results matching criteria
@@ -280,8 +374,48 @@ paths:
                   $ref: '#/components/schemas/WatchObject'
         '400':
           description: bad input parameter
+        '404': 
+          description: No validation found  
         '503':
-          description: error in th evalidation service
+          description: error in the validation service
+    post:
+      tags:
+        - developers
+      summary: Creates a new observed resource. The service will subscribe to any change in the file and will perform a validaton when   modification in the file takes place
+      parameters:
+        - in: query
+          name: syntax
+          description: indicates that syntax of the object must be validated
+          schema:
+            type: boolean
+        - in: query
+          name: integrity
+          description: indicates that integrity must be validated
+          schema:
+            type: boolean
+        - in: query
+          name: topology
+          description: indicates that topology must be validated
+          schema:
+            type: boolean
+        
+      responses:
+          '202':
+            description: watchers correcty created
+          '400':
+            description: bad parameters
+          '503':
+            description: service not available
+          
+    
+    delete:
+      tags:
+        - developers
+      summary: deletes all the watchers
+      responses:
+        '200':
+          description: watchers correcty deleted
+    
 components:
   schemas:
     ValidationAsyncResult:
@@ -304,17 +438,38 @@ components:
     resourceItem:
       type: object
       required:
-        - rid
+        - resourceId
+        - type
+        - hashFile
       properties:
-        rid:
+        resourceId:
           type: string
-        vid:
+        validations:
+          type: array
+          description: validations performed for this resource.
+          items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                    format: url
+                  type:
+                    type: string
+                    enum: [ validation ]
+                    
+        type:
+          description: indicates the type of resource
           type: string
-          description: indicates the last validation performed for this resource. Empty if no validation available
-        resource_type:
-            description: indicates the type of resource
-            type: string
-            enum: [project, service, function]
+          enum: [project, service, function]
+        hashFile:
+          description: hash of the resource used to detect if there have been changes in a resource
+          type: string
+        includedResources:
+          description: resources which belong to this 
+          type: array
+          items: 
+            $ref: '#/components/schemas/resourceItem'
+            
     TopologyObject:
       type: object
       properties:
@@ -332,7 +487,9 @@ components:
       properties:
         rid:
           type: string
-        validation_type:
+        path:
+          type: string
+        type:
             description: indicates the type of validation which is done for this watched resource
             type: string
             enum: [ project, service, function ]
@@ -348,40 +505,60 @@ components:
       properties:
         vid:
           type: string
-        rid:
-          type: string
         syntax:
           type: boolean
         topology:
           type: boolean
         integrity:
-          type: boolean  
+          type: boolean 
+        custom:
+          type: boolean
+        #the field for the custom file is missing
         validation_type:
           description: indicates the type of validations included in this validation instance
           type: string
           enum: [project, service, function]
-        error_count: 
-          type: integer
-        errors:
-            type: array
-            items:
-              type: object
-              properties:
-                source_id:
-                  type: string
-                event_code:
-                  type: string
-                level:
-                  type: string
-                  enum: [error, warning]
-                event_id:
-                  type: string
-                header:
-                  type: string
-                detail:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                    detail_event_id:
-                      type: string
+        resources:
+          type: array
+          description: resources related with this validation.
+          items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                    format: url
+                  type:
+                    type: string
+                    enum: [ resource ]
+        result:
+          type: object
+          properties:
+            error_count:
+              type: integer
+            warning_count:
+              type: integer
+            vid:
+              type: string
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  source_id:
+                    type: string
+                  event_code:
+                    type: string
+                  level:
+                    type: string
+                    enum: [error, warning]
+                  event_id:
+                    type: string
+                  header:
+                    type: string
+                  detail:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      detail_event_id:
+                        type: string
