@@ -12,3 +12,4 @@ requests
 business_rules
 watchdog
 flask_caching
+redis
