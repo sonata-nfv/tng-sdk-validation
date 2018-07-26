@@ -11,3 +11,4 @@ flask_cache
 requests
 business_rules
 watchdog
+flask_caching
