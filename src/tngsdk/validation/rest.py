@@ -335,6 +335,7 @@ class FlushCaches(Resource):
 
         return 200
 
+
 @api_v1.route("/validations/<string:validationId>/topology")
 class ValidationGetNetTopology(Resource):
     @api_v1.response(200, "Successfully operation.")
@@ -365,6 +366,7 @@ class Resources(Resource):
         log.info('Deleting cached resources.')
         flush_resources()
         return 200
+
 
 @api_v1.route("/validations/<string:validationId>/fwgraph")
 class ValidationGetNetFWGraph(Resource):
@@ -480,11 +482,21 @@ def _validate_object(args, path, keypath, obj_type):
     resource = get_resource(rid)
     validation = get_validation(vid)
     hashFile = get_file_hash(path)
-    if(args['custom']):
+    if(args['custom'] and args['source'] == 'local'):
         custom_rid = gen_resource_key(args['cfile'])
-        print(custom_rid)
         custom_hashFile = get_file_hash(args['cfile'])
-        print(custom_hashFile)
+        custom_resource = get_resource(custom_rid)
+    elif(args['custom'] and args['source'] == 'embedded'):
+        if 'descriptor' not in request.files:
+            log.degub('Miss descriptor file in the request')
+            return 'Miss descriptor file in the request', 400
+        if 'rules' not in request.files:
+            log.degub('Miss rules file in the request')
+            return 'Miss rules file in the request', 400
+        rules_path = get_file(request.files['rules'])
+        print(rules_path)
+        custom_rid = gen_resource_key(rules_path)
+        custom_hashFile = get_file_hash(rules_path)
         custom_resource = get_resource(custom_rid)
 
     if resource and validation:
@@ -507,49 +519,43 @@ def _validate_object(args, path, keypath, obj_type):
              .format(obj_type, path, args['syntax'],
                      args['integrity'], args['topology'],
                      args['custom'], rid, vid))
-    if args['custom']:
+    if (args['custom'] and args['source'] == 'local'):
         set_resource(rid, keypath, obj_type, hashFile, vid)
         set_resource(custom_rid, args['cfile'], 'custom_rule',
                      custom_hashFile, vid)
     else:
         set_resource(rid, keypath, obj_type, hashFile, vid)
+
     if args['source'] == 'embedded':
         log.info('File embedded in request')
-        if 'descriptor' not in request.files:
-            log.degub('Miss descriptor file in the request')
-            if args['custom']:
-                if 'rules' not in request.files:
-                    log.degub('Miss rules file in the request')
-        else:
-            # Save file passed in the request
-            descriptor_path = get_file(request.files['descriptor'])
-            validator = Validator()
-            if not args['custom']:
-                validator.configure(syntax=(args['syntax'] or False),
-                                    integrity=(args['integrity'] or False),
-                                    topology=(args['topology'] or False),
-                                    custom=(args['custom'] or False),
-                                    cfile=(args['cfile'] or False),
-                                    dext=(args['dext'] or False),
-                                    dpath=(args['dpath'] or False),
-                                    workspace_path=(args['workspace']
-                                                    or False))
-            if args['custom']:
-                rules_path = get_file(request.files['rules'])
-                validator.configure(syntax=(args['syntax'] or False),
-                                    integrity=(args['integrity'] or False),
-                                    topology=(args['topology'] or False),
-                                    custom=(args['custom'] or False),
-                                    cfile=rules_path,
-                                    dext=(args['dext'] or False),
-                                    dpath=(args['dpath'] or False),
-                                    workspace_path=(args['workspace']
-                                                    or False))
+        # Save file passed in the request
+        descriptor_path = path
+        validator = Validator()
+        if not args['custom']:
+            validator.configure(syntax=(args['syntax'] or False),
+                                integrity=(args['integrity'] or False),
+                                topology=(args['topology'] or False),
+                                custom=(args['custom'] or False),
+                                cfile=(args['cfile'] or False),
+                                dext=(args['dext'] or False),
+                                dpath=(args['dpath'] or False),
+                                workspace_path=(args['workspace']
+                                                or False))
+        if args['custom']:
+            validator.configure(syntax=(args['syntax'] or False),
+                                integrity=(args['integrity'] or False),
+                                topology=(args['topology'] or False),
+                                custom=(args['custom'] or False),
+                                cfile=rules_path,
+                                dext=(args['dext'] or False),
+                                dpath=(args['dpath'] or False),
+                                workspace_path=(args['workspace']
+                                                or False))
 
-            if args['function']:
-                log.info("Validating Function: {}".format(descriptor_path))
-                # TODO check if the function is a valid file path
-                validator.validate_function(descriptor_path)
+        if args['function']:
+            log.info("Validating Function: {}".format(descriptor_path))
+            # TODO check if the function is a valid file path
+            validator.validate_function(descriptor_path)
     else:
         if (args['source'] == 'local'):
             log.info('Local file')
@@ -598,12 +604,9 @@ def _validate_object(args, path, keypath, obj_type):
                        hashFile, result=json_result, net_topology=net_topology,
                        net_fwgraph=net_fwgraph)
     update_resource_validation(rid, vid)
-
+    validation_to_return = get_validation(vid)
     # return json_result
-    return {"validation_process_uuid": "test",
-            "status": 200,
-            "error_count": validator.error_count,
-            "errors": validator.errors}
+    return validation_to_return, 200
 
 
 def install_watchers(watch_path, obj_type, syntax, integrity, topology,
@@ -1116,7 +1119,6 @@ def gen_resource_key(path):
     #
     # print(res_hash.hexdigest())
     # generate path hash
-    print(os.path.abspath(path))
     res_hash.update(str(generate_hash(os.path.abspath(path)))
                     .encode('utf-8'))
     # validation event config must also be included
