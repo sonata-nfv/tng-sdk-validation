@@ -316,24 +316,6 @@ flushes_parser.add_argument("type",
                             help="Specify the cache that will be reseted.")
 
 
-@api_v1.route("/flushes")
-class FlushCaches(Resource):
-
-    def post(self, **kwargs):
-        args = flushes_parser.parse_args()
-        if args.type == 'validations':
-            log.info('Reseting validations.')
-            flush_validations()
-        elif args.type == 'resources':
-            log.info('Reseting resources')
-            flush_resources()
-        elif args.type == 'watchers':
-            log.info('Reseting watchers')
-            flush_watchers()
-
-        return 200
-
-
 @api_v1.route("/validations/<string:validationId>/topology")
 class ValidationGetNetTopology(Resource):
     @api_v1.response(200, "Successfully operation.")
@@ -449,8 +431,6 @@ class Validation(Resource):
             return check_correct_args
 
 
-
-
 @api_v1.route("/watchers")
 class Watch(Resource):
     @api_v1.response(200, "Successfully operation.")
@@ -458,7 +438,7 @@ class Watch(Resource):
     def get(self):
         watchers = cache.get('watchers')
         if not watchers:
-            return ('No watchers in cache', 204)
+            return ('No watchers in cache', 404)
         return watchers, 200
 
     def post(self, **kwargs):
@@ -472,6 +452,10 @@ class Watch(Resource):
 
         return result
 
+    def delete(self):
+        log.info('Reseting watchers')
+        flush_watchers()
+        return 200
 
 def _validate_object(args, path, keypath, obj_type):
     # protect against incorrect parameters
