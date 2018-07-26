@@ -115,27 +115,6 @@ Example usage:
         tng-sdk-validate --function ./vnfds/ --dext yml
 ```
 
-### Service mode
-#### API overview
-
-The API is an avolution of the API supported in the [Sonata-NFV *son-cli* project](https://github.com/sonata-nfv/son-cli).
-A new synchronous feature has been added to the API. With this new feature it is possible to validate an object an receive the validation result in the reply of the HTTP POST request.
-**Important:** Currently the descriptors files can not be passed as an attachement in the request but the file path is provided and must be accessible by the `tng-sdk-validate` executable. We plan to add the capability to pass the descriptor as an attachment in the POST request.
-
-#### Synchronous queries
-In order to get a synchronous result the query string parameter `sync=true` must be added. This means that if the 200OK reply will contain the result of the validation process. If the sync parameter is not added or is false then the request is processed asynchronously. In any case the validation resource is created so its result can be checked at any moment.
-
-#### Asynchronous queries (still not working in this version)
-By default all the queries are asynchronous. It means that when a validation resource is created the API will reply inmediatly informaing about the result of the resource creation and the path to reach the validation resource not with the result not the validation itself. The validation result must be accessed later once the validation process has finished.
-
-The end-points exposed by the API are as follows:
-
-* validate an SDK project, a service or a function (`/validate/<object type> [POST]`)
-* retrieve a list of available and validated objects (`/report [GET]`)
-* retrieve the validation report for a specific object (`/report/result/<resource id> [GET]`)
-* retrieve the validated network topology graph (`/report/topology/<resource id> [GET]`)
-* retrieve the validated forwarding graphs structure (`/fwgraphs/<resource id>) [GET]`)
-
 ## Documentation
 
 Please refer to the [wiki](https://github.com/sonata-nfv/tng-sdk-validation/wiki) of the project for a more detailed documentation. 
