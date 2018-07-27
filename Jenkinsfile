@@ -10,7 +10,7 @@ pipeline {
     stage('Unit Tests') {
       steps {
         echo 'Unit Testing..'
-        sh "docker run -d --name redis_server -p 6379:6379 --network my_network redis"
+        sh "docker run -d --rm --name redis_server -p 6379:6379 --network my_network redis"
         sh "docker run --network my_network -e VAPI_REDIS_HOST='redis_server' -i --rm registry.sonata-nfv.eu:5000/tng-sdk-validation pytest -v"
       }
     }
