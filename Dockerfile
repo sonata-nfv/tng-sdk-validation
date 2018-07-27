@@ -34,7 +34,7 @@ FROM python:3.6-alpine
 MAINTAINER 5GTANGO
 
 # install git
-RUN apk update && apk upgrade && apk add --no-cache bash git 
+RUN apk update && apk upgrade && apk add --no-cache bash git && apk add --update redis
 
 RUN pip install pycodestyle
 
@@ -55,4 +55,4 @@ RUN python setup.py install
 
 # This command leaves the tng-sdk-validate tool running in API mode
 # Listening at por 5001
-#RUN tng-sdk-validate --api 
+#RUN tng-sdk-validate --api
