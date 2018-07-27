@@ -1,4 +1,4 @@
-# YAML description of a iperf docker container
+# YAML description of a tcpdump docker container
 # used in the SONATA platform
 
 ---
@@ -9,12 +9,12 @@
 descriptor_schema: "https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/function-descriptor/vnfd-schema.yml"
 
 vendor: "eu.sonata-nfv"
-name: "iperf-vnf"
+name: "tcpdump-vnf"
 version: "0.2"
 author: "Steven van Rossem, iMinds"
 description: >
-  "A first iperf VNF descriptor. The iperf VNF
-   acts as a traffic source."
+  "A first tcpdump VNF descriptor. The tcpdump
+   VNF acts as a traffic sink."
 
 ##
 ## The virtual deployment unit.
@@ -22,12 +22,12 @@ description: >
 virtual_deployment_units:
   - id: "vdu01"
     vm_image: "image"
-    vm_image_format: "qcow2"
+    vm_image_format: "docker"
     resource_requirements:
       cpu:
-        vcpus: 4
+        vcpus: 1
       memory:
-        size: 8
+        size: 2
         size_unit: "GB"
       storage:
         size: 10
@@ -42,7 +42,6 @@ virtual_deployment_units:
       - id: "cp03"
         interface: "ipv4"
         type: "internal"
-
 
 ##
 ## The virtual links that interconnect
@@ -64,6 +63,7 @@ virtual_links:
     connection_points_reference:
       - "vdu01:cp03"
       - "output"
+
 ##
 ## The VNF connection points to the
 ## outside world.
