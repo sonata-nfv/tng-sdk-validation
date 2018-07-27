@@ -10,3 +10,7 @@ flask_cors
 flask_cache
 requests
 business_rules
+watchdog
+flask_caching
+redis
+requests_toolbelt

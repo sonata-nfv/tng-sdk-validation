@@ -349,7 +349,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
         url = ("/api/v1/validations?function=true&" +
                "source=embedded&sync=true&integrity=true&" +
                "syntax=true&topology=true")
-        descriptor = open('/home/dani/Documents/firewall-vnfd.yml', 'rb')
+        descriptor = open(SAMPLES_DIR + '/samples/functions/valid-son/' +
+                          'firewall-vnfd.yml', 'rb')
         data = {
                 'descriptor': (descriptor.name, descriptor,
                                'application/octet-stream'),
@@ -364,8 +365,10 @@ class TngSdkValidationRestTest(unittest.TestCase):
         url = ("/api/v1/validations?function=true&" +
                "source=embedded&sync=true&integrity=true&" +
                "syntax=true&topology=true&custom=true")
-        descriptor = open('/home/dani/Documents/firewall-vnfd.yml', 'rb')
-        rules = open('/home/dani/Documents/custom_rule_1.yml', 'rb')
+        descriptor = open(SAMPLES_DIR + '/samples/functions/valid-son/' +
+                          'firewall-vnfd.yml', 'rb')
+        rules = open(SAMPLES_DIR + '/samples/custom_rules/rules/' +
+                     'custom_rule_1.yml', 'rb')
         data = {
                 'descriptor': (descriptor.name, descriptor,
                                'application/octet-stream'),
