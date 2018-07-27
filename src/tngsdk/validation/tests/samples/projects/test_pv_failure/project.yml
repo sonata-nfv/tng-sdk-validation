@@ -1,0 +1,29 @@
+version: '0.5'
+package:
+  name: 5gtango-project-sample
+  vendor: eu.5gtango
+  version: '0.1'
+  maintainer: Name, Company, Contact
+  description: Some description about this sample
+descriptor_extension: yml
+files:
+- path: sources/nsd/unexpected_field.yml
+  type: application/vnd.5gtango.nsd
+  tags:
+  - eu.5gtango
+- path: sources/vnfd/invalid-firewall-vnfd-tng.yml
+  type: application/vnd.5gtango.vnfd
+  tags:
+  - eu.5gtango
+- path: sources/vnfd/invalid-iperf-vnfd-tng.yml
+  type: application/vnd.5gtango.vnfd
+  tags:
+  - eu.5gtango
+- path: sources/vnfd/invalid-tcpdump-vnfd-tng.yml
+  type: application/vnd.5gtango.vnfd
+  tags:
+  - eu.5gtango
+- path: sources/vnfd/invalid-default-vnfd-tng.yml
+  type: application/vnd.5gtango.vnfd
+  tags:
+  - eu.5gtango
