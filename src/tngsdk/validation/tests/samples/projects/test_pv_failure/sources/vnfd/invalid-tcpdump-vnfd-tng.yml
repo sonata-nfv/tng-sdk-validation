@@ -1,4 +1,4 @@
-# YAML description of a iperf docker container
+# YAML description of a tcpdump docker container
 # used in the SONATA platform
 
 ---
@@ -9,25 +9,25 @@
 descriptor_schema: "https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/function-descriptor/vnfd-schema.yml"
 
 vendor: "eu.sonata-nfv"
-name: "iperf-vnf"
+name: "tcpdump-vnf"
 version: "0.2"
 author: "Steven van Rossem, iMinds"
 description: >
-  "A first iperf VNF descriptor. The iperf VNF
-   acts as a traffic source."
+  "A first tcpdump VNF descriptor. The tcpdump
+   VNF acts as a traffic sink."
 
 ##
 ## The virtual deployment unit.
 ##
 virtual_deployment_units:
   - id: "vdu01"
-    vm_image: "image"
-    vm_image_format: "qcow2"
+    vm_image: "file:///docker_files/tcpdump/Dockerfile"
+    vm_image_format: "docker"
     resource_requirements:
       cpu:
-        vcpus: 4
+        vcpus: 1
       memory:
-        size: 8
+        size: 2
         size_unit: "GB"
       storage:
         size: 10
@@ -43,7 +43,6 @@ virtual_deployment_units:
         interface: "ipv4"
         type: "internal"
 
-
 ##
 ## The virtual links that interconnect
 ## the different connections points.
@@ -56,7 +55,7 @@ virtual_links:
       - "mgmt"
   - id: "input"
     connectivity_type: "E-Line"
-    connection_points_reference:
+  connection_points_reference:
       - "vdu01:cp02"
       - "input"
   - id: "output"
@@ -64,17 +63,18 @@ virtual_links:
     connection_points_reference:
       - "vdu01:cp03"
       - "output"
+
 ##
-## The VNF connection points to the
+## The VNF connection points to the 
 ## outside world.
 ##
 connection_points:
   - id: "mgmt"
     interface: "ipv4"
-    type: "internal"
+    type: "management"
   - id: "input"
     interface: "ipv4"
-    type: "internal"
+    type: "external"
   - id: "output"
     interface: "ipv4"
-    type: "internal"
+    type: "external"
