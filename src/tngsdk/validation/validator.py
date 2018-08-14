@@ -88,7 +88,7 @@ class Validator(object):
         self._dpath = '.'
         self._log_level = self._workspace.log_level
         self._cfile = '.'
-        self._workspace_path = '.'
+        self._workspace_path = os.path.expanduser('~/.tng-workspace/')
         # # for package signature validation
         # self._pkg_signature = None
         # self._pkg_pubkey = None

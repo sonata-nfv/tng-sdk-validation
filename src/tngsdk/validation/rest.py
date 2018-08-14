@@ -468,23 +468,26 @@ def _validate_object(args, path, keypath, obj_type):
                              args['integrity'], args['topology'],
                              args['custom'], args['cfile'] or False)
     resource = get_resource(rid)
-    validation = get_validation(vid)
-    hashFile = get_file_hash(path)
-    if(args['custom'] and args['source'] == 'local'):
-        custom_rid = gen_resource_key(args['cfile'])
-        custom_hashFile = get_file_hash(args['cfile'])
-        custom_resource = get_resource(custom_rid)
-    elif(args['custom'] and args['source'] == 'embedded'):
-        if 'descriptor' not in request.files:
-            log.degub('Miss descriptor file in the request')
-            return 'Miss descriptor file in the request', 400
-        if 'rules' not in request.files:
-            log.degub('Miss rules file in the request')
-            return 'Miss rules file in the request', 400
-        rules_path = get_file(request.files['rules'])
-        custom_rid = gen_resource_key(rules_path)
-        custom_hashFile = get_file_hash(rules_path)
-        custom_resource = get_resource(custom_rid)
+    if (obj_type == 'project'):
+        pass
+    else:
+        validation = get_validation(vid)
+        hashFile = get_file_hash(path)
+        if(args['custom'] and args['source'] == 'local'):
+            custom_rid = gen_resource_key(args['cfile'])
+            custom_hashFile = get_file_hash(args['cfile'])
+            custom_resource = get_resource(custom_rid)
+        elif(args['custom'] and args['source'] == 'embedded'):
+            if 'descriptor' not in request.files:
+                log.degub('Miss descriptor file in the request')
+                return 'Miss descriptor file in the request', 400
+            if 'rules' not in request.files:
+                log.degub('Miss rules file in the request')
+                return 'Miss rules file in the request', 400
+            rules_path = get_file(request.files['rules'])
+            custom_rid = gen_resource_key(rules_path)
+            custom_hashFile = get_file_hash(rules_path)
+            custom_resource = get_resource(custom_rid)
 
     if resource and validation:
         if obj_type == 'function':
@@ -535,6 +538,8 @@ def _validate_object(args, path, keypath, obj_type):
         set_resource(rid, keypath, obj_type, hashFile, vid)
         set_resource(custom_rid, args['cfile'], 'custom_rule',
                      custom_hashFile, vid)
+    elif (obj_type == 'project'):
+        pass
     else:
         set_resource(rid, keypath, obj_type, hashFile, vid)
 
@@ -584,7 +589,7 @@ def _validate_object(args, path, keypath, obj_type):
                             cfile=(args['cfile'] or False),
                             dext=(args['dext'] or False),
                             dpath=(args['dpath'] or False),
-                            workspace_path=(args['workspace'] or False))
+                            workspace_path=(args['workspace'] or None))
 
         if args['function']:
             log.info("Validating Function: {}".format(path))
@@ -609,6 +614,14 @@ def _validate_object(args, path, keypath, obj_type):
                        hashFile, custom_rid, custom_hashFile,
                        result=json_result, net_topology=net_topology,
                        net_fwgraph=net_fwgraph)
+    elif (obj_type == 'project'):
+        set_validation(vid, rid, path, obj_type, args['syntax'],
+                       args['integrity'], args['topology'], args['custom'],
+                       'ProjectNotHashFile', result=json_result,
+                       net_topology=net_topology,
+                       net_fwgraph=net_fwgraph,
+                       dpath=(args['dpath'] or None),
+                       dext=(args['dext'] or None))
     else:
         set_validation(vid, rid, path, obj_type, args['syntax'],
                        args['integrity'], args['topology'], args['custom'],
@@ -616,9 +629,8 @@ def _validate_object(args, path, keypath, obj_type):
                        net_fwgraph=net_fwgraph,
                        dpath=(args['dpath'] or None),
                        dext=(args['dext'] or None))
-    update_resource_validation(rid, vid)
+    # update_resource_validation(rid, vid)
     validation_to_return = get_validation(vid)
-    # return json_result
     return validation_to_return, 200
 
 
@@ -1270,12 +1282,12 @@ def check_args(args):
             return {"error_message": "Need rules file path" +
                     " (cfile) to validate custom rules of " +
                     "descriptor"}, 400
-    if (args.project):
-        if (args.workspace is None):
-            log.info('With project validation the workspace path ' +
-                     'of the project should be specified (workspace)')
-            return {"error_message": "Need workspace path " +
-                    "(workspace) to validate project"}, 400
+    # if (args.project):
+    #     if (args.workspace is None):
+    #         log.info('With project validation the workspace path ' +
+    #                  'of the project should be specified (workspace)')
+    #         return {"error_message": "Need workspace path " +
+    #                 "(workspace) to validate project"}, 400
     return True
 
 
