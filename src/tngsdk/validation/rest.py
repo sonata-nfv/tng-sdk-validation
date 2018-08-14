@@ -534,12 +534,12 @@ def _validate_object(args, path, keypath, obj_type):
                      args['custom'], rid, vid,
                      args['dpath'] or None,
                      args['dext'] or None))
-    if (args['custom'] and args['source'] == 'local'):
+    if (obj_type == 'project'):
+        pass
+    elif (args['custom'] and args['source'] == 'local'):
         set_resource(rid, keypath, obj_type, hashFile, vid)
         set_resource(custom_rid, args['cfile'], 'custom_rule',
                      custom_hashFile, vid)
-    elif (obj_type == 'project'):
-        pass
     else:
         set_resource(rid, keypath, obj_type, hashFile, vid)
 
@@ -608,13 +608,7 @@ def _validate_object(args, path, keypath, obj_type):
     json_result = gen_report_result(vid, validator)
     net_topology = gen_report_net_topology(validator)
     net_fwgraph = gen_report_net_fwgraph(validator)
-    if(args['custom']):
-        set_validation(vid, rid, path, obj_type, args['syntax'],
-                       args['integrity'], args['topology'], args['custom'],
-                       hashFile, custom_rid, custom_hashFile,
-                       result=json_result, net_topology=net_topology,
-                       net_fwgraph=net_fwgraph)
-    elif (obj_type == 'project'):
+    if (obj_type == 'project'):
         set_validation(vid, rid, path, obj_type, args['syntax'],
                        args['integrity'], args['topology'], args['custom'],
                        'ProjectNotHashFile', result=json_result,
@@ -622,6 +616,12 @@ def _validate_object(args, path, keypath, obj_type):
                        net_fwgraph=net_fwgraph,
                        dpath=(args['dpath'] or None),
                        dext=(args['dext'] or None))
+    elif(args['custom']):
+        set_validation(vid, rid, path, obj_type, args['syntax'],
+                       args['integrity'], args['topology'], args['custom'],
+                       hashFile, custom_rid, custom_hashFile,
+                       result=json_result, net_topology=net_topology,
+                       net_fwgraph=net_fwgraph)
     else:
         set_validation(vid, rid, path, obj_type, args['syntax'],
                        args['integrity'], args['topology'], args['custom'],
