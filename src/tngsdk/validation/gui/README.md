@@ -15,7 +15,8 @@ is needed to host the static files after building it.
 
 To build the application run the following commands at the root of gui repository:
 
-```npm install request
+```
+   npm install request
    npm install
    npm install -g http-server
    npm run build:dev
