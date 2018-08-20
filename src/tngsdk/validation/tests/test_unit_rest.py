@@ -80,33 +80,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
         app.cliargs = None
         self.app = app.test_client()
 
-    # def tearDown(self):
-    #     self.patcher.stop()
-
-    # def test_validations_v1_endpoint(self):
-    #     # do a malformed post
-    #     r = self.app.post("/api/v1/validations")
-    #     self.assertEqual(r.status_code, 400)
-    #     # do a post with a real validation for function
-    #     # w/o errors
-    #     r = self.app.post("/api/v1/packages",
-    #                       content_type="multipart/form-data",
-    #                       data={"package": (
-    #                           open("misc/5gtango-ns-package-example.tgo",
-    #                                "rb"), "5gtango-ns-package-example.tgo"),
-    #                             "skip_store": True})
-    #     self.assertEqual(r.status_code, 200)
-    #     rd = json.loads(r.get_data(as_text=True))
-    #     self.assertIn("package_process_uuid", rd)
-        # do a post with a real validation for service
-        # w/o errors
-
-        # do a post with a real validation for fucntion
-        # w/o errors
-
-        # do a post with a real validation for service
-        # with errors
-
     def test_rest_validation_function_syntax_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'function=true&path=' + SAMPLES_DIR +
@@ -117,16 +90,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
         d = json.loads(data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 0)
-
-    # def test_rest_validation_function_syntax_ok_dext(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'function=true&path=' + SAMPLES_DIR +
-    #                       'samples/functions/' +
-    #                       'valid-syntax-tng/&dext=yml&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
     def test_rest_validation_function_syntax_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
@@ -138,27 +103,33 @@ class TngSdkValidationRestTest(unittest.TestCase):
         d = json.loads(data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 1)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
-    # def test_rest_validation_service_syntax_ok(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'service=true&path=' + SAMPLES_DIR +
-    #                       'samples/services/' +
-    #                       'valid-son/valid.yml&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 0)
+    def test_rest_validation_service_syntax_ok(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'service=true&path=' + SAMPLES_DIR +
+                          'samples/services/' +
+                          'valid-son/valid.yml&source=local')
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(d['result']['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
-    # def test_rest_validation_service_syntax_ko(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'service=true&path=' + SAMPLES_DIR +
-    #                       'samples/services/' +
-    #                       'invalid-syntax-tng/unexpected_field.yml&' +
-    #                       'source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 1)
+    def test_rest_validation_service_syntax_ko(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'service=true&path=' + SAMPLES_DIR +
+                          'samples/services/' +
+                          'invalid-syntax-tng/required_properties.yml&' +
+                          'source=local')
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(d['result']['error_count'], 1)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
     def test_rest_validation_function_integrity_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
@@ -171,6 +142,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
         d = json.loads(data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
     def test_rest_validation_function_integrity_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
@@ -180,34 +153,41 @@ class TngSdkValidationRestTest(unittest.TestCase):
                           'firewall-vnfd.yml&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
+        print(r)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 1)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
-    # def test_rest_validation_service_integrity_ok(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'integrity=true&service=true&path=' +
-    #                       SAMPLES_DIR + 'samples/' +
-    #                       'services/valid-son/valid.yml&dpath=' +
-    #                       SAMPLES_DIR +
-    #                       'samples/functions/valid-son/' +
-    #                       '&dext=yml&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 0)
+    def test_rest_validation_service_integrity_ok(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&service=true&path=' +
+                          SAMPLES_DIR + 'samples/' +
+                          'services/valid-son/valid.yml&dpath=' +
+                          SAMPLES_DIR +
+                          'samples/functions/valid-son/' +
+                          '&dext=yml&source=local')
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(d['result']['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
-    # def test_rest_validation_service_integrity_ko(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'integrity=true&service=true&path=' +
-    #                       SAMPLES_DIR + 'samples/' +
-    #                       'services/valid-son/valid.yml&dpath=' +
-    #                       SAMPLES_DIR +
-    #                       'samples/functions/invalid_integrity-son/' +
-    #                       '&dext=yml&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 3)
+    def test_rest_validation_service_integrity_ko(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&service=true&path=' +
+                          SAMPLES_DIR + 'samples/' +
+                          'services/valid-son/valid.yml&dpath=' +
+                          SAMPLES_DIR +
+                          'samples/functions/invalid_integrity-son/' +
+                          '&dext=yml&source=local')
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(d['result']['error_count'], 3)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
     def test_rest_validation_function_topology_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
@@ -219,17 +199,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
         d = json.loads(data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 0)
-
-    # def test_rest_validation_function_topology_ok_dext(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'integrity=true&topology=true&function=true' +
-    #                       '&path=' + SAMPLES_DIR +
-    #                       'samples/functions/valid-son/&dext=yml' +
-    #                       '&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
     def test_rest_validation_function_topology_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
@@ -241,43 +212,38 @@ class TngSdkValidationRestTest(unittest.TestCase):
         d = json.loads(data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 1)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
-    # def test_rest_validation_function_topology_ko_dext(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'integrity=true&topology=true&function=true' +
-    #                       '&path=' + SAMPLES_DIR +
-    #                       'samples/functions/invalid_topology-son/' +
-    #                       '&dext=yml&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 1)
+    def test_rest_validation_service_topology_ok(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&service=true' +
+                          '&path=' + SAMPLES_DIR +
+                          'samples/services/valid-son/valid.yml&dpath=' +
+                          SAMPLES_DIR +
+                          'samples/functions/valid-son/&dext=yml' +
+                          '&source=local')
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(d['result']['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
-    # def test_rest_validation_service_topology_ok(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'integrity=true&topology=true&service=true' +
-    #                       '&path=' + SAMPLES_DIR +
-    #                       'samples/services/valid-son/valid.yml&dpath=' +
-    #                       SAMPLES_DIR +
-    #                       'samples/functions/valid-son/&dext=yml' +
-    #                       '&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 0)
-    #
-    # def test_rest_validation_service_topology_ko(self):
-    #     r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-    #                       'integrity=true&topology=true&service=true' +
-    #                       '&path=' + SAMPLES_DIR +
-    #                       'samples/services/valid-son/valid.yml&dpath=' +
-    #                       SAMPLES_DIR +
-    #                       'samples/functions/invalid_topology-son/' +
-    #                       '&dext=yml&source=local')
-    #     data = r.data.decode('utf-8')
-    #     d = ast.literal_eval(data)
-    #     self.assertEqual(r.status_code, 200)
-    #     self.assertEqual(d['error_count'], 1)
+    def test_rest_validation_service_topology_ko(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&service=true' +
+                          '&path=' + SAMPLES_DIR +
+                          'samples/services/valid-son/valid.yml&dpath=' +
+                          SAMPLES_DIR +
+                          'samples/functions/invalid_topology-son/' +
+                          '&dext=yml&source=local')
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(d['result']['error_count'], 1)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
 
     def test_rest_validation_ko_many_arguments(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
@@ -334,17 +300,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
                             'custom rules of descriptor')
         self.assertEqual(d['error_message'], expected_message)
 
-    def test_rest_validation_ko_no_workspace(self):
-        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
-                          'source=local&project=true&path=' +
-                          SAMPLES_DIR + 'samples/' +
-                          'projects/test_pv')
-        data = r.data.decode('utf-8')
-        d = ast.literal_eval(data)
-        expected_message = ('Need workspace path (workspace) ' +
-                            'to validate project')
-        self.assertEqual(d['error_message'], expected_message)
-
     def test_rest_validation_ok_embedded_descriptor(self):
         url = ("/api/v1/validations?function=true&" +
                "source=embedded&sync=true&integrity=true&" +
@@ -358,7 +313,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
         m = MultipartEncoder(data)
         headers = {'Content-Type': m.content_type}
         response = self.app.post(url, headers=headers, data=m)
-        print(response.status_code)
         self.assertEqual(response.status_code, 200)
 
     def test_rest_validation_ok_embedded_descriptor_rules(self):
@@ -380,6 +334,82 @@ class TngSdkValidationRestTest(unittest.TestCase):
         print(response)
         self.assertEqual(response.status_code, 200)
 
+    def test_rest_validation_ok_get_validations_by_id(self):
+        r = self.app.post('/api/v1/validations?async=true&syntax=true&' +
+                          'integrity=true&topology=true&function=true' +
+                          '&path=' + SAMPLES_DIR +
+                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '&source=local')
+        self.assertEqual(r.status_code, 201)
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        validation_by_id = self.app.get('/api/v1' + d)
+        data_validation = validation_by_id.data.decode('utf-8')
+        d_validation = json.loads(data_validation)
+        self.assertEqual(validation_by_id.status_code, 200)
+        self.assertEqual(d_validation['result']['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
+
+    def test_rest_validation_ok_get_validations(self):
+        r = self.app.post('/api/v1/validations?async=true&syntax=true&' +
+                          'integrity=true&topology=true&function=true' +
+                          '&path=' + SAMPLES_DIR +
+                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '&source=local')
+        self.assertEqual(r.status_code, 201)
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        validations = self.app.get('/api/v1/validations')
+        self.assertEqual(validations.status_code, 200)
+        data_validations = validations.data.decode('utf-8')
+        d_validations = json.loads(data_validations)
+        for i in d_validations:
+            self.assertEqual(d_validations[i]['result']['error_count'], 0)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
+
+    def test_rest_validation_get_validations_without_validations_cached(self):
+        validations = self.app.get('/api/v1/validations')
+        self.assertEqual(validations.status_code, 404)
+
+    def test_rest_validation_get_resources_without_resources_cached(self):
+        resources = self.app.get('/api/v1/resources')
+        self.assertEqual(resources.status_code, 404)
+
+    def test_rest_validation_ok_get_resources(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&function=true' +
+                          '&path=' + SAMPLES_DIR +
+                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '&source=local')
+        self.assertEqual(r.status_code, 200)
+        resources = self.app.get('/api/v1/resources')
+        data_resources = resources.data.decode('utf-8')
+        d_resources = json.loads(data_resources)
+        self.assertEqual(len(d_resources), 1)
+        self.app.delete('/api/v1/validations')
+        self.app.delete('/api/v1/resources')
+
+    def test_rest_validation_delete_validations_cached(self):
+        r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
+                          'integrity=true&topology=true&function=true' +
+                          '&path=' + SAMPLES_DIR +
+                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '&source=local')
+        self.assertEqual(r.status_code, 200)
+        data = r.data.decode('utf-8')
+        d = json.loads(data)
+        validations = self.app.get('/api/v1/validations')
+        self.assertEqual(validations.status_code, 200)
+        data_validations = validations.data.decode('utf-8')
+        d_validations = json.loads(data_validations)
+        self.assertEqual(len(d_validations), 1)
+        delete = self.app.delete('/api/v1/validations')
+        self.assertEqual(delete.status_code, 200)
+        self.app.delete('/api/v1/resources')
+        validations_post_delete = self.app.get('/api/v1/validations')
+        self.assertEqual(validations_post_delete.status_code, 404)
 
 if __name__ == "__main__":
     unittest.main()
