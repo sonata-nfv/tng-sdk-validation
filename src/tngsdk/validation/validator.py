@@ -868,15 +868,15 @@ class Validator(object):
             if(len(cr_validation) != 0):
                 for i in cr_validation:
                     self._customErrors.append({
-                        "event_code" : "errors_custom_rule_validation",
-                        "event_id" : vnfd_path,
-                        "header" : "Errors found in custom rule validation",
-                        "level" : "error",
-                        "source_id" : vnfd_path,
-                        "detail" : [
+                        "event_code": "errors_custom_rule_validation",
+                        "event_id": vnfd_path,
+                        "header": "Errors found in custom rule validation",
+                        "level": "error",
+                        "source_id": vnfd_path,
+                        "detail": [
                             {
-                                "detail_event_id" : vnfd_path,
-                                "message" : i
+                                "detail_event_id": vnfd_path,
+                                "message": i
                             }
                         ]
                     })

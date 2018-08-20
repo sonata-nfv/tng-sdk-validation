@@ -71,10 +71,12 @@ class Descriptor(object):
         # print(type(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id']))
 
     def display_error(self, error_text):
-        log.info("Error detected in custom rules validation: {}".format(error_text))
+        log.info("Error detected in custom rules validation: {}"
+                 .format(error_text))
 
     def display_warning(self, warning_text):
-        log.info("Warning detected in custom rules validation: {}".format(warning_text))
+        log.info("Warning detected in custom rules validation: {}"
+                 .format(warning_text))
 
 
 class DescriptorVariables(BaseVariables):

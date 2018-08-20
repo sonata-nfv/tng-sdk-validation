@@ -524,7 +524,6 @@ def _validate_object(args, path, keypath, obj_type):
                     update_resource_validation(rid, vid)
                     return validation
 
-
     log.info("Starting validation [type={}, path={}, syntax={}, "
              "integrity={}, topology={}, custom={}, "
              "resource_id:={}, validationId={}, dpath={}, "
@@ -955,15 +954,12 @@ def gen_report_net_topology(validator):
             graph_repr += line
         report.append(graph_repr)
 
-
     # TODO: temp patch for returning only the topology of the first service
     if len(report) > 0:
         report = report[0]
         return report
 
-    # return json.dumps(report, sort_keys=True,
-    #                   indent=4, separators=(',', ': ')).encode('utf-8')
-    return report
+        return report
 
 
 def gen_report_net_fwgraph(validator):
@@ -994,7 +990,8 @@ def set_resource(rid, path, obj_type, hashFile, vid_related):
     resources[rid]['type'] = obj_type
     resources[rid]['hashFile'] = hashFile
     if 'validations' in resources[rid]:
-        if not ('/validations/' + vid_related) in resources[rid]['validations']:
+        if (not ('/validations/' + vid_related) in
+                resources[rid]['validations']):
             resources[rid]['validations'].append('/validations/' + vid_related)
     else:
         resources[rid]['validations'] = []
@@ -1039,10 +1036,10 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     validations[vid]['resources'] = dict()
     if obj_type == "function":
         validations[vid]['resources']['vnfd'] = {'id': '/resources/' + rid,
-                                             'hashFile': hashFile}
+                                                 'hashFile': hashFile}
     elif obj_type == "service":
         validations[vid]['resources']['nsd'] = {'id': '/resources/' + rid,
-                                             'hashFile': hashFile}
+                                                'hashFile': hashFile}
         if (syntax and not integrity and not topology and not custom):
             log.info('Not vnfds in service syntax validation')
         else:
@@ -1055,8 +1052,8 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
                 set_resource(vnfd_rid, vnfd_path, "function",
                              vnfd_hashFile, vid)
                 validations[vid]['resources']['vnfd'].append(
-                {'id': '/resources/' + vnfd_rid,
-                 'hashFile': vnfd_hashFile})
+                    {'id': '/resources/' + vnfd_rid,
+                     'hashFile': vnfd_hashFile})
     if dpath:
         validations[vid]['dpath'] = dpath
     if dext:
@@ -1081,7 +1078,7 @@ def get_service_validation_resources(dpath):
         path = dpath + '/' + file
         rid = gen_resource_key(path)
         hashFile = get_file_hash(path)
-        vnfds.append({'rid' : rid, 'hashFile' : hashFile, 'path' : path})
+        vnfds.append({'rid': rid, 'hashFile': hashFile, 'path': path})
     return vnfds
 
 

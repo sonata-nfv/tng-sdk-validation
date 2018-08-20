@@ -411,5 +411,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
         validations_post_delete = self.app.get('/api/v1/validations')
         self.assertEqual(validations_post_delete.status_code, 404)
 
+
 if __name__ == "__main__":
     unittest.main()
