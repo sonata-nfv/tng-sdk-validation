@@ -1043,15 +1043,18 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
     elif obj_type == "service":
         validations[vid]['resources']['nsd'] = {'id': '/resources/' + rid,
                                              'hashFile': hashFile}
-        vnfds = get_service_validation_resources(dpath)
-        validations[vid]['resources']['vnfd'] = []
-        for i in vnfds:
-            vnfd_rid = i['rid']
-            vnfd_hashFile = i['hashFile']
-            vnfd_path = i['path']
-            set_resource(vnfd_rid, vnfd_path, "function",
-                         vnfd_hashFile, vid)
-            validations[vid]['resources']['vnfd'].append(
+        if (syntax and not integrity and not topology and not custom):
+            log.info('Not vnfds in service syntax validation')
+        else:
+            vnfds = get_service_validation_resources(dpath)
+            validations[vid]['resources']['vnfd'] = []
+            for i in vnfds:
+                vnfd_rid = i['rid']
+                vnfd_hashFile = i['hashFile']
+                vnfd_path = i['path']
+                set_resource(vnfd_rid, vnfd_path, "function",
+                             vnfd_hashFile, vid)
+                validations[vid]['resources']['vnfd'].append(
                 {'id': '/resources/' + vnfd_rid,
                  'hashFile': vnfd_hashFile})
     if dpath:
