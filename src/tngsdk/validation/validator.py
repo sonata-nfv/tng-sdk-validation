@@ -32,6 +32,7 @@
 # Python packages imports
 import logging
 import os
+import uuid
 # from .event import *
 import coloredlogs
 import networkx as nx
@@ -76,7 +77,7 @@ class Validator(object):
         self._custom = False
 
         # Variable to delete, only to check custom rules errors
-        self._customErrors = 0
+        self._customErrors = []
         # create "virtual" workspace if not provided (don't actually create
         # file structure)
         if not self._workspace:
@@ -87,7 +88,7 @@ class Validator(object):
         self._dpath = '.'
         self._log_level = self._workspace.log_level
         self._cfile = '.'
-        self._workspace_path = '.'
+        self._workspace_path = os.path.expanduser('~/.tng-workspace/')
         # # for package signature validation
         # self._pkg_signature = None
         # self._pkg_pubkey = None
@@ -389,8 +390,6 @@ class Validator(object):
         Validate the network topology of a service.
         :return:
         """
-        log.info("On working function")
-        return
         log.info("Validating topology of service '{0}'".format(service.id))
 
         # build service topology graph with VNF connection points
@@ -863,11 +862,24 @@ class Validator(object):
         if self._topology and not self._validate_function_topology(func):
             return True
 
-        if (self._custom and
-                validator_custom_rules.process_rules(self._cfile, vnfd_path)):
-            self._customErrors = 1
-            return False
-
+        if self._custom:
+            cr_validation = validator_custom_rules.process_rules(self._cfile,
+                                                                 vnfd_path)
+            if(len(cr_validation) != 0):
+                for i in cr_validation:
+                    self._customErrors.append({
+                        "event_code": "errors_custom_rule_validation",
+                        "event_id": vnfd_path,
+                        "header": "Errors found in custom rule validation",
+                        "level": "error",
+                        "source_id": vnfd_path,
+                        "detail": [
+                            {
+                                "detail_event_id": vnfd_path,
+                                "message": i
+                            }
+                        ]
+                    })
         return True
 
     def _validate_function_syntax(self, func):

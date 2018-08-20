@@ -48,6 +48,7 @@ class Descriptor(object):
                  # vdu_resource_connection_points_mng
                  ):
         self.func = func
+        self.errors = []
         # self.id=id
         # self.vdu_resource_requirements_cpu_vcpus= \
         #       vdu_resource_requirements_cpu_vcpus
@@ -70,10 +71,12 @@ class Descriptor(object):
         # print(type(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id']))
 
     def display_error(self, error_text):
-        print("Error detected in custom rules: {}".format(error_text))
+        log.info("Error detected in custom rules validation: {}"
+                 .format(error_text))
 
     def display_warning(self, warning_text):
-        print("Warning detected in custom rules: {}".format(warning_text))
+        log.info("Warning detected in custom rules validation: {}"
+                 .format(warning_text))
 
 
 class DescriptorVariables(BaseVariables):
@@ -152,6 +155,7 @@ class DescriptorActions(BaseActions):
     #     self.product.order(number_to_order)
     @rule_action(params={"error_text": FIELD_TEXT})
     def raise_error(self, error_text):
+        self.descriptor.errors.append(error_text)
         self.descriptor.display_error(error_text)
 
     @rule_action(params={"error_text": FIELD_TEXT})
@@ -205,7 +209,7 @@ def process_rules(custom_rule_file, descriptor_file_name):
                         defined_variables=DescriptorVariables(descriptor),
                         defined_actions=DescriptorActions(descriptor),
                         stop_on_first_trigger=False)
-    return triggered
+    return descriptor.errors
 
 
 if __name__ == "__main__":

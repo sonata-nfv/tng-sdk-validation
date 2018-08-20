@@ -63,9 +63,10 @@ def dispatch(args, validator):
             print("Syntax, integrity, topology  and custom rules validation")
         if validator.validate_function(args.vnfd):
             if validator.error_count == 0:
-                print("No errors found in the VNFD")
-        else:
-            print("Errors in custom rules validation")
+                if len(validator.customErrors) == 0:
+                    print("No errors found in the VNFD")
+                else:
+                    print("Errors in custom rules validation")
         return validator
 
     elif args.nsd:
