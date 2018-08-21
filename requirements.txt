@@ -2,7 +2,7 @@ setuptools
 pytest
 pyaml
 coloredlogs
-networkx
+networkx<=1.12
 validators
 jsonschema
 flask_restplus

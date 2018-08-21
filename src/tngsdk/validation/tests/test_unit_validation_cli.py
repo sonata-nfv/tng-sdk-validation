@@ -340,7 +340,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
         check_args = cli.check_args(args)
         self.assertTrue(check_args)
         result_validator = cli.dispatch(args, validator)
-        self.assertEqual(result_validator.customErrors, 0)
+        self.assertEqual(len(result_validator.customErrors), 0)
 
     def test_cli_validation_function_custom_ko(self):
         validator = Validator()
@@ -354,35 +354,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
         check_args = cli.check_args(args)
         self.assertTrue(check_args)
         result_validator = cli.dispatch(args, validator)
-        self.assertEqual(result_validator.customErrors, 1)
-
-    def test_cli_validation_function_custom_ok_dext(self):
-        validator = Validator()
-        input_args = ['--custom', '--cfile',
-                      SAMPLE_DIR + 'samples/custom_rules/rules/' +
-                      'custom_rule_1.yml', '--function',
-                      SAMPLE_DIR + 'samples/custom_rules/functions/valid',
-                      '--dext', 'yml']
-        args = cli.parse_args(input_args)
-        print("Test arguments: {}".format(args))
-        check_args = cli.check_args(args)
-        self.assertTrue(check_args)
-        result_validator = cli.dispatch(args, validator)
-        self.assertEqual(result_validator.customErrors, 0)
-
-    def test_cli_validation_function_custom_ko_dext(self):
-        validator = Validator()
-        input_args = ['--custom', '--cfile',
-                      SAMPLE_DIR + 'samples/custom_rules/rules/' +
-                      'custom_rule_1.yml', '--function',
-                      SAMPLE_DIR + 'samples/custom_rules/functions/invalid',
-                      '--dext', 'yml']
-        args = cli.parse_args(input_args)
-        print("Test arguments: {}".format(args))
-        check_args = cli.check_args(args)
-        self.assertTrue(check_args)
-        result_validator = cli.dispatch(args, validator)
-        self.assertEqual(result_validator.customErrors, 1)
+        self.assertEqual(len(result_validator.customErrors), 2)
 
 
 if __name__ == "__main__":
