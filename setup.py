@@ -60,7 +60,9 @@ setup(name='tngsdk.validate',
       zip_safe=False,
       entry_points={
           'console_scripts': [
-              'tng-sdk-validate=tngsdk.validation:main'
+              'tng-sdk-validate=tngsdk.validation:main',
+              'tng-validate=tngsdk.validation:main',
+              'tng-vld=tngsdk.validation:main'
           ],
       },
       test_suite='tngsdk',
