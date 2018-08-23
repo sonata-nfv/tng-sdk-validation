@@ -82,10 +82,18 @@ def dispatch(args, validator):
             print("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
                                 dpath=args.dpath)
+        elif args.custom:
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                custom=True, cfile=args.cfile,
+                                dpath=args.dpath)
+            print("Syntax, integrity, topology  and custom rules validation")
 
         validator.validate_service(args.nsd)
         if validator.error_count == 0:
-            print("No errors found in the NSD")
+            if len(validator.customErrors) == 0:
+                print("No errors found in the Service validation")
+            else:
+                print("Errors in custom rules validation")
         return validator
 
     elif args.project_path:
@@ -102,12 +110,20 @@ def dispatch(args, validator):
             print("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
                                 workspace_path=args.workspace_path)
+        elif args.custom:
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                custom=True, cfile=args.cfile)
+            print("Syntax, integrity, topology  and custom rules validation")
 
         if not validator.validate_project(args.project_path):
             print('Cant validate the project')
         else:
             if validator.error_count == 0:
-                print("No errors found in the Project")
+                if len(validator.customErrors) == 0:
+                    print("No errors found in project validation")
+                else:
+                    print("Errors in custom rules validation")
+
         return validator
 
 
