@@ -297,8 +297,7 @@ class Validator(object):
                 (self._workspace.config
                  ['projects_config']) = (self._workspace_path +
                                          '/projects/config.yml')
-            project = Project.__create_from_descriptor__(self._workspace,
-                                                         project)
+            project = Project.load_project(project, workspace=None, translate=False)
 
         if type(project) is not Project:
             return
