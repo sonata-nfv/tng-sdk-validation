@@ -297,7 +297,7 @@ class Validator(object):
                 (self._workspace.config
                  ['projects_config']) = (self._workspace_path +
                                          '/projects/config.yml')
-            project = Project.load_project(project, workspace=None, translate=False)
+            project = Project.load_project(project, workspace=self._workspace_path, translate=False)
 
         if type(project) is not Project:
             return
