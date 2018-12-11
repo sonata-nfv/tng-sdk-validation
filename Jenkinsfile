@@ -24,6 +24,12 @@ pipeline {
         sh "pipeline/checkstyle/check.sh"
       }
     }
+    stage('Integration tests (SDK-tools)') {
+        steps {
+            echo 'Stage: Integration tests (SDK-tools)'
+            sh "docker run --rm --name tng-sdk-validation-int registry.sonata-nfv.eu:5000/tng-sdk-validation pipeline/test/test_sdk_integration.sh"
+        }
+    }
     stage('Containers Publication') {
       steps {
         echo 'Publication of containers in local registry....'

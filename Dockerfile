@@ -53,6 +53,8 @@ WORKDIR /tng-sdk-validation
 RUN pip install -r requirements.txt
 RUN python setup.py install
 
+RUN chmod +x pipeline/test/test_sdk_integration.sh
+
 # This command leaves the tng-sdk-validate tool running in API mode
 # Listening at por 5001
 #RUN tng-sdk-validate --api
