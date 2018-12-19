@@ -25,7 +25,7 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 
 2. Then install the Python dependencies defined in requierements file.
 ```bash
-$ pip3 install requirements.txt
+$ pip3 install -r requirements.txt
 ```
 3. The last step is to install *tng-sdk-validation* tool.
 ```bash

@@ -48,7 +48,6 @@ def logging_setup():
 def main():
     logging_setup()
     args = cli.parse_args()
-
     # TODO better log configuration (e.g. file-based logging)
     if args.verbose:
         coloredlogs.install(level="DEBUG")
@@ -56,7 +55,6 @@ def main():
         coloredlogs.install(level="INFO")
 
     # TODO validate if args combination makes any sense
-
     validator = Validator()
     if cli.check_args(args):
         if args.api:
