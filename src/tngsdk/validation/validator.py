@@ -82,7 +82,6 @@ class Validator(object):
         # file structure)
         if not self._workspace:
             self._workspace = Workspace('.', log_level='info')
-
         # load configurations from workspace
         self._dext = self._workspace.default_descriptor_extension
         self._dpath = '.'
@@ -263,7 +262,6 @@ class Validator(object):
                           "'--cfile' must be specified")
         elif caller == 'validate_function':
             pass
-
         return True
 
     def validate_project(self, project):
@@ -274,7 +272,6 @@ class Validator(object):
         :param project: SONATA project
         :return: True if all validations were successful, False otherwise
         """
-
         if not self._assert_configuration():
             return
         if project.endswith('/'):
@@ -285,6 +282,7 @@ class Validator(object):
         if not os.path.isdir(project):
             log.error("Incorrect path. Try again with a correct project path")
             return False
+        #   CHECK: os.path.isdir(project) is cheked before
         if type(project) is not Project and os.path.isdir(project):
             if not self._workspace:
                 log.error("Workspace not defined. Unable to validate project")
@@ -298,10 +296,8 @@ class Validator(object):
                  ['projects_config']) = (self._workspace_path +
                                          '/projects/config.yml')
             project = Project.load_project(project, workspace=self._workspace_path, translate=False)
-
         if type(project) is not Project:
             return
-
         log.info("Validating project '{0}'".format(project.project_root))
         log.info("... syntax: {0}, integrity: {1}, topology: {2}"
                  .format(self._syntax, self._integrity, self._topology))
@@ -615,7 +611,8 @@ class Validator(object):
 
     @staticmethod
     def write_service_graphs(service):
-        graphsdir = 'graphs'
+        graphsdir = '/tmp/graphs'
+        #CHECK: Graphs isn't eliminated in different executions. Graph folder is always the same.
         try:
             os.makedirs(graphsdir)
         except OSError as exc:

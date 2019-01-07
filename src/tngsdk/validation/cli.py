@@ -110,6 +110,7 @@ def dispatch(args, validator):
             print("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
                                 workspace_path=args.workspace_path)
+
         elif args.custom:
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile)
@@ -316,7 +317,10 @@ def parse_args(input_args=None):
     )
 
     if input_args is None:
-        input_args = sys.argv[1:]
-
-    print("CLI input arguments: {}".format(input_args))
+        if (len(sys.argv) == 1):
+            input_args = ["-t"]
+            print("Default mode: -t")
+        else:
+            input_args = sys.argv[1:]
+            print("CLI input arguments: {}".format(input_args))
     return parser.parse_args(input_args)
