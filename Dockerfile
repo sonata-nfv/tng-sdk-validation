@@ -55,6 +55,8 @@ RUN python setup.py install
 
 RUN chmod +x pipeline/test/test_sdk_integration.sh
 
+EXPOSE 5001
+CMD ["tng-sdk-validate","--api"]
 # This command leaves the tng-sdk-validate tool running in API mode
 # Listening at por 5001
 #RUN tng-sdk-validate --api
