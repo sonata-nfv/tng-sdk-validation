@@ -29,6 +29,7 @@ import logging
 import networkx as nx
 import validators
 import requests
+
 from collections import OrderedDict
 # importing the local event module, fix this ASAP
 # from .event import *
@@ -428,6 +429,7 @@ class Descriptor(Node):
         """
         Add vbridge to the descriptor.
         """
+
         # check number of connection point references
         if len(cp_refs) < 1:
             evtlog.log("Bad number of connection points",
@@ -507,10 +509,10 @@ class Descriptor(Node):
         Load 'virtual_links' section of the descriptor.
         - 'e-line' virtual links will be stored in Link objects
         - 'e-lan' virtual links will be stored in Bridge objects
+        - 'e-tree' virtual links will be stored in Bridge objects
         """
         if 'virtual_links' not in self.content:
             return
-
         for vl in self.content['virtual_links']:
             if not vl['id']:
                 evtlog.log("Missing virtual link ID",
@@ -526,6 +528,11 @@ class Descriptor(Node):
                     return
 
             if vl_type == 'e-lan':
+                if not self.add_vbridge(vl['id'],
+                                        vl['connection_points_reference']):
+                    return
+
+            if vl_type == 'e-tree':
                 if not self.add_vbridge(vl['id'],
                                         vl['connection_points_reference']):
                     return
@@ -1090,53 +1097,81 @@ class Function(Descriptor):
     def load_units(self):
         """
         Load units of the function descriptor content, section
-        'virtual_deployment_units'
+        'virtual_deployment_units or cloudnative_deployment_units'
         """
-        if 'virtual_deployment_units' not in self.content:
+        vduExist = 'virtual_deployment_units' in self.content
+        cduExist = 'cloudnative_deployment_units' in self.content
+
+        if vduExist:
+            for vdu in self.content['virtual_deployment_units']:
+                unit = Unit(vdu['id'])
+                self.associate_unit(unit)
+
+                # Check vm image URLs
+                # only perform a check if vm_image is a URL
+                vdu_image_path = vdu['vm_image']
+                if validators.url(vdu_image_path):  # Check if is URL/URI.
+                    try:
+                        # Check if the image URL is accessible
+                        # within a short time interval
+                        requests.head(vdu_image_path, timeout=1)
+
+                    except (requests.Timeout, requests.ConnectionError):
+
+                        evtlog.log("VDU image not found",
+                                   "Failed to verify the existence of VDU image at"
+                                   " the address '{0}'. VDU id='{1}'"
+                                   .format(vdu_image_path, vdu['id']),
+                                   self.id,
+                                   'evt_vnfd_itg_vdu_image_not_found')
+            return True
+
+        elif cduExist:
+            for cdu in self.content['cloudnative_deployment_units']:
+                unit = Unit(cdu['id'])
+                self.associate_unit(unit)
+                # TODO check if image exists as with the VNF 
+            return True
+
+        else:
             log.error("Function id={0} is missing the "
-                      "'virtual_deployment_units' section"
+                      "'virtual_deployment_units or cloudnative_deployment_units' section"
                       .format(self.id))
             return
 
-        for vdu in self.content['virtual_deployment_units']:
-            unit = Unit(vdu['id'])
-            self.associate_unit(unit)
-
-            # Check vm image URLs
-            # only perform a check if vm_image is a URL
-            vdu_image_path = vdu['vm_image']
-            if validators.url(vdu_image_path):  # Check if is URL/URI.
-                try:
-                    # Check if the image URL is accessible
-                    # within a short time interval
-                    requests.head(vdu_image_path, timeout=1)
-
-                except (requests.Timeout, requests.ConnectionError):
-
-                    evtlog.log("VDU image not found",
-                               "Failed to verify the existence of VDU image at"
-                               " the address '{0}'. VDU id='{1}'"
-                               .format(vdu_image_path, vdu['id']),
-                               self.id,
-                               'evt_vnfd_itg_vdu_image_not_found')
-        return True
-
     def load_unit_connection_points(self):
-        """
-        Load connection points of the units of the function.
-        """
-        for vdu in self.content['virtual_deployment_units']:
-            if vdu['id'] not in self.units.keys():
-                log.error("Unit id='{0}' is not associated with function "
-                          "id='{1}".format(vdu['id'], self.id))
+            """
+            Load connection points of the units of the function.
+            """
+            vduExist = 'virtual_deployment_units' in self.content
+            cduExist = 'cloudnative_deployment_units' in self.content
+            if vduExist:
+                for vdu in self.content['virtual_deployment_units']:
+                    if vdu['id'] not in self.units.keys():
+                        log.error("Unit id='{0}' is not associated with function "
+                                  "id='{1}".format(vdu['id'], self.id))
+                        return
+
+                    unit = self.units[vdu['id']]
+
+                    for cp in vdu['connection_points']:
+                        unit.add_connection_point(cp['id'])
+
+                return True
+            elif cduExist:
+                for cdu in self.content['cloudnative_deployment_units']:
+                    if cdu['id'] not in self.units.keys():
+                        log.error("Unit id='{0}' is not associated with function "
+                                  "id='{1}".format(cdu['id'], self.id))
+                        return
+
+                    unit = self.units[cdu['id']]
+                    for cp in cdu['connection_points']:
+                        unit.add_connection_point(cp['id'])
+                return True
+            else:
                 return
 
-            unit = self.units[vdu['id']]
-
-            for cp in vdu['connection_points']:
-                unit.add_connection_point(cp['id'])
-
-        return True
 
     def build_topology_graph(self, bridges=False, parent_id='', level=0,
                              vdu_inner_connections=True):

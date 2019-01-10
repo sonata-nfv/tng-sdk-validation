@@ -918,7 +918,7 @@ class Validator(object):
 
         # load units
         if not func.load_units():
-            evtlog.log("Missing 'virtual_deployment_units'",
+            evtlog.log("Missing 'virtual_deployment_units or cloudnative_deployment_units'",
                        "Couldn't load the units of function id='{0}'"
                        .format(func.id),
                        func.id,
