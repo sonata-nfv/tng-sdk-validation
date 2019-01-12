@@ -88,12 +88,19 @@ def dispatch(args, validator):
                                 dpath=args.dpath)
             print("Syntax, integrity, topology  and custom rules validation")
 
-        validator.validate_service(args.nsd)
-        if validator.error_count == 0:
-            if len(validator.customErrors) == 0:
-                print("No errors found in the Service validation")
-            else:
-                print("Errors in custom rules validation")
+        #Using the following statements it is possible distinguish between using --dpath or not
+        #TODO check if the user MUST put '/' at the end of path in the case of using ---dpath
+        if args.dpath is None:
+            nsd_path = args.nsd
+        else:
+            nsd_path = args.dpath+args.nsd
+
+        if validator.validate_service(nsd_path):
+            if validator.error_count == 0:
+                if len(validator.customErrors) == 0:
+                    print("No errors found in the Service validation")
+                else:
+                    print("Errors in custom rules validation")
         return validator
 
     elif args.project_path:

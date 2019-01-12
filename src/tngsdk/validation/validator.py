@@ -54,7 +54,7 @@ from tngsdk.validation.storage import DescriptorStorage
 # from son.validate.util import strip_root, build_descriptor_id
 # from util import read_descriptor_files, list_files, strip_root
 # from util import build_descriptor_id
-from tngsdk.validation.util import read_descriptor_files, list_files
+from tngsdk.validation.util import read_descriptor_files, list_files, read_proyectYamel_file, find_file
 from tngsdk.validation.util import strip_root, build_descriptor_id
 from tngsdk.validation.schema.validator import SchemaValidator
 from tngsdk.validation import event
@@ -685,7 +685,6 @@ class Validator(object):
                            service.id,
                            'evt_nsd_itg_function_invalid')
                 return
-
         # load service connection points
         if not service.load_connection_points():
             evtlog.log("Bad section 'connection_points'",
@@ -695,7 +694,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_itg_badsection_cpoints')
             return
-
         # load service links
         if not service.load_virtual_links():
             evtlog.log("Bad section 'virtual_links'",
@@ -704,7 +702,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_itg_badsection_vlinks')
             return
-
         undeclared = service.undeclared_connection_points()
         if undeclared:
             for cxpoint in undeclared:
@@ -715,7 +712,6 @@ class Validator(object):
                            service.id,
                            'evt_nsd_itg_undeclared_cpoint')
             return
-
         # check for unused connection points
         unused_ifaces = service.unused_connection_points()
         if unused_ifaces:
@@ -758,29 +754,37 @@ class Validator(object):
         :param service: service
         :return: True if successful, None otherwise
         """
-
         log.debug("Loading functions of the service.")
-        # # get VNFD file list from provided dpath
+        #get VNFD file list from provided dpath
         if not self._dpath:
             return
-        if type(self._dpath) is list:
-            vnfd_files = list(self._dpath)
-        else:
-            vnfd_files = list_files(self._dpath, self._dext)
+        ###TODO: Can dpath be a list?
 
-            log.debug("Found {0} descriptors in dpath='{2}': {1}"
-                      .format(len(vnfd_files), vnfd_files, self._dpath))
 
-        # load all VNFDs
-        path_vnfs = read_descriptor_files(vnfd_files)
+        #We take the path of the folder which contains 'project.yml' and then parse it. It is finded
+        #using the path of the service
+        pathProject = find_file('project.yml',service.filename)
 
-        # check for errors
+        if not pathProject:
+            log.error("project.yml doesn't exists.")
+            return
+
+        projectYamel = read_proyectYamel_file(pathProject+'project.yml')
+        #We take all paths of the VNF which are referenced by 'project.yml'
+        path_vnfs = []
+        for i in projectYamel['files']:
+            if i['type'] == 'application/vnd.5gtango.vnfd':
+                path_vnfs.append(pathProject+i['path'])
+        #check if there are errors in the NSD.
         if 'network_functions' not in service.content:
             log.error("Service doesn't have any functions. "
                       "Missing 'network_functions' section.")
             return
 
         functions = service.content['network_functions']
+
+        #check if there are functions in the NSD ('functions') but they can't be founded
+        #('path_vnfs')
         if functions and not path_vnfs:
             evtlog.log("VNF not found",
                        "Service references VNFs but none could be found in "
@@ -790,12 +794,14 @@ class Validator(object):
                        'evt_nsd_itg_function_unavailable')
             return
 
-        # store function descriptors referenced in the service
+        #check if the VNFS in the NSD are the same as in the '.yml' in the project
+        #if all testings are correct load the functions.
+        dic_vnfs = read_descriptor_files(path_vnfs)
         for func in functions:
             fid = build_descriptor_id(func['vnf_vendor'],
                                       func['vnf_name'],
                                       func['vnf_version'])
-            if fid not in path_vnfs.keys():
+            if fid not in dic_vnfs.keys():
                 evtlog.log("VNF not found",
                            "Referenced function descriptor id='{0}' couldn't "
                            "be loaded".format(fid),
@@ -804,10 +810,9 @@ class Validator(object):
                 return
 
             vnf_id = func['vnf_id']
-            new_func = self._storage.create_function(path_vnfs[fid])
+            new_func = self._storage.create_function(dic_vnfs[fid])
 
             service.associate_function(new_func, vnf_id)
-
         return True
 
     def validate_function(self, vnfd_path):

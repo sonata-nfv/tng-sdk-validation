@@ -91,6 +91,34 @@ def read_descriptor_file(file):
 
         return descriptor
 
+def read_proyectYamel_file(path):
+    """
+    Open project.yml and return the file parsed if all is OK or None if something
+    was wrong
+    param: file: path of the yml
+    return: parsed yamel
+    """
+    with open(path, 'r') as stream:
+        try:
+            return yaml.load(stream)
+        except yaml.YAMLError as exc:
+            return None
+
+def find_file(fileName, path):
+    """
+    Provides the localization of a folder which contains the file inside of a bigger path.
+    param: fileName: name of the desired file
+           path: path inside which is the file
+    return: If the file doesn't exist, it will return None. If the file exists it will return the path of the folder
+    """
+
+    splitedPath = path.split('/')
+    temporalPath = ''
+    for i in range(0,len(splitedPath)-1):
+        temporalPath = temporalPath+splitedPath[i]+'/'
+        if os.path.isfile(temporalPath+fileName):
+            return temporalPath
+    return
 
 def descriptor_id(descriptor):
     """

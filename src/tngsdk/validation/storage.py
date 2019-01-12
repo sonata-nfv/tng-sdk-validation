@@ -626,6 +626,7 @@ class Service(Descriptor):
         """
         Initialize a service object. This inherits the descriptor object.
         :param descriptor_file: descriptor filename
+        :param _functions:
         """
         super().__init__(descriptor_file)
         self._functions = {}
@@ -639,7 +640,6 @@ class Service(Descriptor):
         :return: functions dict
         """
         return self._functions
-
     @property
     def fw_graphs(self):
         """
@@ -1130,7 +1130,7 @@ class Function(Descriptor):
             for cdu in self.content['cloudnative_deployment_units']:
                 unit = Unit(cdu['id'])
                 self.associate_unit(unit)
-                # TODO check if image exists as with the VNF 
+                # TODO check if image exists as with the VNF
             return True
 
         else:
