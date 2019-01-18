@@ -61,6 +61,8 @@ def dispatch(args, validator):
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile)
             print("Syntax, integrity, topology  and custom rules validation")
+        else:
+            print("Default mode: Syntax, integrity and topology validation")
         if validator.validate_function(args.vnfd):
             if validator.error_count == 0:
                 if len(validator.customErrors) == 0:
@@ -87,13 +89,17 @@ def dispatch(args, validator):
                                 custom=True, cfile=args.cfile,
                                 dpath=args.dpath)
             print("Syntax, integrity, topology  and custom rules validation")
+        else:
+            validator.configure(syntax=True, integrity=True, topology=True,
+                                dpath=args.dpath)
+            print("Default mode: Syntax, integrity and topology validation")
 
-        validator.validate_service(args.nsd)
-        if validator.error_count == 0:
-            if len(validator.customErrors) == 0:
-                print("No errors found in the Service validation")
-            else:
-                print("Errors in custom rules validation")
+        if validator.validate_service(args.nsd):
+            if validator.error_count == 0:
+                if len(validator.customErrors) == 0:
+                    print("No errors found in the Service validation")
+                else:
+                    print("Errors in custom rules validation")
         return validator
 
     elif args.project_path:
@@ -115,7 +121,8 @@ def dispatch(args, validator):
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile)
             print("Syntax, integrity, topology  and custom rules validation")
-
+        else:
+            print("Default mode: Syntax, integrity and topology validation")
         if not validator.validate_project(args.project_path):
             print('Cant validate the project')
         else:
@@ -130,6 +137,15 @@ def dispatch(args, validator):
 
 def check_args(args):
     if (args.nsd):
+        if (not(args.integrity) and not(args.syntax) and not(args.topology) and not(args.custom)):
+            if (args.dpath and args.dext):
+                return True
+            else:
+                print("Invalid parameters. To validate the "
+                      "integrity, topology or custom rules of a service "
+                      "both' --dpath' and '--dext' parameters must be "
+                      "specified.")
+                return False
         if (args.integrity or args.topology):
             if (args.dpath and args.dext):
                 return True
@@ -139,7 +155,8 @@ def check_args(args):
                       "both' --dpath' and '--dext' parameters must be "
                       "specified.")
                 return False
-        if (args.custom):
+
+        elif (args.custom):
             if (args.dpath and args.dext and args.cfile):
                 return True
             else:
@@ -149,7 +166,7 @@ def check_args(args):
                       "specified (to validate the topology/integrity) and "
                       "'--cfile' must be specified")
                 return False
-    if (args.vnfd):
+    elif (args.vnfd):
         if (args.custom):
             if (args.cfile):
                 return True
@@ -316,11 +333,6 @@ def parse_args(input_args=None):
         dest="service_port"
     )
 
-    if input_args is None:
-        if (len(sys.argv) == 1):
-            input_args = ["-t"]
-            print("Default mode: -t")
-        else:
-            input_args = sys.argv[1:]
-            print("CLI input arguments: {}".format(input_args))
+    input_args = sys.argv[1:]
+    print("CLI input arguments: {}".format(input_args))
     return parser.parse_args(input_args)

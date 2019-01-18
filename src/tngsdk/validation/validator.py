@@ -350,12 +350,11 @@ class Validator(object):
         Validate a 5GTANGO service.
         By default, it performs the following validations: syntax, integrity
         and network topology.
-        :param nsd_file: service descriptor filename
+        :param nsd_file: service descriptor path
         :return: True if all validations were successful, False otherwise
         """
         if not self._assert_configuration():
             return
-
         log.info("Validating service '{0}'".format(nsd_file))
         log.info("... syntax: {0}, integrity: {1}, topology: {2}"
                  .format(self._syntax, self._integrity, self._topology))
@@ -685,7 +684,6 @@ class Validator(object):
                            service.id,
                            'evt_nsd_itg_function_invalid')
                 return
-
         # load service connection points
         if not service.load_connection_points():
             evtlog.log("Bad section 'connection_points'",
@@ -695,7 +693,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_itg_badsection_cpoints')
             return
-
         # load service links
         if not service.load_virtual_links():
             evtlog.log("Bad section 'virtual_links'",
@@ -704,7 +701,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_itg_badsection_vlinks')
             return
-
         undeclared = service.undeclared_connection_points()
         if undeclared:
             for cxpoint in undeclared:
@@ -715,7 +711,6 @@ class Validator(object):
                            service.id,
                            'evt_nsd_itg_undeclared_cpoint')
             return
-
         # check for unused connection points
         unused_ifaces = service.unused_connection_points()
         if unused_ifaces:
@@ -752,6 +747,7 @@ class Validator(object):
                         return
         return True
 
+
     def _load_service_functions(self, service):
         """
         Loads and stores functions (VNFs) referenced in the specified service
@@ -767,7 +763,6 @@ class Validator(object):
             vnfd_files = list(self._dpath)
         else:
             vnfd_files = list_files(self._dpath, self._dext)
-
             log.debug("Found {0} descriptors in dpath='{2}': {1}"
                       .format(len(vnfd_files), vnfd_files, self._dpath))
 
@@ -827,7 +822,6 @@ class Validator(object):
             log.info("Validating functions in path '{0}'".format(vnfd_path))
             vnfd_files = list_files(vnfd_path, self._dext)
             # ANTON
-            print(*vnfd_files, sep='\n')
             for vnfd_file in vnfd_files:
                 log.info("Detected file {0} order validation..."
                          .format(vnfd_file))
