@@ -35,16 +35,15 @@ MAINTAINER 5GTANGO
 
 # install git
 RUN apk update && apk upgrade && apk add --no-cache bash git && apk add --update redis
-
 RUN pip install pycodestyle
 
 # install tng-sdk-project first
 #WORKDIR /opt
 RUN git clone https://github.com/sonata-nfv/tng-sdk-project.git
 WORKDIR tng-sdk-project
-RUN ls -hall
 #RUN pip install -r requirements.txt
 RUN python setup.py install
+RUN tng-workspace
 
 ADD . /tng-sdk-validation
 
