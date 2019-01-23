@@ -332,7 +332,8 @@ def parse_args(input_args=None):
         required=False,
         dest="service_port"
     )
-
-    input_args = sys.argv[1:]
+    print("oaiklhjdflakdjflikakjdfñlakjdfñlkiajdñflkjañdfkjadñlofikjañdlfkjadñlksfjañlkfjañkdfjñakdsjf")
+    if input_args is None:
+        input_args = sys.argv[1:]
     print("CLI input arguments: {}".format(input_args))
     return parser.parse_args(input_args)
