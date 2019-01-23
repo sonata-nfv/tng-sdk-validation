@@ -128,7 +128,7 @@ def dispatch(args, validator):
         else:
             if validator.error_count == 0:
                 if len(validator.customErrors) == 0:
-                    print("No errors found in project validation")
+                    print("No errors found in the project validation of the descriptors")
                 else:
                     print("Errors in custom rules validation")
 
