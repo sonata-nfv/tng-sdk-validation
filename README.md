@@ -38,7 +38,7 @@ $ python3 setup.py install
 
 ### CLI mode
 
-The CLI interface is designed for developer usage, allowing to quickly validate SDK projects,package descriptors, service descriptors and function descriptors. The different levels of validation, namely syntax, integrity and topology can only be used in the following combinations:
+The CLI interface is designed for developer usage, allowing to quickly validate SDK projects descriptors, package descriptors, service descriptors and function descriptors. The different levels of validation are syntax, integrity, topology and custom_rules. They can only be used in the following combinations:
 
 * syntax only: `-s` or `--syntax`
 * syntax and integrity `-i` or `--integrity`
@@ -46,27 +46,22 @@ The CLI interface is designed for developer usage, allowing to quickly validate 
 * syntax, integrity, topology and custom_rules `-c` or `--custom`
 
 The tng-sdk-validation CLI tool can be used to validate one of the following components:
-`-project` - to validate an SDK project, the `--workspace` parameter must be specified, otherwise the default location `$ HOME/.tng-workspace` is assumed. (still working in this validations)
-* service - in service validation, if the chosen level of validation comprises more than syntax (integrity or topology), the `--dpath` argument must be specified in order to indicate the location of the VNF descriptor files, referenced in the service (this mustn't be specified in syntax validation). Has a standalone validation of a service, son-validate is not aware of a directory structure, unlike the project validation.
-  Moreover, the `--dext` parameter should also be specified to indicate the extension of descriptor files.
-* function - this specifies the validation of an individual VNF. It is also possible to validate multiple functions in bulk contained inside a directory. To if the `--function` is a directory, it will search for descriptor files with the extension specified by parameter `--dext`.
+
+* `--project` - If this option is chosen, all descriptors in the project will be validated. It is possible to use `--workspace`/`-w` parameter to set a particular workspace path, otherwise, the path is `$ HOME/.tng-workspace`.
+
+* `--service` - It is possible validate only the syntax of the service descriptor in the case of use `--syntax`. If a superior validation is chosen (for instance integrity), it is necessary to specify `--dpath` and `--dext` parameters. Using the superior validation the functions referenced by the descriptor will be validated too.
+
+* `--function` - There are two modes of function descriptor validation, validate an individual function descriptor or validation of all descriptors inside a directory.
 
 ```
-5gtango@validation-host:# tng-sdk-validate -h
-CLI input arguments: []
-usage: tng-sdk-validate [-h] [-w WORKSPACE_PATH]
-                        (--project PROJECT_PATH | --service NSD | --function VNFD | --api)
-                        [--dpath DPATH] [--dext DEXT] [--syntax] [--integrity]
-                        [--topology] [--debug] [--mode {stateless,local}]
-                        [--host SERVICE_ADDRESS] [--port SERVICE_PORT]
-tng-sdk-validate: error: one of the arguments --project --package --service --function --api is required
-root@debian-experiment:/home/quobis/tng-sdk-validation/src/tngsdk/validation/tests# tng-sdk-validate -h
+quobis@quobis-UX303UA:~/tng-sdk-validation$ tng-sdk-validate -h
 CLI input arguments: ['-h']
-usage: tng-sdk-validate [-h] [-w WORKSPACE_PATH]
-                        (--project PROJECT_PATH | --service NSD | --function VNFD | --api)
-                        [--dpath DPATH] [--dext DEXT] [--syntax] [--integrity]
-                        [--topology] [--debug] [--mode {stateless,local}]
-                        [--host SERVICE_ADDRESS] [--port SERVICE_PORT]
+usage: tng-validate [-h] [-w WORKSPACE_PATH]
+                    (--project PROJECT_PATH | --package PACKAGE_FILE | --service NSD | --function VNFD | --api)
+                    [--dpath DPATH] [--dext DEXT] [--syntax] [--integrity]
+                    [--topology] [--custom] [--cfile CFILE] [--debug]
+                    [--mode {stateless,local}] [--host SERVICE_ADDRESS]
+                    [--port SERVICE_PORT]
 
 5GTANGO SDK validator
 
@@ -77,11 +72,13 @@ optional arguments:
                         validating the SDK project.
   --project PROJECT_PATH
                         Validate the service of the specified SDK project.
+  --package PACKAGE_FILE
+                        Validate the specified package descriptor.
   --service NSD         Validate the specified service descriptor. The
                         directory of descriptors referenced in the service
                         descriptor should be specified using the argument '--
                         path'.
-  --function VNFD       Validate the specified function descriptor. If a
+  --function VNFD/CNFD  Validate the specified function descriptor. If a
                         directory is specified, it will search for descriptor
                         files with extension defined in '--dext'
   --api                 Run validator in service mode with REST API.
@@ -91,11 +88,11 @@ optional arguments:
   --dext DEXT           Specify the extension of descriptor files.
                         Particularly useful when using the '--function'
                         argument
-  --cfile               Specify the rules used to validate.
   --syntax, -s          Perform a syntax validation.
   --integrity, -i       Perform an integrity validation.
   --topology, -t        Perform a network topology validation.
-  --custom, -c          Perform a custom rules validation.
+  --custom, -c          Perform a network custom rules validation.
+  --cfile CFILE         Specify the file with the custom rules to validate
   --debug               Sets verbosity level to debug
   --mode {stateless,local}
                         Specify the mode of operation. 'stateless' mode will
@@ -109,16 +106,29 @@ optional arguments:
   --port SERVICE_PORT   Bind port number
 
 Example usage:
-        tng-sdk-validate --project /home/sonata/projects/project_X
-                     --workspace /home/sonata/.son-workspace
-        tng-sdk-validate --service ./nsd_file.yml --path ./vnfds/ --dext yml
-        tng-sdk-validate --function ./vnfd_file.yml
-        tng-sdk-validate --function ./vnfds/ --dext yml
+
+    - Validation of project descriptors in a particular workspace.
+        tng-sdk-validate --project path/to/project/ --workspace path/to/workspace
+
+    - Validation of project descriptors in the default workspace ($ HOME/.tng-workspace).
+        tng-sdk-validate --project path/to/project/
+
+    - Validation of service descriptors.
+        tng-sdk-validate  --service path/to/example_nsd.yml --dpath path/to/function_folder --dext yml
+
+    - Validation of all function (VNF/CNF) descriptors in a folder.
+        tng-sdk-validate --function path/to/function_folder/
+        tng-sdk-validate --function path/to/function_folder/ --dext yml
+
+    - Validation of individual function (VNF/CNF) descriptor.
+        tng-sdk-validate --function path/to/example_function.yml
+        tng-sdk-validate --function path/to/example_function.yml --dext yml
+
 ```
 
 ## Documentation
 
-Please refer to the [wiki](https://github.com/sonata-nfv/tng-sdk-validation/wiki) of the project for a more detailed documentation. 
+Please refer to the [wiki](https://github.com/sonata-nfv/tng-sdk-validation/wiki) of the project for a more detailed documentation.
 
 ## License
 
