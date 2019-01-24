@@ -179,16 +179,29 @@ def check_args(args):
 
 
 def parse_args(input_args=None):
+    #TODO Examples for custom rules.
     parser = argparse.ArgumentParser(
         description="5GTANGO SDK validator",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Example usage:
-        tng-sdk-validate --project /home/sonata/projects/project_X
-                     --workspace /home/sonata/.son-workspace
-        tng-sdk-validate --service ./nsd_file.yml --path ./vnfds/ --dext yml
-        tng-sdk-validate --function ./vnfd_file.yml
-        tng-sdk-validate --function ./vnfds/ --dext yml
-        """)
+
+    - Validation of project descriptors in a particular workspace.
+        tng-sdk-validate --project path/to/project/ --workspace path/to/workspace
+
+    - Validation of project descriptors in the default workspace ($ HOME/.tng-workspace).
+        tng-sdk-validate --project path/to/project/
+
+    - Validation of service descriptors.
+        tng-sdk-validate  --service path/to/example_nsd.yml --dpath path/to/function_folder --dext yml
+
+    - Validation of all function (VNF/CNF) descriptors in a folder.
+        tng-sdk-validate --function path/to/function_folder/
+        tng-sdk-validate --function path/to/function_folder/ --dext yml
+
+    - Validation of individual function (VNF/CNF) descriptor.
+        tng-sdk-validate --function path/to/example_function.yml
+        tng-sdk-validate --function path/to/example_function.yml --dext yml
+    """)
 
     exclusive_parser = parser.add_mutually_exclusive_group(
         required=True
@@ -332,7 +345,6 @@ def parse_args(input_args=None):
         required=False,
         dest="service_port"
     )
-    print("oaiklhjdflakdjflikakjdfñlakjdfñlkiajdñflkjañdfkjadñlofikjañdlfkjadñlksfjañlkfjañkdfjñakdsjf")
     if input_args is None:
         input_args = sys.argv[1:]
     print("CLI input arguments: {}".format(input_args))
