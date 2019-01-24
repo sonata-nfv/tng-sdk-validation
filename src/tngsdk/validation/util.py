@@ -91,7 +91,6 @@ def read_descriptor_file(file):
 
         return descriptor
 
-
 def descriptor_id(descriptor):
     """
     Provides the descriptor id of the specified descriptor content
