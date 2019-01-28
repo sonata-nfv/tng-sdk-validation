@@ -134,7 +134,7 @@ class DescriptorStorage(object):
         :return: function descriptor object
         """
         if fid not in self._functions[fid]:
-            log.error("Function id='{0}' is not stored.".format(fid))
+            log.error("Function descriptor id='{0}' is not stored.".format(fid))
             return
         return self.functions[fid]
 
@@ -1186,7 +1186,6 @@ class Function(Descriptor):
                                       should be internally connected
         """
         graph = nx.Graph()
-
         def_node_attrs = {'label': '',
                           'level': level,
                           'parent_id': self.id,
@@ -1310,6 +1309,7 @@ class Function(Descriptor):
                         s_cpr = cpr
 
                     graph.add_edge(brnode, s_cpr, attr_dict={'label': vb_id})
+        
         return graph
 
     def undeclared_connection_points(self):

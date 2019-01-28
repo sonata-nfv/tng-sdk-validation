@@ -130,7 +130,7 @@ class Validatewatchers(FileSystemEventHandler):
 
 
 def initialize(debug=False):
-    log.info("Initializing validator service")
+    log.info("Initializing validator service descriptor")
 
     cache.clear()
     cache.add('debug', debug)
@@ -208,18 +208,18 @@ validations_parser.add_argument("function",
                                 location="args",
                                 type=inputs.boolean,
                                 required=False,
-                                help="Function validation")
+                                help="Function descriptor validation")
 validations_parser.add_argument("service",
                                 location="args",
                                 type=inputs.boolean,
                                 required=False,
-                                help="Service validation")
+                                help="Service descriptor validation")
 validations_parser.add_argument("project",
                                 location="args",
                                 type=inputs.boolean,
                                 required=False,
                                 help="If True indicates that the request "
-                                     "if for a project validation")
+                                     "if for a project descriptor validation")
 validations_parser.add_argument("workspace",
                                 location="args",
                                 required=False,
@@ -247,7 +247,7 @@ validations_parser.add_argument("path",
 validations_parser.add_argument("dext",
                                 location="args",
                                 required=False,
-                                help="Specify the extension of the function "
+                                help="Specify the extension of the function descriptor "
                                      "files that are asociated with a service"
                                      " validation.")
 validations_parser.add_argument("cfile",
@@ -569,7 +569,7 @@ def _validate_object(args, path, keypath, obj_type):
                                                 or False))
 
         if args['function']:
-            log.info("Validating Function: {}".format(descriptor_path))
+            log.info("Validating Function descriptor: {}".format(descriptor_path))
             # TODO check if the function is a valid file path
             validator.validate_function(descriptor_path)
     else:
@@ -591,16 +591,16 @@ def _validate_object(args, path, keypath, obj_type):
                             workspace_path=(args['workspace'] or None))
 
         if args['function']:
-            log.info("Validating Function: {}".format(path))
+            log.info("Validating Function descriptor: {}".format(path))
             validator.validate_function(path)
 
         elif args['service']:
-            log.info("Validating Service: {}".format(path))
+            log.info("Validating Service descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_service(path)
 
         elif args['project']:
-            log.info("Validating Project: {}".format(path))
+            log.info("Validating Project descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_project(path)
 
@@ -738,17 +738,17 @@ def _validate_object_watcher(args, path, keypath, obj_type):
                         workspace_path=(args['workspace'] or False))
 
     if obj_type == 'function':
-        log.info("Validating Function: {}".format(path))
+        log.info("Validating Function descriptor: {}".format(path))
         # TODO check if the function is a valid file path
         validator.validate_function(path)
 
     elif obj_type == 'service':
-        log.info("Validating Service: {}".format(path))
+        log.info("Validating Service descriptor: {}".format(path))
         # TODO check if the function is a valid file path
         validator.validate_service(path)
 
     elif obj_type == 'project':
-        log.info("Validating Project: {}".format(path))
+        log.info("Validating Project descriptor: {}".format(path))
         # TODO check if the function is a valid file path
         validator.validate_project(path)
 
@@ -843,17 +843,17 @@ def _validate_object_from_watch(path):
                             custom=(watch['custom'] or False))
 
         if watch['type'] == 'function':
-            log.info("Validating Function: {}".format(path))
+            log.info("Validating Function descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_function(path)
 
         elif watch['type'] == 'service':
-            log.info("Validating Service: {}".format(path))
+            log.info("Validating Service descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_service(path)
 
         elif watch['type'] == 'project':
-            log.info("Validating Project: {}".format(path))
+            log.info("Validating Project descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_project(path)
 
@@ -1041,7 +1041,7 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
         validations[vid]['resources']['nsd'] = {'id': '/resources/' + rid,
                                                 'hashFile': hashFile}
         if (syntax and not integrity and not topology and not custom):
-            log.info('Not vnfds in service syntax validation')
+            log.info('Not vnfds in service descriptor syntax validation')
         else:
             vnfds = get_service_validation_resources(dpath)
             validations[vid]['resources']['vnfd'] = []
@@ -1240,22 +1240,22 @@ def check_args(args):
                 "and project parameters"}, 400
 
     if (args.function and args.service):
-        log.info("Not possible to validate function and service in the" +
+        log.info("Not possible to validate function descriptor and service descriptor in the" +
                  " same request")
-        return {"error_message": "Not possible to validate function" +
-                " and service and project in the same request"}, 400
+        return {"error_message": "Not possible to validate function descriptor" +
+                " and service descriptor and project descriptor in the same request"}, 400
 
     if (args.function and args.project):
-        log.info("Not possible to validate function and project in the" +
+        log.info("Not possible to validate function descriptor and project descriptor in the" +
                  " same request")
-        return {"error_message": "Not possible to validate function" +
-                " and project in the same request"}, 400
+        return {"error_message": "Not possible to validate function descriptor" +
+                " and project descriptor in the same request"}, 400
 
     if (args.service and args.project):
-        log.info("Not possible to validate service and project in the" +
+        log.info("Not possible to validate service descriptor and project descriptor in the" +
                  " same request")
-        return {"error_message": "Not possible to validate service" +
-                " and project in the same request"}, 400
+        return {"error_message": "Not possible to validate service descriptor" +
+                " and project descriptor in the same request"}, 400
 
     if (args.source == 'local' or args.source == 'url'):
         if (args.path is None):
@@ -1267,12 +1267,12 @@ def check_args(args):
     if (args.service and
             (args.integrity or args.topology or args.custom)):
         if (args.dpath is None or args.dext is None):
-            log.info('With integrity or topology validation of a service' +
-                     ' we need to specify the path of the functions ' +
+            log.info('With integrity or topology validation of a service descriptor' +
+                     ' we need to specify the path of the function descriptors ' +
                      '(dpath) and the extension of it (dext)')
-            return {"error_message": "Need functions path " +
+            return {"error_message": "Need function descriptors path " +
                     "(dpath) and the extension of it (dext) to validate " +
-                    "service integrity|topology|custom_rules"}, 400
+                    "service descriptor integrity|topology|custom_rules"}, 400
 
     if (args.custom and args.source == 'local'):
         if (args.cfile is None):
