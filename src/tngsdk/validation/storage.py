@@ -1166,8 +1166,9 @@ class Function(Descriptor):
                         return
 
                     unit = self.units[cdu['id']]
-                    for cp in cdu['connection_points']:
-                        unit.add_connection_point(cp['id'])
+                    if cdu.get('connection_points'):
+                        for cp in cdu['connection_points']:
+                            unit.add_connection_point(cp['id'])
                 return True
             else:
                 return
