@@ -1167,6 +1167,37 @@ class Function(Descriptor):
                 return True
             else:
                 return
+    def detect_selfloops(self):
+        """
+        detect wheter some vlink or vbridge are forming a loop
+        :return: the id of the vlink/vtree which makes the loop
+        """
+        selfloops = {}
+        for vl_id, vl in self.vlinks.items():
+            cpr_u = vl.cpr_u.split(":")
+            cpr_v = vl.cpr_v.split(":")
+            if cpr_u[0]==cpr_v[0]:
+                if vl_id not in selfloops.keys():
+                    selfloops[vl_id]=[vl.cpr_u,vl.cpr_v]
+                else:
+                    selfloops[vl_id].append([vl.cpr_u,vl.cpr_v])
+        for vb_id, vb in self.vbridges.items():
+            for i in range(0,len(vb.connection_point_refs)):
+                if vb_id in selfloops.keys():
+                    continue
+                cp = vb.connection_point_refs[i].split(":")
+                id = cp[0]
+                for j in range(0,len(vb.connection_point_refs)):
+                    if i==j:
+                        continue
+                    cp_aux = vb.connection_point_refs[j].split(":")
+                    id_aux = cp_aux[0]
+                    if id==id_aux:
+                        if vb_id not in selfloops.keys():
+                            selfloops[vb_id]=[vb.connection_point_refs[i],vb.connection_point_refs[j]]
+                        else:
+                            selfloops[vb_id].append(vb.connection_point_refs[j])
+        return selfloops
 
     def detect_disconnected_units(self):
         """

@@ -999,6 +999,11 @@ class Validator(object):
         if isolated_units:
             print("there are {} isolated_units".format(len(isolated_units)))
             return
+        selfloops = func.detect_selfloops()
+        if selfloops:
+            print("there are {} vlinks/vbridges which are creating selfloop(s)".format(len(selfloops)))
+            return
+
         func.graph = func.build_topology_graph(bridges=True)
         if not func.graph:
             evtlog.log("Invalid topology graph",
