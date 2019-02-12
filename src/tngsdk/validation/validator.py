@@ -43,11 +43,10 @@ import atexit
 import errno
 import yaml
 import inspect
-
+import matplotlib.pyplot as plt
 # Sonata and 55GTANGO imports
 from tngsdk.project.workspace import Workspace
 from tngsdk.project.project import Project
-
 from tngsdk.validation.storage import DescriptorStorage
 # from storage import DescriptorStorage
 # from son.validate.util import read_descriptor_files, list_files
@@ -387,7 +386,7 @@ class Validator(object):
         log.info("Validating topology of service descriptor '{0}'".format(service.id))
 
         # build service topology graph with VNF connection points
-        service.graph = service.build_topology_graph(level=1, bridges=False)
+        service.graph = service.build_topology_graph(level=1, bridges=True)
         if not service.graph:
             evtlog.log("Invalid topology",
                        "Couldn't build topology graph of service descriptor'{0}'"
@@ -898,7 +897,6 @@ class Validator(object):
         """
         log.info("Validating integrity of function descriptor '{0}'"
                  .format(func.id))
-
         # load function connection points
         if not func.load_connection_points():
             evtlog.log("Missing 'connection_points'",
@@ -988,7 +986,7 @@ class Validator(object):
 
     def _validate_function_topology(self, func):
         """
-        Validate the network topology of a function.
+        This functions validates the network topology of a function.
         It builds the topology graph of the function, including VDU
         connections.
         :param func: function to validate
@@ -997,7 +995,10 @@ class Validator(object):
         log.info("Validating topology of function descriptor '{0}'"
                  .format(func.id))
 
-        # build function topology graph
+        isolated_units = func.detect_disconnected_units()
+        if isolated_units:
+            print("there are {} isolated_units".format(len(isolated_units)))
+            return
         func.graph = func.build_topology_graph(bridges=True)
         if not func.graph:
             evtlog.log("Invalid topology graph",
@@ -1011,8 +1012,6 @@ class Validator(object):
                   .format(func.id, func.graph.edges()))
         log.info("Built topology graph of function descriptor'{0}': {1}"
                  .format(func.id, func.graph.edges()))
-
         return True
-
     def workspace(self):
         log.warning("workspace not implemented")

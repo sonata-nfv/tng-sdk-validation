@@ -72,7 +72,7 @@ def dispatch(args, validator):
             if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
                 print("No errors found in the VNFD")
             else:
-                print("Errors in custom rules validation")
+                print("Errors in validation")
         return validator
 
     elif args.nsd:

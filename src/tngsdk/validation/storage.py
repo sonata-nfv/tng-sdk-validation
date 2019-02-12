@@ -29,7 +29,7 @@ import logging
 import networkx as nx
 import validators
 import requests
-
+from collections import Counter
 from collections import OrderedDict
 # importing the local event module, fix this ASAP
 # from .event import *
@@ -552,7 +552,6 @@ class Descriptor(Node):
                 unused_cps.append(cp)
         return unused_cps
 
-
 class Package(Descriptor):
 
     def __init__(self, descriptor_file):
@@ -734,7 +733,6 @@ class Service(Descriptor):
         connection_point_refs = self.vlink_cp_refs
         if bridges:
             connection_point_refs += self.vbridge_cp_refs
-
         for cpr in connection_point_refs:
             node_attrs = def_node_attrs.copy()
             node_attrs['label'] = cpr
@@ -825,7 +823,6 @@ class Service(Descriptor):
         # build vlinks topology graph
         if not self.vlinks and not self.vbridges:
             log.warning("No links were found")
-
         for vl_id, vl in self.vlinks.items():
 
             if level >= 1:
@@ -921,7 +918,6 @@ class Service(Descriptor):
                                 link_attrs['type'] = 'iface'
                                 graph.add_edge(node_u, node_v,
                                                attr_dict=link_attrs)
-
         return graph
 
     def load_forwarding_graphs(self):
@@ -1172,6 +1168,31 @@ class Function(Descriptor):
             else:
                 return
 
+    def detect_disconnected_units(self):
+        """
+        detect wheter some unit is disconnected (all cp are unused)
+        :return: id of the units which are disconnected
+        """
+        unused_units = []
+        for unit_id, unit in self.units.items():
+            #vlinks which are being used are put in "cp_used_unit"
+            cp_used_unit = []
+            cp_used_unit = []
+            for cp in unit.connection_points:
+                cp_extended = unit_id+":"+cp
+                unit_is_isolated = True
+                for vl_id, vl in self.vlinks.items():
+                    if cp_extended in vl.connection_point_refs and cp not in cp_used_unit:
+                        cp_used_unit.append(cp)
+                        break
+                for vb_id, vb in self.vbridges.items():
+                    if cp_extended in vb.connection_point_refs and cp not in cp_used_unit:
+                        cp_used_unit.append(cp)
+                        break
+            if len(cp_used_unit)==0:
+
+                unused_units.append(unit_id)
+        return unused_units
 
     def build_topology_graph(self, bridges=False, parent_id='', level=0,
                              vdu_inner_connections=True):
@@ -1194,11 +1215,9 @@ class Function(Descriptor):
         def_edge_attrs = {'label': '',
                           'level': '',
                           'type': ''}
-
         # assign nodes from function
 
         cp_refs = self.vlink_cp_refs
-
         if bridges:
             cp_refs += self.vbridge_cp_refs
         for cpr in cp_refs:
@@ -1206,7 +1225,6 @@ class Function(Descriptor):
             s_cpr = cpr.split(':')
             unit = self.units[s_cpr[0]] if s_cpr[0] in self.units else None
             if len(s_cpr) > 1 and unit:
-
                 if level == 0:
                     iface = s_cpr[0]
                 node_attrs['parent_id'] = self.id
@@ -1218,26 +1236,20 @@ class Function(Descriptor):
                 node_attrs['level'] = 1
                 node_attrs['node_id'] = self.id
                 node_attrs['node_label'] = self.content['name']
-
             node_attrs['label'] = s_cpr[1] if len(s_cpr) > 1 else cpr
 
             if cpr in self.vlink_cp_refs:
                 node_attrs['type'] = 'iface'
             elif cpr in self.vbridge_cp_refs:
                 node_attrs['type'] = 'br-iface'
-
             graph.add_node(cpr, attr_dict=node_attrs)
-
-        # build link topology graph
         for vl_id, vl in self.vlinks.items():
-
             edge_attrs = def_edge_attrs.copy()
 
             cpr_u = vl.cpr_u.split(':')
             cpr_v = vl.cpr_v.split(':')
 
             if level == 0:
-                # unit interfaces not considered as nodes, just the unit itself
                 if vl.cpr_u not in self.connection_points and len(cpr_u) > 1:
                     cpr_u = cpr_u[0]
                 else:
@@ -1247,7 +1259,6 @@ class Function(Descriptor):
                     cpr_v = cpr_v[0]
                 else:
                     cpr_v = vl.cpr_v
-
                 edge_attrs['level'] = 1
 
             elif level == 1:
@@ -1258,9 +1269,7 @@ class Function(Descriptor):
 
             edge_attrs['type'] = 'iface'
             edge_attrs['label'] = vl.id
-
             graph.add_edge(cpr_u, cpr_v, attr_dict=edge_attrs)
-
         if vdu_inner_connections:
             # link vdu interfaces if level 1
             if level == 1:
@@ -1309,12 +1318,11 @@ class Function(Descriptor):
                         s_cpr = cpr
 
                     graph.add_edge(brnode, s_cpr, attr_dict={'label': vb_id})
-        
         return graph
 
     def undeclared_connection_points(self):
         """
-        Provides a list of interfaces that are referenced in 'virtual_links'
+        Provides a list of interfaces that are referenced in 'gitvirtual_links'
         section but not declared in 'connection_points' of the Function and its
         Units.
         """
@@ -1334,7 +1342,6 @@ class Function(Descriptor):
                         undeclared_cps.append(cpr)
 
         return undeclared_cps
-
 
 class Unit(Node):
     def __init__(self, uid):
