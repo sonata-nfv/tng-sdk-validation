@@ -54,6 +54,7 @@ class DescriptorStorage(object):
         self._services = {}
         self._functions = {}
         self._units = {}
+        self._tests = {}
 
     @property
     def packages(self):
@@ -78,7 +79,12 @@ class DescriptorStorage(object):
         :return: dictionary of functions.
         """
         return self._functions
-
+    @property
+    def tests(self):
+        """
+        Provides the stores tests
+        :return: dictionary of tests
+        """
     def service(self, sid):
         """
         Obtain the service for the provided service id
@@ -151,10 +157,36 @@ class DescriptorStorage(object):
         new_function = Function(descriptor_file)
         if new_function.id in self._functions.keys():
             return self._functions[new_function.id]
-
         self._functions[new_function.id] = new_function
         return new_function
 
+    def test(self, tid):
+        """
+        Obtain the function for the provided test id
+        :param tid: test id
+        :return: test descriptor object
+        """
+        if tid not in self._tests[tid]:
+            log.error("Test descriptor id='{0}' is not stored.".format(fid))
+            return
+        return self.functions[fid]
+
+    def create_test(self, descriptor_file):
+        """
+        Create and store a test based on the provided descriptor filename.
+        If a test is already stored with the same id, it will return the
+        stored test.
+        :param descriptor_file: test descriptor filename
+        :return: created test object or, if id exists, the stored test.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_test = Test(descriptor_file)
+        if new_test.id in self._tests.keys():
+            return self._tests[new_test.id]
+
+        self._tests[new_test.id] = new_test
+        return new_test
 
 class Node:
     def __init__(self, nid):
@@ -353,6 +385,7 @@ class Descriptor(Node):
         This modification will impact the content and id of the descriptor.
         :param value: descriptor filename
         """
+
         self._filename = value
         content = read_descriptor_file(self._filename)
         if content:
@@ -1390,3 +1423,127 @@ class Unit(Node):
         :return: unit id
         """
         return self._id
+
+class Test_parameter:
+    def __init__(self, test_parameter):
+        self._parameter_name = test_parameter["parameter_name"]
+        self._parameter_definition = test_parameter["parameter_definition"]
+        self._parameter_value = test_parameter["parameter_value"]
+        self._content_type = test_parameter["content_type"]
+    @property
+    def parameter_name(self):
+        return self._parameter_name
+    @property
+    def parameter_definition(self):
+        return self._parameter_definition
+    @property
+    def parameter_value(self):
+        return self._parameter_value
+
+class Test_execution:
+    def __init__(self, test_execution):
+        self._tag_id = test_execution["tag_id"]
+        self._test_tag = test_execution["test_tag"]
+    @property
+    def test_id(self):
+        return self._test_id
+    @property
+    def test_tag(self):
+        return self._test_tag
+
+class Test:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._test_type = None
+        self._test_category = None
+        self._content = None
+        self.filename = descriptor_file
+        self._test_executions = []
+        self._test_configuration_parameters = []
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def test_type(self):
+        return self._test_type
+
+    @property
+    def test_category(self):
+        return self._test_category
+
+    @property
+    def content(self):
+        """
+        Descriptor dictionary.
+        :return: descriptor dict
+        """
+        return self._content
+
+    @property
+    def test_configuration_parameters(self):
+        return self._test_configuration_parameters
+
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def test_executions(self):
+        return self._test_executions
+
+    @content.setter
+    def content(self, value):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: descriptor dict
+        """
+        self._content = value
+        self._id = descriptor_id(self._content)
+
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content
+
+    def set_test_type(self, test_type):
+        self._test_type = test_type
+
+    def set_test_category(self, test_category):
+        self._test_category = test_category
+
+    def add_test_configuration_parameter(self, test_conf_param):
+        """
+        :test_conf_param: Test_parameter object
+        """
+        self._test_configuration_parameters.append(test_conf_param)
+
+    def add_test_execution(self, test_execution):
+        """
+        :test_execution: Test_execution object
+        """
+        self._test_executions.append(test_execution)
+
+    def get_test_config_parameter(self, parameter_name):
+        """
+        :parameter_name: String
+        :return: The Test_parameter object which has that name if the name exists, None otherwise
+        """
+        for test_config_parameter in self._test_config_parameters:
+            if parameter_name in test_config_parameter:
+                 return self.add_test_configuration_parameters["parameter_name"]
+        return

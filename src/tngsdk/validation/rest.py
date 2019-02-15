@@ -412,6 +412,7 @@ class Validation(Resource):
         args = validations_parser.parse_args()
         log.info("POST to /validation w. args: {}".format(args))
         check_correct_args = check_args(args)
+
         if check_correct_args is True:
             keypath, path = process_request(args)
             if not keypath or not path:

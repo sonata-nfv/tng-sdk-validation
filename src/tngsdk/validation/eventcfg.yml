@@ -136,7 +136,42 @@ evt_vnfd_itg_undefined_cpoint: error
 # VNFD [topology] - failed to build topology graph
 evt_vnfd_top_topgraph_failed: error
 
+## TEST
+# Test - invalid descriptor file
+evt_test_invalid_descriptor: error
 
+# TSTD [syntax] - invalid schema syntax
+evt_tstd_stx_invalid: error
+
+# TSTD [integrity] - test_type missing
+evt_tstd_itg_badsection_test_type: error
+
+# TSTD [integrity] - test_configuration_parameters missing
+evt_tstd_itg_badsection_test_configuration_parameters: error
+
+# TSTD [integrity] - test_category missing
+evt_tstd_itg_badsection_test_category: error
+
+# TSTD [integrity] - test_configuration_parameters_parameter_name missing
+evt_tstd_itg_badsection_test_configuration_parameters_parameter_name: error
+
+# TSTD [integrity] - test_configuration_parameters_parameter_name missing
+evt_tstd_itg_badsection_test_configuration_parameters_parameter_definition: error
+
+# TSTD [integrity] - test_configuration_parameters_parameter_name missing
+evt_tstd_itg_badsection_test_configuration_parameters_parameter_value: error
+
+# TSTD [integrity] - test_configuration_parameters_parameter_name missing
+evt_tstd_itg_badsection_test_configuration_parameters_content_type: error
+
+# TSTD [integrity] - test_execution missing
+evt_tstd_itg_badsection_test_execution: error
+
+# TSTD [integrity] - test_execution_test_tag
+evt_tstd_itg_badsection_test_execution_test_tag: error
+
+# TSTD [integrity] - test_execution_test_id
+evt_tstd_itg_badsection_test_execution_test_id: error
 ### GENERAL
 
 # Duplicate declaration of connection point

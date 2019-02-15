@@ -43,11 +43,10 @@ import atexit
 import errno
 import yaml
 import inspect
-import matplotlib.pyplot as plt
 # Sonata and 55GTANGO imports
 from tngsdk.project.workspace import Workspace
 from tngsdk.project.project import Project
-from tngsdk.validation.storage import DescriptorStorage
+from tngsdk.validation.storage import DescriptorStorage, Test_parameter, Test_execution
 # from storage import DescriptorStorage
 # from son.validate.util import read_descriptor_files, list_files
 # from son.validate.util import strip_root, build_descriptor_id
@@ -310,10 +309,29 @@ class Validator(object):
         # load all project descriptors present at source directory
         log.debug("Loading project service descriptor")
         nsd_file = Validator._load_project_service_file(project)
-        if not nsd_file:
-            return
-        nsd_file = project_path + nsd_file
-        return self.validate_service(nsd_file)
+        # TODO some type of function 'project.get_tstd()' is necessary here
+        with open(project_path+project.__descriptor_name__, 'r') as _file:
+            try:
+                descriptor = yaml.load(_file)
+            except yaml.YAMLError as exc:
+                return
+        tstd_file = []
+        for _file in descriptor["files"]:
+            if _file["type"] == "application/vnd.5gtango.tstd":
+                tstd_file.append(project_path+_file["path"])
+        tstd_ok = True
+        for _file in tstd_file:
+            if not self.validate_test(_file):
+                tstd_error = False
+        ###
+        if nsd_file and tstd_file:
+            nsd_file = project_path + nsd_file
+            return self.validate_service(nsd_file) and tstd_ok
+        elif not(nsd_file) and tstd_ok:
+            return tstd_ok
+        else:
+            nsd_file = project_path + nsd_file
+            return self.validate_service(nsd_file)
 
     @staticmethod
     def _load_project_service_file(project):
@@ -326,11 +344,7 @@ class Validator(object):
         # load project service descriptor (NSD)
         nsd_files = project.get_nsds()
         if not nsd_files:
-            evtlog.log("NSD not found",
-                       "Couldn't find a service descriptor in project '{0}'"
-                       .format(project.project_root),
-                       project.project_root,
-                       'evt_project_service_invalid')
+            log.warning("NSD not found. Couldn't find a service descriptor in project '{0}'".format(project.project_root))
             return False
 
         if len(nsd_files) > 1:
@@ -340,7 +354,7 @@ class Validator(object):
                        .format(project.project_root, nsd_files),
                        project.project_root,
                        'evt_project_service_multiple')
-            return False
+            return Falsetel
 
         return nsd_files[0]
 
@@ -915,7 +929,6 @@ class Validator(object):
                        func.id,
                        'evt_vnfd_itg_badsection_vdus')
             return
-
         # load connection points of units
         if not func.load_unit_connection_points():
             evtlog.log("Bad section 'connection_points'",
@@ -994,7 +1007,7 @@ class Validator(object):
         """
         log.info("Validating topology of function descriptor '{0}'"
                  .format(func.id))
-
+        """
         isolated_units = func.detect_disconnected_units()
         if isolated_units:
             print("there are {} isolated_units".format(len(isolated_units)))
@@ -1003,7 +1016,7 @@ class Validator(object):
         if selfloops:
             print("there are {} vlinks/vbridges which are creating selfloop(s)".format(len(selfloops)))
             return
-
+        """
         func.graph = func.build_topology_graph(bridges=True)
         if not func.graph:
             evtlog.log("Invalid topology graph",
@@ -1020,3 +1033,168 @@ class Validator(object):
         return True
     def workspace(self):
         log.warning("workspace not implemented")
+
+
+    def validate_test(self, test_path):
+        """
+        Validate one or multiple 5GTANGO tests (TSTD).
+        By default, it performs the following validations: syntax, integrity.
+        :param test_path: function descriptor TSTD filename or
+                          a directory to search for tests
+        :return: True if all validations were successful, False otherwise
+        """
+        if os.path.isdir(test_path):
+            log.info("Validating test descriptors in path '{0}'".format(test_path))
+            test_files = list_files(test_path, self._dext)
+            for test in test_files:
+                log.info("Detected file {0} order validation..."
+                         .format(test))
+                if not self.validate_test(test):
+                    return
+            return True
+
+        log.info("Validating test descriptor '{0}'".format(test_path))
+        log.info("... syntax: {0}, integrity: {1}"
+                 .format(self._syntax, self._integrity))
+
+        test = self._storage.create_test(test_path)
+
+        if not(test) or test.content is None:
+            evtlog.log("Invalid test descriptor",
+                       "Couldn't store TSTD of file '{0}'".format(test_path),
+                       test_path,
+                       'evt_test_invalid_descriptor')
+            return
+
+        if self._syntax and not self._validate_test_syntax(test):
+            return True
+
+        if self._integrity and not self._validate_test_integrity(test):
+            return True
+        return True
+
+    def _validate_test_syntax(self, test):
+        """
+        Validate the syntax of a test (TSTD) against its schema.
+        :param test: test to validate
+        :return: True if syntax is correct, None otherwise
+        """
+        log.info("Validating syntax of test descriptor '{0}'".format(test.id))
+        if not self._schema_validator.validate(
+                test.content, SchemaValidator.SCHEMA_TEST_DESCRIPTOR):
+            evtlog.log("Invalid TSTD syntax",
+                       "Invalid syntax in test descriptor'{0}': {1}"
+                       .format(test.id, self._schema_validator.error_msg),
+                       test.id,
+                       'evt_tstd_stx_invalid')
+            return
+        return True
+    def _validate_test_integrity(self, test):
+        """
+        Validate the existence of all elements in the test descriptor i.e. configuration
+        parameters...
+        :test: test to validate
+        :return: True if integrity is correct, False otherwise
+        """
+        log.info("Validating integrity of test descriptor '{0}'"
+                 .format(test.id))
+
+        if "test_type" not in test.content:
+            evtlog.log("Missing 'test_type'",
+                       "Couldn't load the test_type of "
+                       "test descriptor id='{0}'"
+                       .format(test.id),
+                       test.id,
+                       'evt_tstd_itg_badsection_test_type')
+            return
+        test.set_test_type(test.content["test_type"])
+
+        if "test_category" not in test.content:
+            evtlog.log("Missing 'test_category'",
+                       "Couldn't load the test_category of "
+                       "test descriptor id='{0}'"
+                       .format(test.id),
+                       test.id,
+                       'evt_tstd_itg_badsection_test_category')
+            return
+        test.set_test_category(test.content["test_category"])
+
+        if "test_configuration_parameters" not in test.content:
+            evtlog.log("Missing 'test_configuration_parameters'",
+                       "Couldn't load the test_configuration_parameters of "
+                       "test descriptor id='{0}'"
+                       .format(test.id),
+                       test.id,
+                       'evt_tstd_itg_badsection_test_configuration_parameters')
+            return
+        conf_params = test.content["test_configuration_parameters"]
+        for param in conf_params:
+            if "parameter_name" not in param:
+                evtlog.log("Missing 'parameter_name' in 'test_configuration_parameters'",
+                           "Couldn't load the test_configuration_parameters of "
+                           "test descriptor id='{0}'"
+                           .format(test.id),
+                           test.id,
+                           'evt_tstd_itg_badsection_test_configuration_parameters_parameter_name')
+                return
+            elif "parameter_definition" not in param:
+                evtlog.log("Missing 'parameter_definition' in test_configuration_parameters",
+                           "Couldn't load the test_configuration_parameters of "
+                           "test descriptor id='{0}'"
+                           .format(test.id),
+                           test.id,
+                           'evt_tstd_itg_badsection_test_configuration_parameters_parameter_definition')
+                return
+            elif "parameter_value" not in param:
+                evtlog.log("Missing 'parameter_value' in 'test_configuration_parameters'",
+                           "Couldn't load the test_configuration_parameters of "
+                           "test descriptor id='{0}'"
+                           .format(test.id),
+                           test.id,
+                           'evt_tstd_itg_badsection_test_configuration_parameters_parameter_value')
+                return
+            elif "content_type" not in param:
+                evtlog.log("Missing 'content_type' in 'test_configuration_parameters'",
+                           "Couldn't load the test_configuration_parameters of "
+                           "test descriptor id='{0}'"
+                           .format(test.id),
+                           test.id,
+                           'evt_tstd_itg_badsection_test_configuration_parameters_content_type')
+                return
+            elif len(param)>4:
+                print("So many properties")
+                return
+            else:
+                new_test_conf_param = Test_parameter(param)
+                test.add_test_configuration_parameter(new_test_conf_param)
+
+        if "test_execution" not in test.content:
+            evtlog.log("Missing 'test_execution'",
+                       "Couldn't load the test_execution of "
+                       "test descriptor id='{0}'"
+                       .format(test.id),
+                       test.id,
+                       'evt_tstd_itg_badsection_test_execution')
+            return
+        test_executions = test.content["test_execution"]
+        for test_execution in test_executions:
+            if "test_tag" not in test_execution:
+                evtlog.log("Missing 'test_tag' in 'test_execution'",
+                           "Couldn't load the test_execution of "
+                           "test descriptor id='{0}'"
+                           .format(test.id),
+                           test.id,
+                           'evt_tstd_itg_badsection_test_execution_test_tag')
+                return
+            elif "tag_id" not in test_execution:
+                evtlog.log("Missing 'test_id' in 'test_execution'",
+                           "Couldn't load the test_execution of "
+                           "test descriptor id='{0}'"
+                           .format(test.id),
+                           test.id,
+                           'evt_tstd_itg_badsection_test_execution_test_id')
+                return
+            else:
+                new_test_execution = Test_execution(test_execution)
+                test.add_test_execution(new_test_execution)
+        return True
