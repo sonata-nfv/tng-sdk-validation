@@ -1007,16 +1007,24 @@ class Validator(object):
         """
         log.info("Validating topology of function descriptor '{0}'"
                  .format(func.id))
-        """
         isolated_units = func.detect_disconnected_units()
         if isolated_units:
-            print("there are {} isolated_units".format(len(isolated_units)))
+            evtlog.log("Invalid toplogy graph",
+                        "{} isolated units were found in the topology"
+                        .format(len(loops)),
+                        func.id,
+                        "evt_vnfd_top_isolated_units")
             return
-        selfloops = func.detect_selfloops()
-        if selfloops:
-            print("there are {} vlinks/vbridges which are creating selfloop(s)".format(len(selfloops)))
+
+        loops = func.detect_loops()
+        if loops:
+            evtlog.log("Invalid toplogy graph",
+                        "{} loops were found in the topology"
+                        .format(len(loops)),
+                        func.id,
+                        "evt_vnfd_top_loops")
             return
-        """
+
         func.graph = func.build_topology_graph(bridges=True)
         if not func.graph:
             evtlog.log("Invalid topology graph",

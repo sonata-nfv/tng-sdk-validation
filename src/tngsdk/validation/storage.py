@@ -1200,7 +1200,7 @@ class Function(Descriptor):
                 return True
             else:
                 return
-    def detect_selfloops(self):
+    def detect_loops(self):
         """
         detect wheter some vlink or vbridge are forming a loop
         :return: the id of the vlink/vtree which makes the loop

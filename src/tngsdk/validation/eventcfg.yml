@@ -136,6 +136,13 @@ evt_vnfd_itg_undefined_cpoint: error
 # VNFD [topology] - failed to build topology graph
 evt_vnfd_top_topgraph_failed: error
 
+# VNFD [topology] - isolated units were detected
+evt_vnfd_top_isolated_units: error
+
+# VNFD [topology] - loops were detected
+evt_vnfd_top_loops: error
+
+
 ## TEST
 # Test - invalid descriptor file
 evt_test_invalid_descriptor: error
