@@ -1019,13 +1019,14 @@ class Validator(object):
         loops = func.detect_loops()
         if loops:
             evtlog.log("Invalid toplogy graph",
-                        "{} loops were found in the topology"
+                        "{} loop(s) was/were found in the topology"
                         .format(len(loops)),
                         func.id,
                         "evt_vnfd_top_loops")
             return
-
-        func.graph = func.build_topology_graph(bridges=True)
+            
+        bridges = False
+        func.graph = func.build_topology_graph(bridges)
         if not func.graph:
             evtlog.log("Invalid topology graph",
                        "Couldn't build topology graph of function descriptor '{0}'"
@@ -1038,6 +1039,17 @@ class Validator(object):
                   .format(func.id, func.graph.edges()))
         log.info("Built topology graph of function descriptor'{0}': {1}"
                  .format(func.id, func.graph.edges()))
+
+        if not(bridges):
+            cycles = None
+            cycles = nx.cycle_basis(func.graph)
+            if cycles:
+                evtlog.log("Invalid topology graph",
+                           "{} cycle(s) was/were found in the topology"
+                           .format(len(cycles)),
+                           func.id,
+                           'evt_vnfd_top_cycles')
+                return
         return True
     def workspace(self):
         log.warning("workspace not implemented")

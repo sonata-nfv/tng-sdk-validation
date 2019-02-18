@@ -141,8 +141,8 @@ evt_vnfd_top_isolated_units: error
 
 # VNFD [topology] - loops were detected
 evt_vnfd_top_loops: error
-
-
+# VNFD [topology] - cycles were detected
+evt_vnfd_top_cycles: error
 ## TEST
 # Test - invalid descriptor file
 evt_test_invalid_descriptor: error
