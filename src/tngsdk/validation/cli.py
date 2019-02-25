@@ -66,7 +66,6 @@ def dispatch(args, validator):
             print("Syntax, integrity, topology  and custom rules validation")
         else:
             print("Default mode: Syntax, integrity and topology validation")
-
         if validator.validate_function(args.vnfd):
             if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
                 print("No errors found in the VNFD")
@@ -144,8 +143,8 @@ def dispatch(args, validator):
             print("Integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
         else:
-            print("Default test descriptor validation, syntax and integrity")
-            validator.configure(syntax=True, integrity=False, topology=False, custom=False)
+            print("Default test descriptor validation syntax and integrity")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
     if not validator.validate_test(args.tstd):
         print('Cant validate the test descriptors')
