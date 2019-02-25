@@ -29,7 +29,7 @@ import logging
 import networkx as nx
 import validators
 import requests
-
+from collections import Counter
 from collections import OrderedDict
 # importing the local event module, fix this ASAP
 # from .event import *
@@ -54,6 +54,7 @@ class DescriptorStorage(object):
         self._services = {}
         self._functions = {}
         self._units = {}
+        self._tests = {}
 
     @property
     def packages(self):
@@ -78,7 +79,12 @@ class DescriptorStorage(object):
         :return: dictionary of functions.
         """
         return self._functions
-
+    @property
+    def tests(self):
+        """
+        Provides the stores tests
+        :return: dictionary of tests
+        """
     def service(self, sid):
         """
         Obtain the service for the provided service id
@@ -134,7 +140,7 @@ class DescriptorStorage(object):
         :return: function descriptor object
         """
         if fid not in self._functions[fid]:
-            log.error("Function id='{0}' is not stored.".format(fid))
+            log.error("Function descriptor id='{0}' is not stored.".format(fid))
             return
         return self.functions[fid]
 
@@ -151,10 +157,36 @@ class DescriptorStorage(object):
         new_function = Function(descriptor_file)
         if new_function.id in self._functions.keys():
             return self._functions[new_function.id]
-
         self._functions[new_function.id] = new_function
         return new_function
 
+    def test(self, tid):
+        """
+        Obtain the function for the provided test id
+        :param tid: test id
+        :return: test descriptor object
+        """
+        if tid not in self._tests[tid]:
+            log.error("Test descriptor id='{0}' is not stored.".format(fid))
+            return
+        return self.functions[fid]
+
+    def create_test(self, descriptor_file):
+        """
+        Create and store a test based on the provided descriptor filename.
+        If a test is already stored with the same id, it will return the
+        stored test.
+        :param descriptor_file: test descriptor filename
+        :return: created test object or, if id exists, the stored test.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_test = Test(descriptor_file)
+        if new_test.id in self._tests.keys():
+            return self._tests[new_test.id]
+
+        self._tests[new_test.id] = new_test
+        return new_test
 
 class Node:
     def __init__(self, nid):
@@ -353,6 +385,7 @@ class Descriptor(Node):
         This modification will impact the content and id of the descriptor.
         :param value: descriptor filename
         """
+
         self._filename = value
         content = read_descriptor_file(self._filename)
         if content:
@@ -552,7 +585,6 @@ class Descriptor(Node):
                 unused_cps.append(cp)
         return unused_cps
 
-
 class Package(Descriptor):
 
     def __init__(self, descriptor_file):
@@ -734,7 +766,6 @@ class Service(Descriptor):
         connection_point_refs = self.vlink_cp_refs
         if bridges:
             connection_point_refs += self.vbridge_cp_refs
-
         for cpr in connection_point_refs:
             node_attrs = def_node_attrs.copy()
             node_attrs['label'] = cpr
@@ -825,7 +856,6 @@ class Service(Descriptor):
         # build vlinks topology graph
         if not self.vlinks and not self.vbridges:
             log.warning("No links were found")
-
         for vl_id, vl in self.vlinks.items():
 
             if level >= 1:
@@ -921,7 +951,6 @@ class Service(Descriptor):
                                 link_attrs['type'] = 'iface'
                                 graph.add_edge(node_u, node_v,
                                                attr_dict=link_attrs)
-
         return graph
 
     def load_forwarding_graphs(self):
@@ -1172,7 +1201,63 @@ class Function(Descriptor):
                 return True
             else:
                 return
+    def detect_loops(self):
+        """
+        detect wheter some vlink or vbridge are forming a loop
+        :return: the id of the vlink/vtree which makes the loop
+        """
+        selfloops = {}
+        for vl_id, vl in self.vlinks.items():
+            cpr_u = vl.cpr_u.split(":")
+            cpr_v = vl.cpr_v.split(":")
+            if cpr_u[0]==cpr_v[0]:
+                if vl_id not in selfloops.keys():
+                    selfloops[vl_id]=[vl.cpr_u,vl.cpr_v]
+                else:
+                    selfloops[vl_id].append([vl.cpr_u,vl.cpr_v])
+        for vb_id, vb in self.vbridges.items():
+            for i in range(0,len(vb.connection_point_refs)):
+                if vb_id in selfloops.keys():
+                    continue
+                cp = vb.connection_point_refs[i].split(":")
+                id = cp[0]
+                for j in range(0,len(vb.connection_point_refs)):
+                    if i==j:
+                        continue
+                    cp_aux = vb.connection_point_refs[j].split(":")
+                    id_aux = cp_aux[0]
+                    if id==id_aux:
+                        if vb_id not in selfloops.keys():
+                            selfloops[vb_id]=[vb.connection_point_refs[i],vb.connection_point_refs[j]]
+                        else:
+                            selfloops[vb_id].append(vb.connection_point_refs[j])
+        return selfloops
 
+    def detect_disconnected_units(self):
+        """
+        detect wheter some unit is disconnected (all cp are unused)
+        :return: id of the units which are disconnected
+        """
+        unused_units = []
+        for unit_id, unit in self.units.items():
+            #vlinks which are being used are put in "cp_used_unit"
+            cp_used_unit = []
+            cp_used_unit = []
+            for cp in unit.connection_points:
+                cp_extended = unit_id+":"+cp
+                unit_is_isolated = True
+                for vl_id, vl in self.vlinks.items():
+                    if cp_extended in vl.connection_point_refs and cp not in cp_used_unit:
+                        cp_used_unit.append(cp)
+                        break
+                for vb_id, vb in self.vbridges.items():
+                    if cp_extended in vb.connection_point_refs and cp not in cp_used_unit:
+                        cp_used_unit.append(cp)
+                        break
+            if len(cp_used_unit)==0:
+
+                unused_units.append(unit_id)
+        return unused_units
 
     def build_topology_graph(self, bridges=False, parent_id='', level=0,
                              vdu_inner_connections=True):
@@ -1187,7 +1272,6 @@ class Function(Descriptor):
                                       should be internally connected
         """
         graph = nx.Graph()
-
         def_node_attrs = {'label': '',
                           'level': level,
                           'parent_id': self.id,
@@ -1196,11 +1280,9 @@ class Function(Descriptor):
         def_edge_attrs = {'label': '',
                           'level': '',
                           'type': ''}
-
         # assign nodes from function
 
         cp_refs = self.vlink_cp_refs
-
         if bridges:
             cp_refs += self.vbridge_cp_refs
         for cpr in cp_refs:
@@ -1208,7 +1290,6 @@ class Function(Descriptor):
             s_cpr = cpr.split(':')
             unit = self.units[s_cpr[0]] if s_cpr[0] in self.units else None
             if len(s_cpr) > 1 and unit:
-
                 if level == 0:
                     iface = s_cpr[0]
                 node_attrs['parent_id'] = self.id
@@ -1220,26 +1301,20 @@ class Function(Descriptor):
                 node_attrs['level'] = 1
                 node_attrs['node_id'] = self.id
                 node_attrs['node_label'] = self.content['name']
-
             node_attrs['label'] = s_cpr[1] if len(s_cpr) > 1 else cpr
 
             if cpr in self.vlink_cp_refs:
                 node_attrs['type'] = 'iface'
             elif cpr in self.vbridge_cp_refs:
                 node_attrs['type'] = 'br-iface'
-
             graph.add_node(cpr, attr_dict=node_attrs)
-
-        # build link topology graph
         for vl_id, vl in self.vlinks.items():
-
             edge_attrs = def_edge_attrs.copy()
 
             cpr_u = vl.cpr_u.split(':')
             cpr_v = vl.cpr_v.split(':')
 
             if level == 0:
-                # unit interfaces not considered as nodes, just the unit itself
                 if vl.cpr_u not in self.connection_points and len(cpr_u) > 1:
                     cpr_u = cpr_u[0]
                 else:
@@ -1249,7 +1324,6 @@ class Function(Descriptor):
                     cpr_v = cpr_v[0]
                 else:
                     cpr_v = vl.cpr_v
-
                 edge_attrs['level'] = 1
 
             elif level == 1:
@@ -1260,9 +1334,7 @@ class Function(Descriptor):
 
             edge_attrs['type'] = 'iface'
             edge_attrs['label'] = vl.id
-
             graph.add_edge(cpr_u, cpr_v, attr_dict=edge_attrs)
-
         if vdu_inner_connections:
             # link vdu interfaces if level 1
             if level == 1:
@@ -1315,7 +1387,7 @@ class Function(Descriptor):
 
     def undeclared_connection_points(self):
         """
-        Provides a list of interfaces that are referenced in 'virtual_links'
+        Provides a list of interfaces that are referenced in 'gitvirtual_links'
         section but not declared in 'connection_points' of the Function and its
         Units.
         """
@@ -1336,7 +1408,6 @@ class Function(Descriptor):
 
         return undeclared_cps
 
-
 class Unit(Node):
     def __init__(self, uid):
         """
@@ -1353,3 +1424,127 @@ class Unit(Node):
         :return: unit id
         """
         return self._id
+
+class Test_parameter:
+    def __init__(self, test_parameter):
+        self._parameter_name = test_parameter["parameter_name"]
+        self._parameter_definition = test_parameter["parameter_definition"]
+        self._parameter_value = test_parameter["parameter_value"]
+        self._content_type = test_parameter["content_type"]
+    @property
+    def parameter_name(self):
+        return self._parameter_name
+    @property
+    def parameter_definition(self):
+        return self._parameter_definition
+    @property
+    def parameter_value(self):
+        return self._parameter_value
+
+class Test_execution:
+    def __init__(self, test_execution):
+        self._tag_id = test_execution["tag_id"]
+        self._test_tag = test_execution["test_tag"]
+    @property
+    def test_id(self):
+        return self._test_id
+    @property
+    def test_tag(self):
+        return self._test_tag
+
+class Test:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._test_type = None
+        self._test_category = None
+        self._content = None
+        self.filename = descriptor_file
+        self._test_executions = []
+        self._test_configuration_parameters = []
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def test_type(self):
+        return self._test_type
+
+    @property
+    def test_category(self):
+        return self._test_category
+
+    @property
+    def content(self):
+        """
+        Descriptor dictionary.
+        :return: descriptor dict
+        """
+        return self._content
+
+    @property
+    def test_configuration_parameters(self):
+        return self._test_configuration_parameters
+
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def test_executions(self):
+        return self._test_executions
+
+    @content.setter
+    def content(self, value):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: descriptor dict
+        """
+        self._content = value
+        self._id = descriptor_id(self._content)
+
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content
+
+    def set_test_type(self, test_type):
+        self._test_type = test_type
+
+    def set_test_category(self, test_category):
+        self._test_category = test_category
+
+    def add_test_configuration_parameter(self, test_conf_param):
+        """
+        :test_conf_param: Test_parameter object
+        """
+        self._test_configuration_parameters.append(test_conf_param)
+
+    def add_test_execution(self, test_execution):
+        """
+        :test_execution: Test_execution object
+        """
+        self._test_executions.append(test_execution)
+
+    def get_test_config_parameter(self, parameter_name):
+        """
+        :parameter_name: String
+        :return: The Test_parameter object which has that name if the name exists, None otherwise
+        """
+        for test_config_parameter in self._test_config_parameters:
+            if parameter_name in test_config_parameter:
+                 return self.add_test_configuration_parameters["parameter_name"]
+        return

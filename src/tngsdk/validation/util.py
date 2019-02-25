@@ -55,7 +55,6 @@ def read_descriptor_files(files):
         descriptors[did] = file
     return descriptors
 
-
 def read_descriptor_file(file):
     """
     Reads a SONATA descriptor from a file.
@@ -63,10 +62,8 @@ def read_descriptor_file(file):
     :return: descriptor dictionary
     """
     with open(file, 'r') as _file:
-
         try:
             descriptor = yaml.load(_file)
-
         except yaml.YAMLError as exc:
             evtlog.log("Invalid descriptor",
                        "Error parsing descriptor file: {0}".format(exc),

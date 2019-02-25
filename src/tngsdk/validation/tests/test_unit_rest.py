@@ -153,7 +153,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
                           'firewall-vnfd.yml&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
-        print(r)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(d['result']['error_count'], 1)
         self.app.delete('/api/v1/validations')
@@ -215,7 +214,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         self.app.delete('/api/v1/validations')
         self.app.delete('/api/v1/resources')
     """
-    
+
     def test_rest_validation_service_topology_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&service=true' +
@@ -253,9 +252,10 @@ class TngSdkValidationRestTest(unittest.TestCase):
                           SAMPLES_DIR + 'samples/' +
                           'functions/valid-son/firewall-vnfd.yml')
         data = r.data.decode('utf-8')
+
         d = ast.literal_eval(data)
-        expected_message = ('Not possible to validate function and service ' +
-                            'and project in the same request')
+        expected_message = ('Not possible to validate function descriptor and service descriptor ' +
+                            'and project descriptor in the same request')
         self.assertEqual(d['error_message'], expected_message)
 
     def test_rest_validation_ko_no_path(self):
@@ -284,8 +284,8 @@ class TngSdkValidationRestTest(unittest.TestCase):
                           'samples/services/valid-son/valid.yml')
         data = r.data.decode('utf-8')
         d = ast.literal_eval(data)
-        expected_message = ('Need functions path (dpath) and the extension ' +
-                            'of it (dext) to validate service ' +
+        expected_message = ('Need function descriptors path (dpath) and the extension ' +
+                            'of it (dext) to validate service descriptor ' +
                             'integrity|topology|custom_rules')
         self.assertEqual(d['error_message'], expected_message)
 
@@ -332,7 +332,6 @@ class TngSdkValidationRestTest(unittest.TestCase):
         m = MultipartEncoder(data)
         headers = {'Content-Type': m.content_type}
         response = self.app.post(url, headers=headers, data=m)
-        print(response)
         self.assertEqual(response.status_code, 200)
 
     def test_rest_validation_ok_get_validations_by_id(self):

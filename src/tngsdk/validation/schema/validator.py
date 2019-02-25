@@ -45,7 +45,7 @@ class SchemaValidator(object):
     SCHEMA_PACKAGE_DESCRIPTOR = 'PD'
     SCHEMA_SERVICE_DESCRIPTOR = 'NSD'
     SCHEMA_FUNCTION_DESCRIPTOR = 'VNFD'
-
+    SCHEMA_TEST_DESCRIPTOR = 'TSTD'
     def __init__(self, workspace, preload=False):
         # Assign parameters
         coloredlogs.install(level=workspace.log_level)
@@ -87,6 +87,12 @@ class SchemaValidator(object):
                                       'function-descriptor/vnfd-schema.yml'),
                 'remote': self._schemas_remote_master +
                 '/function-descriptor/vnfd-schema.yml'
+            },
+            self.SCHEMA_TEST_DESCRIPTOR: {
+                'local': os.path.join(self._schemas_local_master,
+                                      'test-descriptor/test-schema.yml'),
+                'remote': self._schemas_remote_master +
+                '/test-descriptor/test-descriptor-schema.yml'
             }
         }
 
@@ -127,7 +133,8 @@ class SchemaValidator(object):
         """
         schemas = [self.SCHEMA_PACKAGE_DESCRIPTOR,
                    self.SCHEMA_SERVICE_DESCRIPTOR,
-                   self.SCHEMA_FUNCTION_DESCRIPTOR]
+                   self.SCHEMA_FUNCTION_DESCRIPTOR,
+                   self.SCHEMA_TEST_DESCRIPTOR]
 
         for schema in schemas:
             schema_file = self._schemas[schema]['local']
@@ -167,7 +174,6 @@ class SchemaValidator(object):
                 # Load schema from remote source
                 self._schemas_library[template] = \
                     load_remote_schema(schema_addr)
-
                 # Update the corresponding local schema file
                 write_local_schema(self._schemas_local_master,
                                    self._schemas[template]['local'],
@@ -215,7 +221,7 @@ class SchemaValidator(object):
             return True
 
         except ValidationError as e:
-            log.error("Failed to validate Descriptor against schema '{}'"
+            log.error("Failed to validate descriptor against schema '{}'"
                       .format(schema_id))
             self.error_msg = e.message
             log.error(e.message)

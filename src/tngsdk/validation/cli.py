@@ -41,6 +41,10 @@ LOG = logging.getLogger(os.path.basename(__file__))
 
 
 def dispatch(args, validator):
+    """
+        'dispath' set in the 'validator' object the level of validation chosen by the user. By default, the validator
+        makes topology level validation.
+    """
     print("Printing all the arguments: {}".format(args))
     if args.vnfd:
         print("VNFD validation")
@@ -48,7 +52,6 @@ def dispatch(args, validator):
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
                                 custom=False)
-            # TODO: check if args.vnfd is a valid file path
         elif args.integrity:
             print("Syntax and integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False,
@@ -64,11 +67,10 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
         if validator.validate_function(args.vnfd):
-            if validator.error_count == 0:
-                if len(validator.customErrors) == 0:
-                    print("No errors found in the VNFD")
-                else:
-                    print("Errors in custom rules validation")
+            if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
+                print("No errors found in the VNFD")
+            else:
+                print("Errors in validation")
         return validator
 
     elif args.nsd:
@@ -95,15 +97,14 @@ def dispatch(args, validator):
             print("Default mode: Syntax, integrity and topology validation")
 
         if validator.validate_service(args.nsd):
-            if validator.error_count == 0:
-                if len(validator.customErrors) == 0:
-                    print("No errors found in the Service validation")
-                else:
+            if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
+                    print("No errors found in the Service descriptor validation")
+            else:
                     print("Errors in custom rules validation")
         return validator
 
     elif args.project_path:
-        print("Project validation")
+        print("Project descriptor validation")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
@@ -123,59 +124,83 @@ def dispatch(args, validator):
             print("Syntax, integrity, topology  and custom rules validation")
         else:
             print("Default mode: Syntax, integrity and topology validation")
+
         if not validator.validate_project(args.project_path):
-            print('Cant validate the project')
+            print('Cant validate the project descriptors')
         else:
             if validator.error_count == 0:
                 if len(validator.customErrors) == 0:
-                    print("No errors found in the project validation of the descriptors")
+                    print("No errors found in the validation of the project descriptors")
                 else:
                     print("Errors in custom rules validation")
-
         return validator
+    elif args.tstd:
+        print("Test descriptor validation")
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False, custom=False)
+        elif args.integrity:
+            print("Integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+        else:
+            print("Default test descriptor validation syntax and integrity")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
-
+    if not validator.validate_test(args.tstd):
+        print('Cant validate the test descriptors')
+    else:
+        if validator.error_count == 0:
+            if len(validator.customErrors) == 0:
+                print("No errors found in the validation of the test descriptors")
+            else:
+                print("Errors in validation")
+    return validator
 def check_args(args):
-    if (args.nsd):
-        if (not(args.integrity) and not(args.syntax) and not(args.topology) and not(args.custom)):
-            if (args.dpath and args.dext):
-                return True
-            else:
-                print("Invalid parameters. To validate the "
-                      "integrity, topology or custom rules of a service "
-                      "both' --dpath' and '--dext' parameters must be "
-                      "specified.")
-                return False
-        if (args.integrity or args.topology):
-            if (args.dpath and args.dext):
-                return True
-            else:
-                print("Invalid parameters. To validate the "
-                      "integrity, topology or custom rules of a service "
-                      "both' --dpath' and '--dext' parameters must be "
-                      "specified.")
-                return False
+    # TODO: the validator accepts two level parameter in the input parametes i.e. -i -s. It does not have sense
+    if args.project_path:
+        if not(args.custom):
+            return True
+        else:
+            if not(args.cfile):
+                print('Invalid parameters. To validate custom_rules of a project descriptors'
+                '--cfile must be specified')
+            return False
+    elif (args.nsd):
+        if args.syntax:
+            return True
+        elif (args.integrity or args.topology or args.custom) and (not(args.dext) and not(args.dpath)):
+            print("Invalid parameters. To validate the "
+                  "integrity, topology or custom rules of a service descriptors"
+                  "both' --dpath' and '--dext' parameters must be "
+                  "specified.")
+            return False
 
-        elif (args.custom):
-            if (args.dpath and args.dext and args.cfile):
-                return True
-            else:
+        elif args.custom and not(args.cfile):
+            print("Invalid parameters. To validate the "
+                  "custom rules of a service descriptors"
+                  "both' --dpath' and '--dext' parameters must be "
+                  "specified (to validate the topology/integrity) and "
+                  "'--cfile' must be specified")
+            return False
+        else:
+            return True
+    elif args.vnfd:
+        if args.custom and not(args.cfile):
                 print("Invalid parameters. To validate the "
-                      "custom rules of a service "
-                      "both' --dpath' and '--dext' parameters must be "
-                      "specified (to validate the topology/integrity) and "
+                      "custom rules of a service descriptors"
                       "'--cfile' must be specified")
                 return False
-    elif (args.vnfd):
-        if (args.custom):
-            if (args.cfile):
-                return True
-            else:
-                print("Invalid parameters. To validate the "
-                      "custom rules of a service "
-                      "'--cfile' must be specified")
-                return False
-    return True
+        else:
+            return True
+    elif args.tstd:
+        # TODO: Does the test descriptor have to bear some type of custom rules?
+        if args.topology or args.custom:
+            print("Invalid parameters. The validation level "
+                  "of the test descriptor is syntax or integrity")
+        else:
+            return True
+    else:
+        return False
 
 
 def parse_args(input_args=None):
@@ -210,7 +235,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "-w", "--workspace",
         help="Specify the directory of the SDK workspace for " +
-             "validating the SDK project.",
+             "validating the descriptors of SDK project.",
         # help="Specify the directory of the SDK workspace for validating the "
         #      "SDK project. If not specified will assume the directory: '{}'"
         #      .format(Workspace.DEFAULT_WORKSPACE_DIR),
@@ -221,7 +246,7 @@ def parse_args(input_args=None):
 
     exclusive_parser.add_argument(
         "--project",
-        help="Validate the service of the specified SDK project.",
+        help="Validate the service descriptors of the specified SDK project.",
         # help="Validate the service of the specified SDK project. If "
         #      "not specified will assume the current directory: '{}'\n"
         #      .format(os.getcwd()),
@@ -251,6 +276,13 @@ def parse_args(input_args=None):
              "specified, it will search for descriptor files with extension "
              "defined in '--dext'",
         dest="vnfd",
+        required=False,
+        default=None
+    )
+    exclusive_parser.add_argument(
+        "--test",
+        help="validate the specified test descriptor",
+        dest="tstd",
         required=False,
         default=None
     )
