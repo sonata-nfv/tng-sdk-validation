@@ -174,7 +174,12 @@ def check_args(args):
                   "both' --dpath' and '--dext' parameters must be "
                   "specified.")
             return False
-
+        elif not(args.syntax) and not(args.integrity) and not(args.topology) and not(args.dpath):
+            print("Invalid parameters. To validate the "
+                  "integrity, topology or custom rules of a service descriptors"
+                  "both' --dpath' and '--dext' parameters must be "
+                  "specified.")
+            return False
         elif args.custom and not(args.cfile):
             print("Invalid parameters. To validate the "
                   "custom rules of a service descriptors"
