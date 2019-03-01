@@ -110,6 +110,9 @@ class Validator(object):
         pass
 
     @property
+    def schema_validator(self):
+        return self._schema_validator
+    @property
     def errors(self):
         return evtlog.errors
 
@@ -277,6 +280,7 @@ class Validator(object):
         else:
             project_path = project + '/'
         # consider cases when project is a path
+        #TODO NSD probably must be PD
         if not os.path.isdir(project):
             log.error("Incorrect path. Try again with a correct project path")
             return False
@@ -408,7 +412,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_top_topgraph_failed')
             return
-
         log.debug("Built topology graph of service descriptor '{0}': {1}"
                   .format(service.id, service.graph.edges()))
 
@@ -1024,7 +1027,7 @@ class Validator(object):
                         func.id,
                         "evt_vnfd_top_loops")
             return
-            
+
         bridges = False
         func.graph = func.build_topology_graph(bridges)
         if not func.graph:

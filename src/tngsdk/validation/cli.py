@@ -45,9 +45,11 @@ def dispatch(args, validator):
         'dispath' set in the 'validator' object the level of validation chosen by the user. By default, the validator
         makes topology level validation.
     """
-    print("Printing all the arguments: {}".format(args))
+    print("Printing all the arguments: {}\n".format(args))
+
     if args.vnfd:
         print("VNFD validation")
+        validator.schema_validator.load_schemas("VNFD")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
@@ -75,6 +77,7 @@ def dispatch(args, validator):
 
     elif args.nsd:
         print("NSD validation")
+        validator.schema_validator.load_schemas("NSD")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False)
@@ -105,6 +108,7 @@ def dispatch(args, validator):
 
     elif args.project_path:
         print("Project descriptor validation")
+        validator.schema_validator.load_schemas("NSD")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
