@@ -129,7 +129,7 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
 
-        if not validator.validate_project(args.project_path):
+        if validator.validate_project(args.project_path):
             print('Cant validate the project descriptors')
         else:
             if validator.error_count == 0:

@@ -133,6 +133,9 @@ evt_vnfd_itg_unused_cpoint: warning
 # VNFD [integrity] - undefined connection point
 evt_vnfd_itg_undefined_cpoint: error
 
+# VNFD [integrity] - duplicated ports in CDUs
+evt_vnfd_itg_duplicated_ports_in_CDUs: error
+
 # VNFD [topology] - failed to build topology graph
 evt_vnfd_top_topgraph_failed: error
 
