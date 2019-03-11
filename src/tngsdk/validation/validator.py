@@ -110,6 +110,9 @@ class Validator(object):
         pass
 
     @property
+    def schema_validator(self):
+        return self._schema_validator
+    @property
     def errors(self):
         return evtlog.errors
 
@@ -277,6 +280,7 @@ class Validator(object):
         else:
             project_path = project + '/'
         # consider cases when project is a path
+        #TODO NSD probably must be PD
         if not os.path.isdir(project):
             log.error("Incorrect path. Try again with a correct project path")
             return False
@@ -995,6 +999,16 @@ class Validator(object):
                                    func.id,
                                    'evt_vnfd_itg_undefined_cpoint')
                         return
+        #verify the port duplication (i.e) two CDU mustn't listen in the same port
+        duplicated_ports = func.search_duplicate_ports()
+        if duplicated_ports:
+            dic_port_unit = func.get_units_by_ports(duplicated_ports)
+            evtlog.log("Duplicated ports",
+                       "The following CDUs have duplicated ports\n{}"
+                       .format(dic_port_unit),
+                       func.id,
+                       'evt_vnfd_itg_duplicated_ports_in_CDUs')
+            return
         return True
 
     def _validate_function_topology(self, func):
@@ -1024,8 +1038,8 @@ class Validator(object):
                         func.id,
                         "evt_vnfd_top_loops")
             return
-            
-        bridges = False
+
+        bridges = True
         func.graph = func.build_topology_graph(bridges)
         if not func.graph:
             evtlog.log("Invalid topology graph",

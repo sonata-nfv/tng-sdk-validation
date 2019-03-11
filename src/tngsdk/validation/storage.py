@@ -1076,7 +1076,6 @@ class Service(Descriptor):
         of the Service or its Functions.
         """
         target_cp_refs = self.vlink_cp_refs + self.vbridge_cp_refs
-
         undeclared_cps = []
         for cpr in target_cp_refs:
             cpr_split = cpr.split(':')
@@ -1113,12 +1112,16 @@ class Function(Descriptor):
         Associate a unit to the function.
         :param unit: unit object
         """
-        if type(unit) is not Unit:
+        if not isinstance(unit,Unit):
             return
 
         if unit.id in self.units:
-            log.error("The unit (VDU) id='{0}' is already associated with "
-                      "function (VNF) id='{1}'".format(unit.id, self.id))
+            if isinstance(unit,VDU_unit):
+                log.error("The unit (VDU) id='{0}' is already associated with "
+                          "function (VNF) id='{1}'".format(unit.id, self.id))
+            else:
+                log.error("The unit (CDU) id='{0}' is already associated with "
+                          "function (VNF) id='{1}'".format(unit.id, self.id))
             return
 
         self._units[unit.id] = unit
@@ -1133,7 +1136,7 @@ class Function(Descriptor):
 
         if vduExist:
             for vdu in self.content['virtual_deployment_units']:
-                unit = Unit(vdu['id'])
+                unit = VDU_Unit(vdu['id'])
                 self.associate_unit(unit)
 
                 # Check vm image URLs
@@ -1157,7 +1160,7 @@ class Function(Descriptor):
 
         elif cduExist:
             for cdu in self.content['cloudnative_deployment_units']:
-                unit = Unit(cdu['id'])
+                unit = CDU_Unit(cdu['id'])
                 self.associate_unit(unit)
                 # TODO check if image exists as with the VNF
             return True
@@ -1167,7 +1170,22 @@ class Function(Descriptor):
                       "'virtual_deployment_units or cloudnative_deployment_units' section"
                       .format(self.id))
             return
+    def get_units_by_ports(self, port_to_find):
+        """
+        Return a dictionary with all the CDUs which use a particular port.
+        :return: dictionary: key = port, value = [cdu01, cdu02...]
+        """
+        dic_port_unit = {}
 
+        for unit_id, unit in self.units.items():
+            if isinstance(unit, CDU_Unit):
+                for cp_id, port in unit.ports.items():
+                    if port in port_to_find:
+                        if port not in dic_port_unit.keys():
+                            dic_port_unit[port] = [unit_id]
+                        else:
+                            dic_port_unit[port].append(unit_id)
+        return dic_port_unit
     def load_unit_connection_points(self):
             """
             Load connection points of the units of the function.
@@ -1198,6 +1216,8 @@ class Function(Descriptor):
                     if cdu.get('connection_points'):
                         for cp in cdu['connection_points']:
                             unit.add_connection_point(cp['id'])
+                            if 'port' in cp:
+                                unit.add_port(cp['id'],cp['port'])
                 return True
             else:
                 return
@@ -1258,7 +1278,23 @@ class Function(Descriptor):
 
                 unused_units.append(unit_id)
         return unused_units
+    def search_duplicate_ports(self):
+        """
+        Check wheter two (or more) CDUs have replicate ports i.e. cdu:01 -> 5000 and cdu:02 -> 5000
+        :return: Dic with key = cdu_id, value = replicate_port
+        """
+        checked_ports = []
+        duplicate_ports = []
+        for unit_id, unit in self.units.items():
+            if isinstance(unit,CDU_Unit):
+                for cp_id, port in unit.ports.items():
+                    if port in checked_ports and not (port in duplicate_ports):
+                        duplicate_ports.append(port)
 
+                    else:
+                        checked_ports.append(port)
+
+        return duplicate_ports
     def build_topology_graph(self, bridges=False, parent_id='', level=0,
                              vdu_inner_connections=True):
         """
@@ -1392,7 +1428,6 @@ class Function(Descriptor):
         Units.
         """
         target_cp_refs = self.vlink_cp_refs + self.vbridge_cp_refs
-
         undeclared_cps = []
         for cpr in target_cp_refs:
             cpr_split = cpr.split(':')
@@ -1414,17 +1449,33 @@ class Unit(Node):
         Initialize a unit object. This inherits the node object.
         :param uid: unit id
         """
-        self._id = uid
-        super().__init__(self._id)
+        super().__init__(uid)
 
+class VDU_Unit(Unit):
+    def __init__(self, uid):
+        """
+        Initialize an vdu_unit object.
+        :param uid: unit id
+        """
+        super().__init__(uid)
+
+class CDU_Unit(Unit):
+    def __init__(self, uid):
+        """
+        Initialize an cdu_unit object.
+        :param uid: unit id
+        """
+        super().__init__(uid)
+        self._ports = {}
     @property
-    def id(self):
+    def ports(self):
         """
-        Unit identifier
-        :return: unit id
+        Ports of the connection points
         """
-        return self._id
+        return self._ports
 
+    def add_port(self, id, port):
+        self._ports[id] = port
 class Test_parameter:
     def __init__(self, test_parameter):
         self._parameter_name = test_parameter["parameter_name"]

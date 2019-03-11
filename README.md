@@ -20,7 +20,11 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 
 ## Installation
 
-
+It is possible use the following command for automatic installation
+```
+pip3 install git+https://github.com/sonata-nfv/tng-sdk-validation.git
+```
+Alternatively:
 1. Clone the master branch of this repository and access the directory.
 
 2. Then install the Python dependencies defined in requierements file.
@@ -32,7 +36,6 @@ $ pip3 install -r requirements.txt
 $ python3 setup.py install
 ```
 4. Once installed, the command `tng-sdk-validate` should be available in your Linux system.
-
 
 ## Usage
 

@@ -103,7 +103,8 @@ class SchemaValidator(object):
     @error_msg.setter
     def error_msg(self, value):
         self._error_msg = value
-
+    def schemas(self, descriptor_type):
+        return self._schemas[descriptor_type]
     def get_remote_schema(self, descriptor):
         """
         Obtains current remote schema URL for a
@@ -144,6 +145,55 @@ class SchemaValidator(object):
                 self._schemas_library[schema] = load_local_schema(schema_file)
             except FileNotFoundError:
                 continue
+
+    def load_schemas(self, type):
+        """
+        Re-Loads all schema descriptor considering the validation required, i.e. project, service, vnfd, test and
+        remplaces the stored schemas. If there are some problem in the connection with de remote repository, it will
+        be used the stored schemas. Only the necessary values for validation are reload.
+        :type: PD, NSD, VNFD, TSTD
+        """
+        # Load Online Schema
+        sch = {}
+        if type == self.SCHEMA_SERVICE_DESCRIPTOR:
+            sch[self.SCHEMA_SERVICE_DESCRIPTOR] = self._schemas[self.SCHEMA_SERVICE_DESCRIPTOR]
+            sch[self.SCHEMA_FUNCTION_DESCRIPTOR] = self._schemas[self.SCHEMA_FUNCTION_DESCRIPTOR]
+            sch[self.SCHEMA_TEST_DESCRIPTOR] = self._schemas[self.SCHEMA_TEST_DESCRIPTOR]
+        elif type == self.SCHEMA_FUNCTION_DESCRIPTOR:
+            sch[self.SCHEMA_FUNCTION_DESCRIPTOR] = self._schemas[self.SCHEMA_FUNCTION_DESCRIPTOR]
+        elif type == self.SCHEMA_TEST_DESCRIPTOR:
+            sch[self.SCHEMA_TEST_DESCRIPTOR] = self.schemas[self.SCHEMA_TEST_DESCRIPTOR]
+        # Verify if local dir structure already exists! If not, create it.
+        if not os.path.isdir(self._schemas_local_master):
+            log.debug("Schema directory '{}' not found. Creating it."
+                      .format(self._schemas_local_master))
+            print("Schema directory '{}' not found. Creating it."
+                  .format(self._schemas_local_master))
+
+            os.mkdir(self._schemas_local_master)
+        else:
+            print("Schema directory '{}' found. We do not need to create it."
+                  .format(self._schemas_local_master))
+        for schema_type, paths in sch.items():
+            schema_addr = paths['remote']
+            if validators.url(schema_addr):
+                try:
+                    log.debug("Loading schema '{}' from remote location '{}'"
+                              .format(schema_type, schema_addr))
+                    self._schemas_library[schema_type] = \
+                        load_remote_schema(schema_addr)
+                    # Update the corresponding local schema file
+                    write_local_schema(self._schemas_local_master,
+                                       self._schemas[schema_type]['local'],
+                                       self._schemas_library[schema_type])
+                except RequestException as e:
+                    log.debug("Could not load schema '{}' from remote "
+                                "location '{}', error: {}"
+                                .format(schema_type, schema_addr, e))
+                    print("There has had a problem in the connection and is not possible reload the schema."
+                          " It will be used the stored schema in {}".format(self._schemas[schema_type]['local']))
+            else:
+                log.warning("Invalid schema URL '{}' it will be used the stored schema".format(schema_addr))
 
     def load_schema(self, template, reload=False):
         """
@@ -269,17 +319,6 @@ def write_local_schema(schemas_root, filename, schema):
     :param schema: The schema content as a dictionary.
     :return:
     """
-    # Verify if local dir structure already exists! If not, create it.
-    if not os.path.isdir(schemas_root):
-        log.debug("Schema directory '{}' not found. Creating it."
-                  .format(schemas_root))
-        print("Schema directory '{}' not found. Creating it."
-              .format(schemas_root))
-
-        os.mkdir(schemas_root)
-    else:
-        print("Schema directory '{}' found. We do not need to create it."
-              .format(schemas_root))
 
     if os.path.isfile(filename):
         log.debug("Replacing schema file '{}'".format(filename))
