@@ -100,7 +100,14 @@ evt_nsd_top_fwpath_inside_vnf: error
 # NSD [topology] - forwarding path is disrupted, i.e. doesn't continue from the previous ending point
 evt_nsd_top_fwpath_disrupted: error
 
+#NSD [topology] - there are unnused vnfd CP
+evt_nsd_top_topgraph_unnused_cps_vnfd: warning
 
+#NSD [topology] - loops found in the topology
+evt_nsd_top_topgraph_loops_in_vnfd: error
+
+# NSD [topology] - there are disconnected vnfd (all cp unnused)
+evt_nsd_top_topgraph_isolated_vnfd: error
 ## FUNCTION
 
 # Function - invalid descriptor file
@@ -142,8 +149,12 @@ evt_vnfd_top_topgraph_failed: error
 # VNFD [topology] - isolated units were detected
 evt_vnfd_top_isolated_units: error
 
+# VNFD [topology] - unnused connection points in units were detected
+evt_vnfd_top_unnused_cps_unit: warning
+
 # VNFD [topology] - loops were detected
 evt_vnfd_top_loops: error
+
 # VNFD [topology] - cycles were detected
 evt_vnfd_top_cycles: error
 ## TEST

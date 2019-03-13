@@ -403,6 +403,31 @@ class Validator(object):
         """
         log.info("Validating topology of service descriptor '{0}'".format(service.id))
 
+        isolated_vnf = service.detect_isolated_vnfs()
+        if isolated_vnf:
+            evtlog.log("Invalid topology",
+                       "The following VNF(s) are isolated in service descriptor {}: {}"
+                       .format(service.id, isolated_vnf),
+                       service.id,
+                       'evt_nsd_top_topgraph_isolated_vnfd')
+            return
+        loops = service.detect_loops()
+        if loops:
+            evtlog.log("Invalid topology",
+                       "The following loop(s) were found in the service descriptor {}: {}"
+                       .format(service.id,loops),
+                       service.id,
+                       'evt_nsd_top_topgraph_loops_in_vnfd')
+            return
+
+        unnused_vnf_cps = service.detect_unnused_cps()
+        if unnused_vnf_cps:
+            evtlog.log("Invalid topology",
+                       "The following CP(s) are unnused in service {}: {}"
+                       .format(service.id, unnused_vnf_cps),
+                       service.id,
+                       'evt_nsd_top_topgraph_unnused_cps_vnfd')
+
         # build service topology graph with VNF connection points
         service.graph = service.build_topology_graph(level=1, bridges=True)
         if not service.graph:
@@ -1004,8 +1029,8 @@ class Validator(object):
         if duplicated_ports:
             dic_port_unit = func.get_units_by_ports(duplicated_ports)
             evtlog.log("Duplicated ports",
-                       "The following CDUs have duplicated ports\n{}"
-                       .format(dic_port_unit),
+                       "The following CDUs have duplicated ports in function {}: {} "
+                       .format(func.id,dic_port_unit),
                        func.id,
                        'evt_vnfd_itg_duplicated_ports_in_CDUs')
             return
@@ -1023,13 +1048,19 @@ class Validator(object):
                  .format(func.id))
         isolated_units = func.detect_disconnected_units()
         if isolated_units:
-            evtlog.log("Invalid toplogy graph",
+            evtlog.log("Invalid topology graph",
                         "{} isolated units were found in the topology"
-                        .format(len(loops)),
+                        .format(len(isolated_units)),
                         func.id,
                         "evt_vnfd_top_isolated_units")
             return
 
+        unnused_cps = func.detect_unnused_cps_units()
+        if unnused_cps:
+            evtlog.log( "Invalid toplogy graph",
+                        "The following CP(s) are not used in function {}: {}".format(func.id, unnused_cps),
+                        func.id,
+                        "evt_vnfd_top_unnused_cps_unit")
         loops = func.detect_loops()
         if loops:
             evtlog.log("Invalid toplogy graph",
@@ -1101,10 +1132,10 @@ class Validator(object):
             return
 
         if self._syntax and not self._validate_test_syntax(test):
-            return True
+            return
 
         if self._integrity and not self._validate_test_integrity(test):
-            return True
+            return
         return True
 
     def _validate_test_syntax(self, test):

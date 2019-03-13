@@ -267,8 +267,12 @@ class SchemaValidator(object):
         :return:
         """
         try:
-            jsonschema.validate(descriptor, self.load_schema(schema_id))
-            return True
+            schema = self.load_schema(schema_id)
+            if schema:
+                jsonschema.validate(descriptor, schema)
+                return True
+            else:
+                exit(0)
 
         except ValidationError as e:
             log.error("Failed to validate descriptor against schema '{}'"

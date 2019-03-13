@@ -321,7 +321,9 @@ class VBridge:
     @property
     def connection_point_refs(self):
         return self._cp_refs
-
+    @property
+    def cp_refs(self):
+        return self._cp_refs
 
 class Descriptor(Node):
     def __init__(self, descriptor_file):
@@ -687,6 +689,9 @@ class Service(Descriptor):
             func_cps += f.connection_points
 
         return func_cps
+    @property
+    def vnf_id_map(self):
+        return self._vnf_id_map
 
     def mapped_function(self, vnf_id):
         """
@@ -700,6 +705,69 @@ class Service(Descriptor):
             return
         return self._functions[self._vnf_id_map[vnf_id]]
 
+    def detect_loops(self):
+        loops = {}
+        vnfs = self.vnf_id_map.keys()
+        for vnf in vnfs:
+            for vl_id, vl in self.vlinks.items():
+                cp_aux = []
+                cpr_u_splitted = vl.cpr_u.split(":")
+                cpr_v_splitted = vl.cpr_v.split(":")
+                if cpr_u_splitted[0]==cpr_v_splitted[0]:
+                    cp_aux.append([vl.cpr_u, vl.cpr_v])
+                if len(cp_aux) >= 2:
+                    loops[vl_id]=cp_aux
+
+            for vb_id, vb in self.vbridges.items():
+                cp_aux = []
+                for cp in vb.cp_refs:
+                    cp_splitted = cp.split(":")
+                    if vnf == cp_splitted[0]:
+                        cp_aux.append(cp)
+                if len(cp_aux) >= 2:
+                    loops[vb_id] = cp_aux
+        return loops
+    def detect_isolated_vnfs(self):
+        isolated_vnfs = []
+        for function_name, function_id in self.vnf_id_map.items():
+            vnfd_cps = self.functions[function_id].connection_points
+            vnfd_is_isolated = True
+            for cp in vnfd_cps:
+                cp_extended = function_name +":"+cp
+                for vl_id, vl in self.vlinks.items():
+                    if cp_extended == vl.cpr_u or cp_extended == vl.cpr_v:
+                            vnfd_is_isolated = False
+                            break
+                if vnfd_is_isolated:
+                    for vb_id, vb in self.vbridges.items():
+                        if cp_extended in vb.cp_refs:
+                            vnfd_is_isolated = False
+                            break
+            if vnfd_is_isolated:
+                isolated_vnfs.append(function_name)
+        return isolated_vnfs
+
+    def detect_unnused_cps(self):
+        #986812400
+        unnused_cps = []
+        for function_name, function_id in self.vnf_id_map.items():
+            for cp in self.functions[function_id].connection_points:
+                cp_extended = function_name+":"+cp
+                cp_is_used = False
+                for vl_id, vl in self.vlinks.items():
+                    if vl.cpr_u == cp_extended or vl.cpr_v == cp_extended:
+                        cp_is_used = True
+                        break
+                if not cp_is_used:
+                    for vb_id, vb in self._vbridges.items():
+                        if not cp_is_used:
+                            for cp in vb.cp_refs:
+                                if cp == cp_extended:
+                                    cp_is_used = True
+                                    break
+                if not cp_is_used:
+                    unnused_cps.append(cp_extended)
+        return unnused_cps
     def vnf_id(self, func):
         """
         Provides the vnf id associated with the provided function.
@@ -1224,7 +1292,7 @@ class Function(Descriptor):
     def detect_loops(self):
         """
         detect wheter some vlink or vbridge are forming a loop
-        :return: the id of the vlink/vtree which makes the loop
+        :return: the id of the vlink/vtree which makes the loop and the points of the vdu
         """
         selfloops = {}
         for vl_id, vl in self.vlinks.items():
@@ -1260,7 +1328,6 @@ class Function(Descriptor):
         """
         unused_units = []
         for unit_id, unit in self.units.items():
-            #vlinks which are being used are put in "cp_used_unit"
             cp_used_unit = []
             cp_used_unit = []
             for cp in unit.connection_points:
@@ -1278,6 +1345,7 @@ class Function(Descriptor):
 
                 unused_units.append(unit_id)
         return unused_units
+
     def search_duplicate_ports(self):
         """
         Check wheter two (or more) CDUs have replicate ports i.e. cdu:01 -> 5000 and cdu:02 -> 5000
@@ -1295,6 +1363,30 @@ class Function(Descriptor):
                         checked_ports.append(port)
 
         return duplicate_ports
+
+    def detect_unnused_cps_units(self):
+        """
+        detect wheter some cp in some unit is disconnected:
+        :return:
+        """
+        unnused_cps = []
+        for unit_id, unit in self.units.items():
+            for cp in unit.connection_points:
+                cp_is_used = False
+                cp_extended = unit_id+":"+cp
+                for vl_id, vl in self.vlinks.items():
+                    if cp_extended in vl.connection_point_refs:
+                        cp_is_used = True
+                        break
+                if not cp_is_used:
+                    for vb_id, vb in self.vbridges.items():
+                        if cp_extended in vb.cp_refs:
+                            cp_is_used = True
+                            break
+                if not cp_is_used:
+                    unnused_cps.append(cp_extended)
+        return unnused_cps
+
     def build_topology_graph(self, bridges=False, parent_id='', level=0,
                              vdu_inner_connections=True):
         """
