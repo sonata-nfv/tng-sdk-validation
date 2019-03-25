@@ -45,9 +45,11 @@ def dispatch(args, validator):
         'dispath' set in the 'validator' object the level of validation chosen by the user. By default, the validator
         makes topology level validation.
     """
-    print("Printing all the arguments: {}".format(args))
+    print("Printing all the arguments: {}\n".format(args))
+
     if args.vnfd:
         print("VNFD validation")
+        validator.schema_validator.load_schemas("VNFD")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
@@ -75,6 +77,7 @@ def dispatch(args, validator):
 
     elif args.nsd:
         print("NSD validation")
+        validator.schema_validator.load_schemas("NSD")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False)
@@ -105,6 +108,7 @@ def dispatch(args, validator):
 
     elif args.project_path:
         print("Project descriptor validation")
+        validator.schema_validator.load_schemas("NSD")
         if args.syntax:
             print("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
@@ -125,7 +129,7 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
 
-        if not validator.validate_project(args.project_path):
+        if validator.validate_project(args.project_path):
             print('Cant validate the project descriptors')
         else:
             if validator.error_count == 0:
@@ -174,7 +178,12 @@ def check_args(args):
                   "both' --dpath' and '--dext' parameters must be "
                   "specified.")
             return False
-
+        elif not(args.syntax) and not(args.integrity) and not(args.topology) and not(args.dpath):
+            print("Invalid parameters. To validate the "
+                  "integrity, topology or custom rules of a service descriptors"
+                  "both' --dpath' and '--dext' parameters must be "
+                  "specified.")
+            return False
         elif args.custom and not(args.cfile):
             print("Invalid parameters. To validate the "
                   "custom rules of a service descriptors"
