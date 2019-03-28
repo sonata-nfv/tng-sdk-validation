@@ -714,14 +714,17 @@ class Service(Descriptor):
                 cpr_u_splitted = vl.cpr_u.split(":")
                 cpr_v_splitted = vl.cpr_v.split(":")
                 if cpr_u_splitted[0]==cpr_v_splitted[0]:
-                    cp_aux.append([vl.cpr_u, vl.cpr_v])
-                if len(cp_aux) >= 2:
-                    loops[vl_id]=cp_aux
+                    loops[vl_id]= [vl.cpr_u, vl.cpr_v]
+                    return loops
+
 
             for vb_id, vb in self.vbridges.items():
                 cp_aux = []
                 for cp in vb.cp_refs:
                     cp_splitted = cp.split(":")
+                    if len(cp_splitted) == 2 and cp_splitted[0]==cp_splitted[1]:
+                        loops[vb_id] = [cp_splitted[0], cp_splitted[1]]
+                        return loops
                     if vnf == cp_splitted[0]:
                         cp_aux.append(cp)
                 if len(cp_aux) >= 2:
@@ -1130,10 +1133,15 @@ class Service(Descriptor):
                 node_pair = {'break': False, 'from': path[x], 'to': None}
             else:
                 node_pair = {'break': False, 'from': path[x], 'to': path[x+1]}
-
-                if path[x] not in self.graph.nodes() or \
-                        path[x+1] not in self._graph.neighbors(path[x]):
+                neighbors = self._graph.neighbors(path[x])
+                if path[x] not in self.graph.nodes():
                     node_pair['break'] = True
+                elif path[x+1] not in self._graph.neighbors(path[x]) and self._graph.neighbors(path[x]):
+                    for neighbor in neighbors:
+                        if neighbor[0:1]=="br":
+                            if path[x+1] in self.graph.neighbors(neighbor):
+                                break
+                    node_pair['break'] = False
             trace.append(node_pair)
         return trace
 
@@ -1193,6 +1201,7 @@ class Function(Descriptor):
             return
 
         self._units[unit.id] = unit
+        return True
 
     def load_units(self):
         """
@@ -1229,8 +1238,11 @@ class Function(Descriptor):
         elif cduExist:
             for cdu in self.content['cloudnative_deployment_units']:
                 unit = CDU_Unit(cdu['id'])
-                self.associate_unit(unit)
-                # TODO check if image exists as with the VNF
+                if self.associate_unit(unit):
+                    if 'parameters' in cdu :
+                        unit.set_env(cdu['parameters']['env'])
+                        unit.set_k8s_deployment(cdu['parameters']['k8s_deployment'])
+                        unit.set_k8s_service(cdu['parameters']['k8s_service'])
             return True
 
         else:
@@ -1532,7 +1544,6 @@ class Function(Descriptor):
                     vdu = self.units[cpr_split[0]]
                     if cpr_split[1] not in vdu.connection_points:
                         undeclared_cps.append(cpr)
-
         return undeclared_cps
 
 class Unit(Node):
@@ -1559,15 +1570,58 @@ class CDU_Unit(Unit):
         """
         super().__init__(uid)
         self._ports = {}
+        self._k8s_deployment = {}
+        self._k8s_service = {}
+        self._env = {}
     @property
     def ports(self):
         """
         Ports of the connection points
         """
         return self._ports
+    @property
+    def env(self):
+        """
+        :return: env
+        """
+        return self._env
+
+    def set_env(self,env):
+        """
+        Set env
+        """
+        for env_id, env in env.items():
+            self._env[env_id]=env
+    @property
+    def k8s_deployment(self):
+        """
+        :return: k8s_deployment
+        """
+        return self._k8s_deployment
+
+    def set_k8s_deployment(self, k8s_deployment):
+        """
+        Set k8s_deployment
+        """
+        for k8s_deployment_id, k8s_deployment in k8s_deployment.items():
+            self._k8s_deployment[k8s_deployment_id] = k8s_deployment
+    @property
+    def k8s_service(self):
+        """
+        :return: k8s_service
+        """
+        return self._k8s_service
+
+    def set_k8s_service(self, k8s_service):
+        """
+        Set the value of the k8s_service
+        """
+        for k8s_service_id, k8s_service in k8s_service.items():
+            self._k8s_service[k8s_service_id] = k8s_service
 
     def add_port(self, id, port):
         self._ports[id] = port
+
 class Test_parameter:
     def __init__(self, test_parameter):
         self._parameter_name = test_parameter["parameter_name"]
@@ -1583,28 +1637,94 @@ class Test_parameter:
     @property
     def parameter_value(self):
         return self._parameter_value
+class Probe:
+    def __init__(self, probe):
+        self._id = probe["id"]
+        self._name = ["name"]
+        self._image = probe["image"]
+        self._description = probe["description"]
+        self._parameters = {}
 
-class Test_execution:
-    def __init__(self, test_execution):
-        self._tag_id = test_execution["tag_id"]
-        self._test_tag = test_execution["test_tag"]
     @property
-    def test_id(self):
-        return self._test_id
+    def id(self):
+        return self._id
     @property
-    def test_tag(self):
-        return self._test_tag
+    def name(self):
+        return self._name
+    @property
+    def image(self):
+        return self._image
+    @property
+    def description(self):
+        return self._description
+
+
+class Step:
+    def __init__(self, step):
+        self._name = step["name"]
+        self._description = step["description"]
+        self._action = step["action"]
+        self._probes = []
+        self._step = ""
+        self._action = ""
+        self._instantation_parameters = []
+        self._run = ""
+        self._index = {}
+        self._start__delay = {}
+        self._dependencies = {}
+        self._output = ""
+
+        @property
+        def id(self):
+            return self._id
+        @property
+        def name(self):
+            return self._name
+        @property
+        def image(self):
+            return self._image
+        @property
+        def description(self):
+            return self._description
+        @property
+        def step(self):
+            return self._step
+        @property
+        def action(self):
+            return self._action
+        @property
+        def run(self):
+            return self._run
+
+class Phase:
+    def __init__(self, phase):
+        self._id = phase["id"]
+        self._steps = []
+    @property
+    def id(self):
+        return self._id
+
+    def add_step(self,step):
+        self._steps.append(step)
+
 
 class Test:
     def __init__(self, descriptor_file):
         self._id = None
-        self._test_type = None
         self._test_category = None
         self._content = None
         self.filename = descriptor_file
-        self._test_executions = []
-        self._test_configuration_parameters = []
+        self._phases = []
+        self._service_platforms = []
+        self._test_tags = {}
+        self._test_category = {}
 
+    def add_test_tag(self, type, description):
+        self._test_tags[type] = description
+    def add_service_platform(self, service_platform):
+        self._service_platforms.append(service_platform)
+    def add_test_category(self, test_category):
+        self._test_category.append(test_category)
     @property
     def id(self):
         return self._id

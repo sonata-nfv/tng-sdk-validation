@@ -42,7 +42,6 @@ class UnitLoadSchemaTests(unittest.TestCase):
         m_os_path.isfile.return_value = False
         self.assertRaises(
             FileNotFoundError, load_local_schema, "/some/file/path")
-
         # Ensure a correct schema format and
         # a correct opening of the schema file
         m_os_path.isfile.return_value = True
@@ -50,10 +49,8 @@ class UnitLoadSchemaTests(unittest.TestCase):
         m_yaml.load.return_value = "not a dict"
         self.assertRaises(
             AssertionError, load_local_schema, "/some/file/path")
-
         self.assertEqual(m_open.call_args,
                          mock.call('/some/file/path', 'r'))
-
         # Ensure that a dictionary is allowed to be returned
         sample_dict = {'dict_key': 'this is a dict'}
         m_os_path.isfile.return_value = True
@@ -81,3 +78,6 @@ class UnitLoadSchemaTests(unittest.TestCase):
         m_yaml.load.return_value = sample_dict
         return_dict = load_remote_schema("url")
         self.assertEqual(sample_dict, return_dict)
+
+if __name__ == "__main__":
+    unittest.main()
