@@ -717,9 +717,12 @@ class Service(Descriptor):
                     loops[vl_id]= [vl.cpr_u, vl.cpr_v]
                     return loops
 
-
             for vb_id, vb in self.vbridges.items():
                 cp_aux = []
+                for cp in self.connection_points:
+                    if vb.cp_refs.count(cp)>1:
+                        loops[vb_id] = [cp,cp]
+                        return loops
                 for cp in vb.cp_refs:
                     cp_splitted = cp.split(":")
                     if len(cp_splitted) == 2 and cp_splitted[0]==cp_splitted[1]:
