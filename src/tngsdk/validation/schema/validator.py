@@ -143,6 +143,7 @@ class SchemaValidator(object):
                 continue
             try:
                 self._schemas_library[schema] = load_local_schema(schema_file)
+
             except FileNotFoundError:
                 continue
 
@@ -209,7 +210,7 @@ class SchemaValidator(object):
         """
         # Check if template is already loaded and present in _schemas_library
         if template in self._schemas_library and not reload:
-            log.debug("Loading previously stored schema for {}"
+            log.debug("Loading previous stored schema for {}"
                       .format(template))
 
             return self._schemas_library[template]
@@ -357,13 +358,13 @@ def load_local_schema(filename):
     if not os.path.isfile(filename):
         log.warning("Schema file '{}' does not exist.".format(filename))
         raise FileNotFoundError
-
-    # Read schema file and return the schema as a dictionary
+        return
     schema_f = open(filename, 'r')
     schema = yaml.load(schema_f)
+    if schema_f != None:
+        schema_f.close()
     assert isinstance(schema, dict), "Failed to load schema file '{}'. " \
                                      "Not a dictionary.".format(filename)
-
     return schema
 
 

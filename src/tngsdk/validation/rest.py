@@ -319,7 +319,6 @@ class ValidationGetNetTopology(Resource):
     @api_v1.response(400, "Bad request: Could not get"
                           "the net topology of requested validation.")
     def get(self, validationId):
-
         vid = get_validation(validationId)
         if (not vid):
             return ('Validation with id {} does not exist'

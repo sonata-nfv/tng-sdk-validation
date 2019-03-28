@@ -46,7 +46,7 @@ import inspect
 # Sonata and 55GTANGO imports
 from tngsdk.project.workspace import Workspace
 from tngsdk.project.project import Project
-from tngsdk.validation.storage import DescriptorStorage, Test_parameter, Test_execution
+from tngsdk.validation.storage import DescriptorStorage, Test, Phase, Step, Probe
 # from storage import DescriptorStorage
 # from son.validate.util import read_descriptor_files, list_files
 # from son.validate.util import strip_root, build_descriptor_id
@@ -313,21 +313,11 @@ class Validator(object):
         # load all project descriptors present at source directory
         log.debug("Loading project service descriptor")
         nsd_file = Validator._load_project_service_file(project)
-        # TODO some type of function 'project.get_tstd()' is necessary here
-        with open(project_path+project.__descriptor_name__, 'r') as _file:
-            try:
-                descriptor = yaml.load(_file)
-            except yaml.YAMLError as exc:
-                return
-        tstd_file = []
-        for _file in descriptor["files"]:
-            if _file["type"] == "application/vnd.5gtango.tstd":
-                tstd_file.append(project_path+_file["path"])
+        tstd_file = project.get_tstds()
         tstd_ok = True
         for _file in tstd_file:
             if not self.validate_test(_file):
                 tstd_error = False
-        ###
         if nsd_file and tstd_file:
             nsd_file = project_path + nsd_file
             return self.validate_service(nsd_file) and tstd_ok
@@ -393,7 +383,6 @@ class Validator(object):
 
         if self._topology and not self._validate_service_topology(service):
             return
-
         return True
 
     def _validate_service_topology(self, service):
@@ -471,7 +460,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_top_badsection_fwgraph')
             return
-
         # analyse forwarding paths
         for fw_graph in service.fw_graphs:
             source_id = service.id + ":" + fw_graph['fg_id']
@@ -493,7 +481,6 @@ class Validator(object):
                     fw_path['event_id'] = evtid
 
                 fw_path['trace'] = service.trace_path_pairs(fw_path['path'])
-
                 if any(pair['break'] is True for pair in fw_path['trace']):
                     evtlog.log("Invalid forwarding path ({0} breakpoint(s))"
                                .format(sum(pair['break'] is True
@@ -647,7 +634,6 @@ class Validator(object):
                                detail_event_id=cycle['cycle_id'])
                 fw_graph['cycles'] = cycles_list
                 fw_graph['event_id'] = evtid
-
         return True
 
     @staticmethod
@@ -1163,7 +1149,10 @@ class Validator(object):
         """
         log.info("Validating integrity of test descriptor '{0}'"
                  .format(test.id))
+        #Validar que el identificador de cada fase sea único
+        #Validar que el identificador de cada step sea único en cada fase
 
+        """
         if "test_type" not in test.content:
             evtlog.log("Missing 'test_type'",
                        "Couldn't load the test_type of "
@@ -1263,3 +1252,4 @@ class Validator(object):
                 new_test_execution = Test_execution(test_execution)
                 test.add_test_execution(new_test_execution)
         return True
+    """
