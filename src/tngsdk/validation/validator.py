@@ -1160,5 +1160,5 @@ class Validator(object):
             return
         for phase in test.content["phases"]:
             if not phase["steps"]:
-                log.error("No hay parámetro steps en tal phase")
+                log.error("Missing steps in phases")
         return True

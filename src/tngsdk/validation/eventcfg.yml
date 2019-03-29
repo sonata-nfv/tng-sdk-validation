@@ -169,7 +169,8 @@ evt_tstd_itg_badsection_phases: error
 
 # TSTD [integrity] - replicate id in phase
 evt_tstd_itg_badsection_phases_replicate_id: error
-
+# TSTD [integrity] - missing steps in phase
+evt_tstd_itg_badsection_steps_missing: error
 ### GENERAL
 
 # Duplicate declaration of connection point

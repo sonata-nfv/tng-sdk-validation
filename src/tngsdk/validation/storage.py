@@ -1812,6 +1812,14 @@ class Test:
                 return
             else:
                 new_phase = Phase(phase)
+                if "steps" not in phase.keys():
+                    evtlog.log("Missing 'steps'",
+                               "Couldn't load the steps of "
+                               "test descriptor id='{0}'"
+                               .format(self.id),
+                               self.id,
+                               'evt_tstd_itg_badsection_steps_missing')
+                    return
                 new_phase.load_steps(phase["steps"])
                 self.phases.append(Phase(phase))
         return True
