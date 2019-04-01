@@ -180,8 +180,14 @@ class DescriptorStorage(object):
         :return: created test object or, if id exists, the stored test.
         """
         if not os.path.isfile(descriptor_file):
+            print(descriptor_file)
             return
         new_test = Test(descriptor_file)
+        if not new_test.content:
+            return
+        content = new_test.content
+        new_test.name = content["name"]
+
         if new_test.id in self._tests.keys():
             return self._tests[new_test.id]
 
@@ -1625,27 +1631,12 @@ class CDU_Unit(Unit):
     def add_port(self, id, port):
         self._ports[id] = port
 
-class Test_parameter:
-    def __init__(self, test_parameter):
-        self._parameter_name = test_parameter["parameter_name"]
-        self._parameter_definition = test_parameter["parameter_definition"]
-        self._parameter_value = test_parameter["parameter_value"]
-        self._content_type = test_parameter["content_type"]
-    @property
-    def parameter_name(self):
-        return self._parameter_name
-    @property
-    def parameter_definition(self):
-        return self._parameter_definition
-    @property
-    def parameter_value(self):
-        return self._parameter_value
 class Probe:
-    def __init__(self, probe):
-        self._id = probe["id"]
-        self._name = ["name"]
-        self._image = probe["image"]
-        self._description = probe["description"]
+    def __init__(self):
+        self._id = ""
+        self._name = ""
+        self._image = ""
+        self._description = ""
         self._parameters = {}
 
     @property
@@ -1663,10 +1654,10 @@ class Probe:
 
 
 class Step:
-    def __init__(self, step):
-        self._name = step["name"]
-        self._description = step["description"]
-        self._action = step["action"]
+    def __init__(self):
+        self._name = ""
+        self._description = ""
+        self._action = ""
         self._probes = []
         self._step = ""
         self._action = ""
@@ -1710,6 +1701,18 @@ class Phase:
     def add_step(self,step):
         self._steps.append(step)
 
+    def load_steps(self, steps):
+        for step in steps:
+            new_step = Step()
+            if "action" in step.keys():
+                new_step.action = step["action"]
+            if "description" in step.keys():
+                new_step.description = step["description"]
+            if "name" in step.keys():
+                new_step.name = step["name"]
+            if "probes" in step.keys():
+                for probe in step["probes"]:
+                    new_probe = Probe()
 
 class Test:
     def __init__(self, descriptor_file):
@@ -1721,6 +1724,7 @@ class Test:
         self._service_platforms = []
         self._test_tags = {}
         self._test_category = {}
+        self._name = None
 
     def add_test_tag(self, type, description):
         self._test_tags[type] = description
@@ -1741,6 +1745,9 @@ class Test:
         return self._test_category
 
     @property
+    def name(self):
+        return self._name
+    @property
     def content(self):
         """
         Descriptor dictionary.
@@ -1749,29 +1756,23 @@ class Test:
         return self._content
 
     @property
-    def test_configuration_parameters(self):
-        return self._test_configuration_parameters
-
-    @property
     def filename(self):
         """
         Filename of the descriptor
         :return: descriptor filename
         """
         return self._filename
-
     @property
-    def test_executions(self):
-        return self._test_executions
-
+    def phases(self):
+        return self._phases
     @content.setter
-    def content(self, value):
+    def content(self, content):
         """
         Sets the descriptor dictionary.
         This modification will impact the id of the descriptor.
-        :param value: descriptor dict
+        :param value: content, an OrderedDict
         """
-        self._content = value
+        self._content = content
         self._id = descriptor_id(self._content)
 
 
@@ -1786,31 +1787,39 @@ class Test:
         content = read_descriptor_file(self._filename)
         if content:
             self.content = content
-
-    def set_test_type(self, test_type):
-        self._test_type = test_type
-
-    def set_test_category(self, test_category):
-        self._test_category = test_category
-
-    def add_test_configuration_parameter(self, test_conf_param):
-        """
-        :test_conf_param: Test_parameter object
-        """
-        self._test_configuration_parameters.append(test_conf_param)
-
-    def add_test_execution(self, test_execution):
-        """
-        :test_execution: Test_execution object
-        """
-        self._test_executions.append(test_execution)
-
-    def get_test_config_parameter(self, parameter_name):
-        """
-        :parameter_name: String
-        :return: The Test_parameter object which has that name if the name exists, None otherwise
-        """
-        for test_config_parameter in self._test_config_parameters:
-            if parameter_name in test_config_parameter:
-                 return self.add_test_configuration_parameters["parameter_name"]
+    @name.setter
+    def name(self, value):
+        self._name = value
+    def get_phase_by_id(self, id):
+        for phase in self.phases:
+            if phase.id == id:
+                return phase
         return
+    def load_phases(self):
+        """
+        Load the phases of the descriptor
+        """
+        if not self.content["phases"]:
+            return False
+        for phase in self.content["phases"]:
+            if self.get_phase_by_id(phase["id"]):
+                evtlog.log("Replicate 'phase id'",
+                           "Couldn't load the phases of "
+                           "test descriptor id='{0}'"
+                           .format(self.id),
+                           self.id,
+                           'evt_tstd_itg_badsection_phases_replicate_id')
+                return
+            else:
+                new_phase = Phase(phase)
+                if "steps" not in phase.keys():
+                    evtlog.log("Missing 'steps'",
+                               "Couldn't load the steps of "
+                               "test descriptor id='{0}'"
+                               .format(self.id),
+                               self.id,
+                               'evt_tstd_itg_badsection_steps_missing')
+                    return
+                new_phase.load_steps(phase["steps"])
+                self.phases.append(Phase(phase))
+        return True

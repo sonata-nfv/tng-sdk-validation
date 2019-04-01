@@ -313,19 +313,19 @@ class Validator(object):
         # load all project descriptors present at source directory
         log.debug("Loading project service descriptor")
         nsd_file = Validator._load_project_service_file(project)
-        tstd_file = project.get_tstds()
+        tstd_files = project.get_tstds()
         tstd_ok = True
-        for _file in tstd_file:
-            if not self.validate_test(_file):
-                tstd_error = False
-        if nsd_file and tstd_file:
+        for _file in tstd_files:
+            if not self.validate_test(os.path.join(project_path,_file)):
+                tstd_ok = False
+        if nsd_file and tstd_files:
             nsd_file = project_path + nsd_file
             return self.validate_service(nsd_file) and tstd_ok
         elif not(nsd_file) and tstd_ok:
-            return tstd_ok
+            return not tstd_ok
         else:
             nsd_file = project_path + nsd_file
-            return self.validate_service(nsd_file)
+            return not self.validate_service(nsd_file)
 
     @staticmethod
     def _load_project_service_file(project):
@@ -861,7 +861,6 @@ class Validator(object):
                  " custom: {3}"
                  .format(self._syntax, self._integrity, self._topology,
                          self._custom))
-
         func = self._storage.create_function(vnfd_path)
         if not func:
             evtlog.log("Invalid function descriptor",
@@ -1107,9 +1106,7 @@ class Validator(object):
         log.info("Validating test descriptor '{0}'".format(test_path))
         log.info("... syntax: {0}, integrity: {1}"
                  .format(self._syntax, self._integrity))
-
         test = self._storage.create_test(test_path)
-
         if not(test) or test.content is None:
             evtlog.log("Invalid test descriptor",
                        "Couldn't store TSTD of file '{0}'".format(test_path),
@@ -1149,107 +1146,19 @@ class Validator(object):
         """
         log.info("Validating integrity of test descriptor '{0}'"
                  .format(test.id))
-        #Validar que el identificador de cada fase sea único
-        #Validar que el identificador de cada step sea único en cada fase
 
-        """
-        if "test_type" not in test.content:
-            evtlog.log("Missing 'test_type'",
-                       "Couldn't load the test_type of "
+        if not test.content["phases"]:
+            evtlog.log("Missing 'phases'",
+                       "Couldn't load the phases of "
                        "test descriptor id='{0}'"
                        .format(test.id),
                        test.id,
-                       'evt_tstd_itg_badsection_test_type')
+                       'evt_tstd_itg_badsection_phases')
             return
-        test.set_test_type(test.content["test_type"])
-
-        if "test_category" not in test.content:
-            evtlog.log("Missing 'test_category'",
-                       "Couldn't load the test_category of "
-                       "test descriptor id='{0}'"
-                       .format(test.id),
-                       test.id,
-                       'evt_tstd_itg_badsection_test_category')
+        if not test.load_phases():
+            #the errors are considered within storage.py
             return
-        test.set_test_category(test.content["test_category"])
-
-        if "test_configuration_parameters" not in test.content:
-            evtlog.log("Missing 'test_configuration_parameters'",
-                       "Couldn't load the test_configuration_parameters of "
-                       "test descriptor id='{0}'"
-                       .format(test.id),
-                       test.id,
-                       'evt_tstd_itg_badsection_test_configuration_parameters')
-            return
-        conf_params = test.content["test_configuration_parameters"]
-        for param in conf_params:
-            if "parameter_name" not in param:
-                evtlog.log("Missing 'parameter_name' in 'test_configuration_parameters'",
-                           "Couldn't load the test_configuration_parameters of "
-                           "test descriptor id='{0}'"
-                           .format(test.id),
-                           test.id,
-                           'evt_tstd_itg_badsection_test_configuration_parameters_parameter_name')
-                return
-            elif "parameter_definition" not in param:
-                evtlog.log("Missing 'parameter_definition' in test_configuration_parameters",
-                           "Couldn't load the test_configuration_parameters of "
-                           "test descriptor id='{0}'"
-                           .format(test.id),
-                           test.id,
-                           'evt_tstd_itg_badsection_test_configuration_parameters_parameter_definition')
-                return
-            elif "parameter_value" not in param:
-                evtlog.log("Missing 'parameter_value' in 'test_configuration_parameters'",
-                           "Couldn't load the test_configuration_parameters of "
-                           "test descriptor id='{0}'"
-                           .format(test.id),
-                           test.id,
-                           'evt_tstd_itg_badsection_test_configuration_parameters_parameter_value')
-                return
-            elif "content_type" not in param:
-                evtlog.log("Missing 'content_type' in 'test_configuration_parameters'",
-                           "Couldn't load the test_configuration_parameters of "
-                           "test descriptor id='{0}'"
-                           .format(test.id),
-                           test.id,
-                           'evt_tstd_itg_badsection_test_configuration_parameters_content_type')
-                return
-            elif len(param)>4:
-                print("So many properties")
-                return
-            else:
-                new_test_conf_param = Test_parameter(param)
-                test.add_test_configuration_parameter(new_test_conf_param)
-
-        if "test_execution" not in test.content:
-            evtlog.log("Missing 'test_execution'",
-                       "Couldn't load the test_execution of "
-                       "test descriptor id='{0}'"
-                       .format(test.id),
-                       test.id,
-                       'evt_tstd_itg_badsection_test_execution')
-            return
-        test_executions = test.content["test_execution"]
-        for test_execution in test_executions:
-            if "test_tag" not in test_execution:
-                evtlog.log("Missing 'test_tag' in 'test_execution'",
-                           "Couldn't load the test_execution of "
-                           "test descriptor id='{0}'"
-                           .format(test.id),
-                           test.id,
-                           'evt_tstd_itg_badsection_test_execution_test_tag')
-                return
-            elif "tag_id" not in test_execution:
-                evtlog.log("Missing 'test_id' in 'test_execution'",
-                           "Couldn't load the test_execution of "
-                           "test descriptor id='{0}'"
-                           .format(test.id),
-                           test.id,
-                           'evt_tstd_itg_badsection_test_execution_test_id')
-                return
-            else:
-                new_test_execution = Test_execution(test_execution)
-                test.add_test_execution(new_test_execution)
+        for phase in test.content["phases"]:
+            if not phase["steps"]:
+                log.error("Missing steps in phases")
         return True
-    """
