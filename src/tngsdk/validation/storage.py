@@ -1249,9 +1249,12 @@ class Function(Descriptor):
                 unit = CDU_Unit(cdu['id'])
                 if self.associate_unit(unit):
                     if 'parameters' in cdu :
-                        unit.set_env(cdu['parameters'].get('env'))
-                        unit.set_k8s_deployment(cdu['parameters'].get('k8s_deployment'))
-                        unit.set_k8s_service(cdu['parameters'].get('k8s_service'))
+                        if cdu['parameters'].get('env'):
+                            unit.set_env(cdu['parameters'].get('env'))
+                        if cdu['parameters'].get('k8s_deployment'):
+                            unit.set_k8s_deployment(cdu['parameters'].get('k8s_deployment'))
+                        if cdu['parameters'].get('k8s_service'):
+                            unit.set_k8s_service(cdu['parameters'].get('k8s_service'))
             return True
 
         else:
