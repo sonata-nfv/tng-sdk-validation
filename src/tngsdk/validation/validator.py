@@ -280,11 +280,9 @@ class Validator(object):
         else:
             project_path = project + '/'
         # consider cases when project is a path
-        #TODO NSD probably must be PD
         if not os.path.isdir(project):
             log.error("Incorrect path. Try again with a correct project path")
             return False
-        #   CHECK: os.path.isdir(project) is cheked before
         if type(project) is not Project and os.path.isdir(project):
             if not self._workspace:
                 log.error("Workspace not defined. Unable to validate project")
@@ -373,7 +371,6 @@ class Validator(object):
                        nsd_file,
                        'evt_service_invalid_descriptor')
             return
-
         # validate service syntax
         if self._syntax and not self._validate_service_syntax(service):
             return

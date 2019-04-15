@@ -209,7 +209,7 @@ def check_args(args):
         else:
             return True
     else:
-        return False
+        return True
 
 
 def parse_args(input_args=None):
@@ -235,6 +235,9 @@ def parse_args(input_args=None):
     - Validation of individual function (VNF/CNF) descriptor.
         tng-sdk-validate --function path/to/example_function.yml
         tng-sdk-validate --function path/to/example_function.yml --dext yml
+    - Validation of individual test (TSTD) descriptor.
+        tng-sdk-validate --test path/to/example_test.yml
+        tng-sdk-validate --test path/to/example_test.yml --dext yml
     """)
 
     exclusive_parser = parser.add_mutually_exclusive_group(
@@ -260,13 +263,6 @@ def parse_args(input_args=None):
         #      "not specified will assume the current directory: '{}'\n"
         #      .format(os.getcwd()),
         dest="project_path",
-        required=False,
-        default=None
-    )
-    exclusive_parser.add_argument(
-        "--package",
-        help="Validate the specified package descriptor.",
-        dest="package_file",
         required=False,
         default=None
     )
