@@ -65,33 +65,18 @@ The tng-sdk-validation CLI tool can be used to validate one of the following com
 * `--test` - It is possible to validate a individual test descriptor or all the test descriptors inside a directory. (Is not possible to validate topology in tests descriptors)
 
 ### Some examples of validator calls:
-#### Syntax project validation
 ```
-#project validation with workspace
-tng-sdk-validate -s --project path/to/project/ --workspace path/to/workspace
-
-#project validation with default workspace
+#project descriptors syntax validation with default workspace
 tng-sdk-validate -s --project path/to/project/
-```
-#### Integrity service validation
-```
+
+#service descriptor integrity validation
 tng-sdk-validate -i --service path/to/example_nsd.yml --dpath path/to/function_folder --dext yml
-```
-#### Topology function validation
-```
-#validation of individual function descriptor
-tng-sdk-validate -t --function path/to/example_function.yml
 
-#validation of function descriptors inside a folder
+#function descriptors topology validation
 tng-sdk-validate -t --function path/to/function_folder/ --dext yml
-```
-#### Default test validation
-```
-#validation of individual test descriptor
-tng-sdk-validate --test path/to/example_function.yml
 
-#validation of test descriptors inside a folder
-tng-sdk-validate --test path/to/test_folder/ --dext yml
+#test descriptor default validation
+tng-sdk-validate --test path/to/example_function.yml
 ```
 
 ## Service mode
@@ -109,11 +94,10 @@ tng-skd-validate --api
 #create the docker image
 docker build --no-cache -f ./Dockerfile -t registry.sonata-nfv.eu:5000/tng-sdk-validation .
 
-docker
+#run the image
+docker run --rm -d --name tng-sdk-validate registry.sonata-nfv.eu:5000/tng-sdk-validation
 ```
-## Development
-
-To contribute to the development of this 5GTANGO component, you may use the very same development workflow as for any other 5GTANGO Github project. That is, you have to fork the repository and create pull requests.
+#### Validation
 
 
 ## Documentation

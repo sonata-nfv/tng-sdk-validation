@@ -235,6 +235,7 @@ def parse_args(input_args=None):
     - Validation of individual function (VNF/CNF) descriptor.
         tng-sdk-validate --function path/to/example_function.yml
         tng-sdk-validate --function path/to/example_function.yml --dext yml
+
     - Validation of individual test (TSTD) descriptor.
         tng-sdk-validate --test path/to/example_test.yml
         tng-sdk-validate --test path/to/example_test.yml --dext yml
@@ -266,6 +267,15 @@ def parse_args(input_args=None):
         required=False,
         default=None
     )
+    """
+    exclusive_parser.add_argument
+        "--package",
+        help="Validate the specified package descriptor.",
+        dest="package_file",
+        required=False,
+        default=None
+    )
+    """
     exclusive_parser.add_argument(
         "--service",
         help="Validate the specified service descriptor. "
