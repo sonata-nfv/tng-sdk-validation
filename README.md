@@ -13,15 +13,15 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 
 # Installation and Dependencies
 
-This tool has been designed to be executed in Linux system and Python 3.6 or higher. It's necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project) first because first as *tng-sdk-validation* depends on it. Moreover, other requirements of the tool are [requirements](https://github.com/MiguelRivasQuobis/tng-sdk-validation/blob/master/requirements.txt).
-You can install it with the following statement.
+This tool has been designed to be executed in Linux system and Python 3.6 or higher. It's necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project). Moreover, it is necessary to install [requirements](https://github.com/sonata-nfv/tng-sdk-validation/blob/master/requirements.txt).
+You can install them with the following statement.
 ```
-pip3 install git -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## Automated:
 
-It is possible use the following command for automatic installation
+It is possible to use the following command for automatic installation
 ```
 pip3 install git+https://github.com/sonata-nfv/tng-sdk-validation.git
 ```
@@ -35,7 +35,7 @@ sudo python3 setup install
 
 # Usage
 
-The packager can either be used as command line tool (CLI mode) or deployed as a micro service which offers a REST API
+The packager can either be used as command line tool (CLI mode) or deployed as a micro service which offers a REST API.
 
 ## CLI mode
 
@@ -46,23 +46,23 @@ tng-sdk-validate -h
 ```
 ### Validation
 
-The CLI interface is designed for developer usage, allowing to quickly validate SDK projects descriptors, package descriptors, service descriptors and function descriptors. The different levels of validation are syntax, integrity, topology and custom_rules. They can only be used in the following combinations:
+The CLI interface is designed for developer usage, allowing to quickly validate SDK descriptors:
 
 * syntax only: `-s` or `--syntax`
 * syntax and integrity `-i` or `--integrity`
 * syntax, integrity and topology `-t` or `--topology`
-* syntax, integrity, topology and custom_rules `-c` or `--custom`
+* syntax, integrity, topology and custom rules `-c` or `--custom`
 * If no validation level is chosen, the default level will be syntax, integrity and topology
 
 The tng-sdk-validation CLI tool can be used to validate one of the following components:
 
-* `--project` - If this option is chosen, all descriptors in the project will be validated. It is possible to use `--workspace`/`-w` parameter to set a particular workspace path, otherwise, the path is `$ HOME/.tng-workspace`.
+* `--project`
 
-* `--service` - It is possible validate only the syntax of the service descriptor in the case of use `--syntax`. If a superior validation is chosen (for instance integrity), it is necessary to specify `--dpath` and `--dext` parameters. Using the superior validation the functions and/ or tests descriptors referenced by the descriptor will be validated too.
+* `--service` - if integrity or superior validation is chosen, `--dpath` and `--dext` parameters must be specified.
 
-* `--function` - There are two modes of function descriptor validation, validate an individual function descriptor or validation of all descriptors inside a directory.
+* `--function`
 
-* `--test` - It is possible to validate a individual test descriptor or all the test descriptors inside a directory. (Is not possible to validate topology in tests descriptors)
+* `--test`
 
 ### Some examples of validator calls:
 ```
@@ -81,9 +81,9 @@ tng-sdk-validate --test path/to/example_function.yml
 
 ## Service mode
 
-Runs the packager as a service that exposes a REST API
+Runs the packager as a service that exposes a REST API.
 
-### Run tng-skd-validate as a serviceif any fruit
+### Run tng-skd-validate as a service
 
 #### Bare metal
 ```
@@ -98,8 +98,19 @@ docker build --no-cache -f ./Dockerfile -t registry.sonata-nfv.eu:5000/tng-sdk-v
 docker run --rm -d --name tng-sdk-validate registry.sonata-nfv.eu:5000/tng-sdk-validation
 ```
 #### Validation
+It is necessary a **redis BSD** listening in port **6379** to perform the validation.
+```
+#validation of descriptor in filesystem
+curl -X POST 'http://localhost:5001/api/v1/validations?syntax=true&project=true&source=local&path=file_location_in_system'
 
+#validation of descriptor using URL
+curl -X POST 'http://localhost:5001/api/v1/validations?syntax=true&project=true&source=local&path=url_where_file_is_located'
+```
 
+If higher level of validation is required it is necessary, send all the levels in the query stream parameters:
+```
+syntax=true&integrity=true&topology=true
+```
 ## Documentation
 
 Please refer to the [wiki](https://github.com/sonata-nfv/tng-sdk-validation/wiki) of the project for a more detailed documentation.
@@ -115,6 +126,7 @@ The following lead developers are responsible for this repository and have admin
 * Antón Román Portabales <anton.roman@quobis.com>
 * Ana Pol González <ana.pol@quobis.com>
 * Daniel Fernández Calvo <daniel.fernandez@quobis.es>
+* Miguel Rivas Costa <miguel.rivas@quobis.es>
 
 #### Feedback-Chanel
 
