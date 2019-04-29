@@ -13,7 +13,9 @@ This repository contains the `tng-sdk-validation` component that is part of the 
 
 # Installation and Dependencies
 
-This tool has been designed to be executed in Linux system and Python 3.6 or higher. It's necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project). Moreover, it is necessary to install [requirements](https://github.com/sonata-nfv/tng-sdk-validation/blob/master/requirements.txt).
+This tool has been designed to be executed in Linux system and Python 3.6 or higher. It's necessary to install [tng-sdk-project](https://github.com/sonata-nfv/tng-sdk-project).
+
+Moreover, it is necessary to install [requirements](https://github.com/sonata-nfv/tng-sdk-validation/blob/master/requirements.txt).
 You can install them with the following statement.
 ```
 pip3 install -r requirements.txt
@@ -97,17 +99,29 @@ docker build --no-cache -f ./Dockerfile -t registry.sonata-nfv.eu:5000/tng-sdk-v
 #run the image
 docker run --rm -d --name tng-sdk-validate registry.sonata-nfv.eu:5000/tng-sdk-validation
 ```
-#### Validation
+### Validation
 It is necessary a **redis BSD** listening in port **6379** to perform the validation.
 ```
-#validation of descriptor in filesystem
+#installation of redis server
+apt-get install redis-server
+
+#redis server listening in port 6379
+redis-server --port 6379
+```
+
+```
+# terminal 1 (run tng-sdk-validate service)
+tng-sdk-validate --api
+
+# terminal 2
+# validation of descriptor in filesystem
 curl -X POST 'http://localhost:5001/api/v1/validations?syntax=true&project=true&source=local&path=file_location_in_system'
 
 #validation of descriptor using URL
 curl -X POST 'http://localhost:5001/api/v1/validations?syntax=true&project=true&source=local&path=url_where_file_is_located'
 ```
 
-If higher level of validation is required it is necessary, send all the levels in the query stream parameters:
+If higher level of validation is required it is necessary to send all the levels in the query stream parameters, i.e.
 ```
 syntax=true&integrity=true&topology=true
 ```
