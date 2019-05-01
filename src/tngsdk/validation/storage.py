@@ -55,6 +55,8 @@ class DescriptorStorage(object):
         self._functions = {}
         self._units = {}
         self._tests = {}
+        self._slices = {}
+        self._slas = {}
 
     @property
     def packages(self):
@@ -82,19 +84,17 @@ class DescriptorStorage(object):
     @property
     def tests(self):
         """
-        Provides the stores tests
+        Provides the stored tests
         :return: dictionary of tests
         """
-    def service(self, sid):
+        return self._tests
+    @property
+    def slices(self):
         """
-        Obtain the service for the provided service id
-        :param sid: service id
-        :return: service descriptor object
+        Provides the stored slices
+        :return: dictionary of slices
         """
-        if sid not in self.services:
-            log.error("Service id='{0}' is not stored.".format(sid))
-            return
-        return self.services[sid]
+        return self._slices
 
     def create_package(self, descriptor_file):
         """
@@ -113,6 +113,16 @@ class DescriptorStorage(object):
         self._packages[new_package.id] = new_package
         return new_package
 
+    def service(self, sid):
+        """
+        Obtain the service for the provided service id
+        :param sid: service id
+        :return: service descriptor object
+        """
+        if sid not in self.services:
+            log.error("Service id='{0}' is not stored.".format(sid))
+            return
+        return self.services[sid]
     def create_service(self, descriptor_file):
         """
         Create and store a service based on the provided descriptor filename.
@@ -143,7 +153,6 @@ class DescriptorStorage(object):
             log.error("Function descriptor id='{0}' is not stored.".format(fid))
             return
         return self.functions[fid]
-
     def create_function(self, descriptor_file):
         """
         Create and store a function based on the provided descriptor filename.
@@ -162,15 +171,14 @@ class DescriptorStorage(object):
 
     def test(self, tid):
         """
-        Obtain the function for the provided test id
+        Obtain the test for the provided test id
         :param tid: test id
         :return: test descriptor object
         """
         if tid not in self._tests[tid]:
             log.error("Test descriptor id='{0}' is not stored.".format(fid))
             return
-        return self.functions[fid]
-
+        return self.tests[tid]
     def create_test(self, descriptor_file):
         """
         Create and store a test based on the provided descriptor filename.
@@ -180,7 +188,6 @@ class DescriptorStorage(object):
         :return: created test object or, if id exists, the stored test.
         """
         if not os.path.isfile(descriptor_file):
-            print(descriptor_file)
             return
         new_test = Test(descriptor_file)
         if not new_test.content:
@@ -193,6 +200,102 @@ class DescriptorStorage(object):
 
         self._tests[new_test.id] = new_test
         return new_test
+
+    def slice(self, sid):
+        """
+        Obtain the slice for the provided slice id
+        :param tid: test id
+        :return: test descriptor object
+        """
+        if sid not in self._slices[sid]:
+            log.error("Slice descriptor id='{0}' is not stored.".format(sid))
+            return
+        return self.slices[sid]
+    def create_slice(self, descriptor_file):
+        """
+        Create and store a slice based on the provided descriptor filename.
+        If a slice is already stored with the same id, it will return the
+        stored slice.
+        :param descriptor_file: slice descriptor filename
+        :return: created slice object or, if id exists, the stored slice.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_slice = Slice(descriptor_file)
+        if not new_slice.content:
+            return
+        content = new_slice.content
+        new_slice.name = content["name"]
+
+        if new_slice.id in self._slices.keys():
+            return self._slices[new_slice.id]
+
+        self._slices[new_slice.id] = new_slice
+        return new_slice
+
+    def sla(self, sla_id):
+        """
+        Obtain the sla for the provided sla id
+        :param sla_id: sla id
+        :return: sla descriptor object
+        """
+        if sla_id not in self._slas[sla_id]:
+            log.error("SLA descriptor id='{0}' is not stored.".format(sla_id))
+            return
+        return self.slas[sla_id]
+    def create_sla(self, descriptor_file):
+        """
+        Create and store a sla based on the provided descriptor filename.
+        If a sla is already stored with the same id, it will return the
+        stored sla.
+        :param descriptor_file: sla descriptor filename
+        :return: created sla object or, if id exists, the stored sla.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_sla = SLA(descriptor_file)
+        if not new_sla.content:
+            return
+        content = new_sla.content
+        new_sla.name = content["name"]
+
+        if new_sla.id in self._slas.keys():
+            return self._slas[new_sla.id]
+
+        self._slas[new_sla.id] = new_sla
+        return new_sla
+
+    def runtime_policy(self, rpid):
+        """
+        Obtain the sla for the provided sla id
+        :param rpid: rpid
+        :return: rp descriptor object
+        """
+        if rpid not in self._runtime_policies[rpid]:
+            log.error("RP descriptor id='{0}' is not stored.".format(rpid))
+            return
+        return self.runtime_policies[rpid]
+    def create_runtime_policy(self, descriptor_file):
+        """
+        Create and store a rp based on the provided descriptor filename.
+        If a rp is already stored with the same id, it will return the
+        stored sla.
+        :param descriptor_file: rp descriptor filename
+        :return: created rp object or, if id exists, the stored rp.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_runtime_policy = Runtime_Policy(descriptor_file)
+        if not new_runtime_policy.content:
+            return
+        content = new_runtime_policy.content
+        new_runtime_policy.name = content["name"]
+
+        if new_runtime_policy.id in self._runtime_policies.keys():
+            return self._runtime_policies[new_runtime_policy.id]
+
+        self._runtime_policies[new_runtime_policy.id] = new_runtime_policy
+        return new_runtime_policy
 
 class Node:
     def __init__(self, nid):
@@ -459,6 +562,7 @@ class Descriptor(Node):
         Load connection points of the descriptor.
         It reads the section 'connection_points' of the descriptor contents.
         """
+
         if 'connection_points' not in self.content:
             return
         for cp in self.content['connection_points']:
@@ -1292,10 +1396,10 @@ class Function(Descriptor):
                         return
 
                     unit = self.units[vdu['id']]
-
+                    if 'connection_points' not in vdu:
+                        return
                     for cp in vdu['connection_points']:
                         unit.add_connection_point(cp['id'])
-
                 return True
             elif cduExist:
                 for cdu in self.content['cloudnative_deployment_units']:
@@ -1310,6 +1414,8 @@ class Function(Descriptor):
                             unit.add_connection_point(cp['id'])
                             if 'port' in cp:
                                 unit.add_port(cp['id'],cp['port'])
+                    else:
+                        return
                 return True
             else:
                 return
@@ -1654,8 +1760,6 @@ class Probe:
     @property
     def description(self):
         return self._description
-
-
 class Step:
     def __init__(self):
         self._name = ""
@@ -1692,7 +1796,6 @@ class Step:
         @property
         def run(self):
             return self._run
-
 class Phase:
     def __init__(self, phase):
         self._id = phase["id"]
@@ -1716,7 +1819,6 @@ class Phase:
             if "probes" in step.keys():
                 for probe in step["probes"]:
                     new_probe = Probe()
-
 class Test:
     def __init__(self, descriptor_file):
         self._id = None
@@ -1790,6 +1892,7 @@ class Test:
         content = read_descriptor_file(self._filename)
         if content:
             self.content = content
+
     @name.setter
     def name(self, value):
         self._name = value
@@ -1826,3 +1929,144 @@ class Test:
                 new_phase.load_steps(phase["steps"])
                 self.phases.append(Phase(phase))
         return True
+
+class Slice:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._content = None
+        self._filename = None
+        self.filename = descriptor_file
+    @property
+    def id(self):
+        return self._id
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def content(self):
+        """
+        Content of the descriptor
+        :return: descriptor content
+        """
+        return self._content
+
+    @content.setter
+    def content(self, content):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: content, an OrderedDict
+        """
+        self._content = content
+        self._id = descriptor_id(self._content)
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content
+
+class SLA:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._content = None
+        self._filename = None
+        self.filename = descriptor_file
+    @property
+    def id(self):
+        return self._id
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def content(self):
+        """
+        Content of the descriptor
+        :return: descriptor content
+        """
+        return self._content
+
+    @content.setter
+    def content(self, content):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: content, an OrderedDict
+        """
+        self._content = content
+        self._id = descriptor_id(self._content)
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content
+
+class Runtime_Policy:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._content = None
+        self._filename = None
+        self.filename = descriptor_file
+    @property
+    def id(self):
+        return self._id
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def content(self):
+        """
+        Content of the descriptor
+        :return: descriptor content
+        """
+        return self._content
+
+    @content.setter
+    def content(self, content):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: content, an OrderedDict
+        """
+        self._content = content
+        self._id = descriptor_id(self._content)
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content

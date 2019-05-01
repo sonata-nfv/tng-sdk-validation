@@ -63,7 +63,7 @@ def read_descriptor_file(file):
     """
     with open(file, 'r') as _file:
         try:
-            descriptor = yaml.load(_file)
+            descriptor = yaml.load(_file, Loader=yaml.SafeLoader)
         except yaml.YAMLError as exc:
             evtlog.log("Invalid descriptor",
                        "Error parsing descriptor file: {0}".format(exc),
