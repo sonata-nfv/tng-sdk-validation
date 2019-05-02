@@ -1221,6 +1221,23 @@ class Validator(object):
         """
         log.info("Validating integrity of slice descriptor '{0}'"
                  .format(slice.id))
+        slice.load_config_values()
+
+        for subnet in slice.content.get("slice_ns_subnets"):
+            if slice.check_subnet_id(subnet.get("id")):
+                evtlog.log("Replicate subnet id '{0}'"
+                           .format(subnet.get("id")),
+                           "Error loading the subnet of "
+                           "slice descriptor id='{0}'"
+                           .format(slice.id),
+                           slice.id,
+                           'evt_nstd_itg_subnet_replicate_id')
+                return
+            slice.load_ns_subnet(subnet)
+        """
+        for vld in slice.content.get("slice_vld"):
+            if
+        """
         return True
 
     def validate_sla(self, sla_path):
@@ -1271,7 +1288,7 @@ class Validator(object):
                        "Invalid syntax in sla descriptor'{0}': {1}"
                        .format(sla.id, self._schema_validator.error_msg),
                        sla.id,
-                       'evt_SLAD_stx_invalid')
+                       'evt_slad_stx_invalid')
             return
         return True
     def _validate_sla_integrity(self, sla):
@@ -1306,7 +1323,7 @@ class Validator(object):
         log.info("... syntax: {0}, integrity: {1}"
                  .format(self._syntax, self._integrity))
         rp = self._storage.create_runtime_policy(rp_path)
-        if not(policy) or policy.content is None:
+        if not(rp) or rp.content is None:
             evtlog.log("Invalid runtime policy descriptor",
                        "Couldn't store RPD of file '{0}'".format(rp_path),
                        rp_path,
@@ -1327,12 +1344,12 @@ class Validator(object):
         """
         log.info("Validating syntax of runtime policy descriptor '{0}'".format(rp.id))
         if not self._schema_validator.validate(
-                policy.content, SchemaValidator.SCHEMA_RP_DESCRIPTOR):
+                rp.content, SchemaValidator.SCHEMA_RP_DESCRIPTOR):
             evtlog.log("Invalid RPD syntax",
                        "Invalid syntax in rp descriptor'{0}': {1}"
                        .format(rp.id, self._schema_validator.error_msg),
                        rp.id,
-                       'evt_RPD_stx_invalid')
+                       'evt_rpd_stx_invalid')
             return
         return True
     def _validate_runtime_policy_integrity(self, rp):

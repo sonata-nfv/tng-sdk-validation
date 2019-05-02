@@ -57,6 +57,7 @@ class DescriptorStorage(object):
         self._tests = {}
         self._slices = {}
         self._slas = {}
+        self._runtime_policies = {}
 
     @property
     def packages(self):
@@ -1929,6 +1930,164 @@ class Test:
                 new_phase.load_steps(phase["steps"])
                 self.phases.append(Phase(phase))
         return True
+class Slice_vld:
+    def __init__(self):
+        self._id = None
+        self._name = None
+        self._mgt_network = None
+        self._type = None
+        self._root_bandwidth = None
+        self._root_bandwidth_unit = None
+        self._leaf_bandwidth = None
+        self._leaf_bandwidth_unit = None
+        self._physical_network = None
+        self._segmentation_id = None
+        self._nsd_connection_point_ref = None
+
+    @property
+    def id(self):
+        return self._id
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @property
+    def mgt_network(self):
+        return self._mgt_network
+    @mgt_network.setter
+    def mgt_network(self, value):
+        self._mgt_network = value
+
+    @property
+    def type(self):
+        return self._type
+    @type.setter
+    def type(self, value):
+        self._type = value
+
+    @property
+    def root_bandwidth(self):
+        return self._root_bandwidth
+    @root_bandwidth.setter
+    def root_bandwidth(self, value):
+        self._root_bandwidth = value
+
+    @property
+    def root_bandwidth_unit(self):
+        return self._root_bandwidth_unit
+    @root_bandwidth_unit.setter
+    def root_bandwidth_unit(self, value):
+        self._root_bandwidth_unit = value
+
+    @property
+    def leaf_bandwidth(self):
+        return self._leaf_bandwidth
+    @leaf_bandwidth.setter
+    def leaf_bandwidth(self, value):
+        self._leaf_bandwidth = value
+
+    @property
+    def leaf_bandwidth_unit(self):
+        return self._leaf_bandwidth_unit
+    @leaf_bandwidth_unit.setter
+    def leaf_bandwidth_unit(self, value):
+        self._leaf_bandwidth_unit = value
+
+    @property
+    def phisical_network(self):
+        return self._phisical_network
+    @phisical_network.setter
+    def phisical_network(self, value):
+        self._phisical_network = value
+
+    @property
+    def segmentation_id(self):
+        return self._segmentation_id
+    @segmentation_id.setter
+    def segmentation_id(self, value):
+        self._segmentation_id = value
+
+    @property
+    def phisical_network(self):
+        return self._phisical_network
+    @phisical_network.setter
+    def phisical_network(self, value):
+        self._phisical_network = value
+
+class Ns_subnet:
+    def __init__(self):
+        self._id = None
+        self._nsd_ref = None
+        self._nsd_name = None
+        self._nsd_version = None
+        self._nsd_vendor = None
+        self._sla_name = None
+        self._sla_ref = None
+        self._is_shared = None
+
+    @property
+    def id(self):
+        return self._id
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def nsd_ref(self):
+        return self._nsd_ref
+    @nsd_ref.setter
+    def nsd_ref(self, value):
+        self._nsd_ref = value
+
+    @property
+    def nsd_name(self):
+        return self._nsd_name
+    @nsd_name.setter
+    def nsd_name(self, value):
+        self._nsd_name = value
+
+    @property
+    def nsd_version(self):
+        return self._nsd_version
+    @nsd_version.setter
+    def nsd_version(self, value):
+        self._nsd_version = value
+
+    @property
+    def nsd_vendor(self):
+        return self._nsd_version
+    @nsd_vendor.setter
+    def nsd_vendor(self, value):
+        self._nsd_vendor = value
+
+    @property
+    def sla_name(self):
+        return self._sla_name
+    @sla_name.setter
+    def sla_name(self, value):
+        self._sla_name = value
+
+    @property
+    def sla_ref(self):
+        return self._sla_ref
+    @sla_ref.setter
+    def sla_ref(self, value):
+        self._sla_ref = value
+
+    @property
+    def is_shared(self):
+        return self._sla_ref
+    @is_shared.setter
+    def is_shared(self, value):
+        self._is_shared = value
+
 
 class Slice:
     def __init__(self, descriptor_file):
@@ -1936,6 +2095,21 @@ class Slice:
         self._content = None
         self._filename = None
         self.filename = descriptor_file
+        self._SNSSAI_identifier = {}
+        self._onboardingState = None
+        self._operationalState = None
+        self._usageState = None
+        self._5qi_value = None
+        self._slice_ns_subnets = []
+        self._slice_vld = []
+
+
+    @property
+    def SNSSAI_identifier(self):
+        return self._id
+    @SNSSAI_identifier.setter
+    def SNSSAI_identifier(self, value):
+        self._SNSSAI_identifier = value
     @property
     def id(self):
         return self._id
@@ -1955,12 +2129,41 @@ class Slice:
         """
         return self._content
 
+    @property
+    def onboardingState(self):
+        return self._onboardingState
+    @onboardingState.setter
+    def onboardingState(self, value):
+        self._onboardingState = value
+
+    @property
+    def operationalState(self):
+        return self._operationalState
+    @operationalState.setter
+    def operationalState(self, value):
+        self._operationalState = value
+
+    @property
+    def usageState(self):
+        return self._usageState
+    @usageState.setter
+    def usageState(self, value):
+        self._usageState = value
+
+    @property
+    def _5qui_value(self):
+        return self._5qui_value
+    @_5qui_value.setter
+    def _5qui_value(self, value):
+        self._5qui_value = value
+
+
     @content.setter
     def content(self, content):
         """
         Sets the descriptor dictionary.
         This modification will impact the id of the descriptor.
-        :param value: content, an OrderedDict
+        :param value: content, an OrderedDictsubnet
         """
         self._content = content
         self._id = descriptor_id(self._content)
@@ -1977,6 +2180,49 @@ class Slice:
         if content:
             self.content = content
 
+    def check_subnet_id(self, id):
+        """
+        :id: id of the subnet
+        :return: True if the id exists, False otherwise
+        """
+
+        for subnet in self._slice_ns_subnets:
+            if id == subnet.id:
+                return True
+        return False
+    def load_config_values(self):
+        SNSSAI_identifier = self.content.get("SNSSAI_identifier")
+        if SNSSAI_identifier:
+            self.SNSSAI_identifier = SNSSAI_identifier
+        onboardingState = self.content.get("onboardingState")
+        if onboardingState:
+            self.onboardingState = onboardingState
+        operationalState = self.content.get("operationalState")
+        if operationalState:
+            self.operationalState = operationalState
+        usageState = self.content.get("usageState")
+        if usageState:
+            self.usageState = usageState
+        _5qui_value = self.content.get("5qui_value")
+        if _5qui_value:
+            self._5qui_value = _5qui_value
+    def load_ns_subnet(self, subnet):
+        #It is not necessary check if the parameter exist because they are required in the schema.
+        new_subnet = Ns_subnet()
+        new_subnet.id = subnet.get("id")
+        new_subnet.nsd_ref = subnet.get("nsd-ref")
+        new_subnet.nsd_name = subnet.get("nsd-name")
+        new_subnet.nsd_version = subnet.get("nsd-version")
+        new_subnet.nsd_vendor = subnet.get("nsd-vendor")
+        new_subnet.sla_name = subnet.get("sla-name")
+        new_subnet.sla_ref = subnet.get("sla-ref")
+        new_subnet.is_shared = subnet.get("is-shared")
+        self._slice_ns_subnets.append(new_subnet)
+        return True
+
+    def load_vld(self, slice_vld):
+        new_vld = Slice_vld()
+        
 class SLA:
     def __init__(self, descriptor_file):
         self._id = None

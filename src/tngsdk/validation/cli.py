@@ -157,7 +157,7 @@ def dispatch(args, validator):
                 print("No errors found in the validation of the test descriptors")
             else:
                 print("Errors in validation")
-            return validator
+        return validator
     elif args.nstd:
         print("Slice descriptor validation")
         validator.schema_validator.load_schemas("NSTD")
@@ -179,7 +179,7 @@ def dispatch(args, validator):
                 print("No errors found in the validation of the slice descriptors")
             else:
                 print("Errors in validation")
-            return validator
+        return validator
     elif args.slad:
         print("SLA descriptor validation")
         validator.schema_validator.load_schemas("SLAD")
@@ -200,7 +200,7 @@ def dispatch(args, validator):
                 print("No errors found in the validation of the sla descriptors")
             else:
                 print("Errors in validation")
-            return validator
+        return validator
     elif args.rpd:
         print("RP descriptor validation")
         validator.schema_validator.load_schemas("RPD")
@@ -214,14 +214,14 @@ def dispatch(args, validator):
             print("Default test descriptor validation syntax and integrity")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
-        if not validator.validate_runtime_policy(args.slad):
+        if not validator.validate_runtime_policy(args.rpd):
             print('Cant validate the sla descriptors')
         else:
             if validator.error_count == 0 and len(validator.customErrors) == 0:
                 print("No errors found in the validation of the sla descriptors")
             else:
                 print("Errors in validation")
-            return validator
+        return validator
 def check_args(args):
     if args.project_path:
         if not(args.custom):
