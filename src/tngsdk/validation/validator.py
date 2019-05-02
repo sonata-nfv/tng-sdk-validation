@@ -1192,7 +1192,6 @@ class Validator(object):
 
         if self._syntax and not self._validate_slice_syntax(slice):
             return True
-
         if self._integrity and not self._validate_slice_integrity(slice):
             return True
         return True
@@ -1234,10 +1233,18 @@ class Validator(object):
                            'evt_nstd_itg_subnet_replicate_id')
                 return
             slice.load_ns_subnet(subnet)
-        """
+
         for vld in slice.content.get("slice_vld"):
-            if
-        """
+            if slice.check_vld_id(vld.get("id")):
+                evtlog.log("Replicate vld id '{0}'"
+                           .format(vld.get("id")),
+                           "Error loading the vld of "
+                           "slice descriptor id='{0}'"
+                           .format(slice.id),
+                           slice.id,
+                           'evt_nstd_itg_vld_replicate_id')
+                return
+            slice.load_vld(vld)
         return True
 
     def validate_sla(self, sla_path):
@@ -1298,6 +1305,11 @@ class Validator(object):
         :sla: sla to validate
         :return: True if integrity is correct, False otherwise
         """
+        log.info("Validating integrity of SLA descriptor '{0}'"
+                 .format(sla.id))
+        sla.load_config_values()
+        sla.load_service_values()
+        sla.load_license_values()
         return True
 
 
@@ -1359,4 +1371,6 @@ class Validator(object):
         :rp: rp to validate
         :return: True if integrity is correct, False otherwise
         """
+        log.info("Validating integrity of RP descriptor '{0}'"
+                 .format(rp.id))
         return True

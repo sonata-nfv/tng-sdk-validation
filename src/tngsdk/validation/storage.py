@@ -2190,6 +2190,17 @@ class Slice:
             if id == subnet.id:
                 return True
         return False
+
+    def check_vld_id(self, id):
+        """
+        :id: id of the vld
+        :return: True if the id exists, False otherwise
+        """
+
+        for vld in self._slice_vld:
+            if id == vld.id:
+                return True
+        return False
     def load_config_values(self):
         SNSSAI_identifier = self.content.get("SNSSAI_identifier")
         if SNSSAI_identifier:
@@ -2222,13 +2233,27 @@ class Slice:
 
     def load_vld(self, slice_vld):
         new_vld = Slice_vld()
-        
+        new_vld.id = slice_vld.get("id")
+        new_vld.name = slice_vld.get("name")
+        new_vld.type = slice_vld.get("type")
+        new_vld._nsd_connection_point_ref = slice_vld.get("_nsd_connection_point_ref")
+        self._slice_vld.append(new_vld)
+
+
 class SLA:
     def __init__(self, descriptor_file):
         self._id = None
         self._content = None
         self._filename = None
         self.filename = descriptor_file
+        self._offer_date = None
+        self._expiration_date = None
+        self._template_name = None
+        self._provider_name = None
+        self._template_initiator = None
+        self._service = {}
+        self._guaranteeTerms = []
+        self._license = {}
     @property
     def id(self):
         return self._id
@@ -2247,6 +2272,41 @@ class SLA:
         :return: descriptor content
         """
         return self._content
+
+    @property
+    def offer_date(self):
+        return serf._offer_date
+    @offer_date.setter
+    def offer_date(self, value):
+        self._offer_date = value
+
+    @property
+    def expiration_date(self):
+        return self._expiration_date
+    @expiration_date.setter
+    def expiration_date(self, value):
+        self._expiration_date = value
+
+    @property
+    def template_name(self):
+        return self._template_name
+    @template_name.setter
+    def template_name(self, value):
+        self._template_name = value
+    @property
+    def provider_name(self):
+        return self._provider_name
+    @property
+    def template_initiator(self):
+        return self._template_initiator
+    @property
+    def service(self):
+        return self._service
+    @property
+    def license(self):
+        return self._license
+
+
 
     @content.setter
     def content(self, content):
@@ -2270,12 +2330,41 @@ class SLA:
         if content:
             self.content = content
 
+    def load_config_values(self):
+        offer_date = self.content.get("sla_template").get("offer_date")
+        expiration_date = self.content.get("sla_template").get("expiration_date")
+        template_name = self.content.get("sla_template").get("template_name")
+        provider_name = self.content.get("sla_template").get("provider_name")
+        template_initiator = self.content.get("sla_template").get("template_initiator")
+
+        if offer_date:
+            self._offer_date = offer_date
+        if expiration_date:
+            self._expiration_date = expiration_date
+        if template_name:
+            self._template_name = template_name
+        if provider_name:
+            self._provider_name = provider_name
+        if template_initiator:
+            self._template_initiator = template_initiator
+
+    def load_service_values(self):
+        service = self.content.get("sla_template").get("service")
+        if service:
+            self._service = service
+
+    def load_license_values(self):
+        license = self.content.get("sla_template").get("licenses")
+        if license:
+            self._license = license
 class Runtime_Policy:
     def __init__(self, descriptor_file):
         self._id = None
         self._content = None
         self._filename = None
         self.filename = descriptor_file
+        self._network_service = {}
+
     @property
     def id(self):
         return self._id

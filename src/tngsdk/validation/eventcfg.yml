@@ -185,6 +185,10 @@ evt_nstd_stx_invalid: error
 # NSTD [integrity] - duplicate subnet id
 evt_nstd_itg_subnet_replicate_id: error
 
+# NSTD [integrity] - duplicate vld id
+evt_nstd_itg_vld_replicate_id: error
+
+
 ##### SLA
 # SLA - invalid descriptor file
 evt_sla_invalid_descriptor: error
@@ -201,6 +205,7 @@ evt_runtime_policy_invalid_descriptor: error
 
 # RPD  [syntax] - invalid schema syntax
 evt_rpd_stx_invalid: error
+
 
 
 
