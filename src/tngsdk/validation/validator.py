@@ -46,7 +46,7 @@ import inspect
 # Sonata and 55GTANGO imports
 from tngsdk.project.workspace import Workspace
 from tngsdk.project.project import Project
-from tngsdk.validation.storage import DescriptorStorage, Test, Phase, Step, Probe
+from tngsdk.validation.storage import DescriptorStorage, Test, Phase, Step, Probe, Slice
 # from storage import DescriptorStorage
 # from son.validate.util import read_descriptor_files, list_files
 # from son.validate.util import strip_root, build_descriptor_id
@@ -280,11 +280,9 @@ class Validator(object):
         else:
             project_path = project + '/'
         # consider cases when project is a path
-        #TODO NSD probably must be PD
         if not os.path.isdir(project):
             log.error("Incorrect path. Try again with a correct project path")
             return False
-        #   CHECK: os.path.isdir(project) is cheked before
         if type(project) is not Project and os.path.isdir(project):
             if not self._workspace:
                 log.error("Workspace not defined. Unable to validate project")
@@ -373,7 +371,6 @@ class Validator(object):
                        nsd_file,
                        'evt_service_invalid_descriptor')
             return
-
         # validate service syntax
         if self._syntax and not self._validate_service_syntax(service):
             return
@@ -925,6 +922,7 @@ class Validator(object):
         """
         log.info("Validating integrity of function descriptor '{0}'"
                  .format(func.id))
+
         # load function connection points
         if not func.load_connection_points():
             evtlog.log("Missing 'connection_points'",
@@ -945,7 +943,7 @@ class Validator(object):
             return
         # load connection points of units
         if not func.load_unit_connection_points():
-            evtlog.log("Bad section 'connection_points'",
+            evtlog.log("Missing 'connection_points'",
                        "Couldn't load VDU connection points of "
                        "function descriptor id='{0}'"
                        .format(func.id),
@@ -1009,6 +1007,7 @@ class Validator(object):
                                    func.id,
                                    'evt_vnfd_itg_undefined_cpoint')
                         return
+
         #verify the port duplication (i.e) two CDU mustn't listen in the same port
         duplicated_ports = func.search_duplicate_ports()
         if duplicated_ports:
@@ -1089,7 +1088,7 @@ class Validator(object):
         """
         Validate one or multiple 5GTANGO tests (TSTD).
         By default, it performs the following validations: syntax, integrity.
-        :param test_path: function descriptor TSTD filename or
+        :param test_path: test descriptor TSTD filename or
                           a directory to search for tests
         :return: True if all validations were successful, False otherwise
         """
@@ -1115,12 +1114,11 @@ class Validator(object):
             return
 
         if self._syntax and not self._validate_test_syntax(test):
-            return
+            return True
 
         if self._integrity and not self._validate_test_integrity(test):
-            return
+            return True
         return True
-
     def _validate_test_syntax(self, test):
         """
         Validate the syntax of a test (TSTD) against its schema.
@@ -1161,4 +1159,218 @@ class Validator(object):
         for phase in test.content["phases"]:
             if not phase["steps"]:
                 log.error("Missing steps in phases")
+        return True
+
+    def validate_slice(self, slice_path):
+        """
+        Validate one or multiple 5GTANGO slices (NSTD).
+        By default, it performs the following validations: syntax, integrity.
+        :param slice_path: slice descriptor NSTD filename or
+                          a directory to search for slices
+        :return: True if all validations were successful, False otherwise
+        """
+        if os.path.isdir(slice_path):
+            log.info("Validating slice descriptors in path '{0}'".format(slice_path))
+            slice_files = list_files(slice_path, self._dext)
+            for slice in slice_files:
+                log.info("Detected file {0} order validation..."
+                         .format(slice))
+                if not self.validate_slice(slice):
+                    return
+            return True
+
+        log.info("Validating slice descriptor '{0}'".format(slice_path))
+        log.info("... syntax: {0}, integrity: {1}"
+                 .format(self._syntax, self._integrity))
+        slice = self._storage.create_slice(slice_path)
+        if not(slice) or slice.content is None:
+            evtlog.log("Invalid slice descriptor",
+                       "Couldn't store NSTD of file '{0}'".format(slice_path),
+                       slice_path,
+                       'evt_slice_invalid_descriptor')
+            return
+
+        if self._syntax and not self._validate_slice_syntax(slice):
+            return True
+        if self._integrity and not self._validate_slice_integrity(slice):
+            return True
+        return True
+    def _validate_slice_syntax(self, slice):
+        """
+        Validate the syntax of a slice (NSTD) against its schema.
+        :param slice: slice to validate
+        :return: True if syntax is correct, None otherwise
+        """
+        log.info("Validating syntax of slice descriptor '{0}'".format(slice.id))
+        if not self._schema_validator.validate(
+                slice.content, SchemaValidator.SCHEMA_SLICE_DESCRIPTOR):
+            evtlog.log("Invalid NSTD syntax",
+                       "Invalid syntax in slice descriptor'{0}': {1}"
+                       .format(slice.id, self._schema_validator.error_msg),
+                       slice.id,
+                       'evt_nstd_stx_invalid')
+            return
+        return True
+    def _validate_slice_integrity(self, slice):
+        """
+        Validate the existence of all elements in the slice descriptor i.e. configuration
+        parameters...
+        :slice: slice to validate
+        :return: True if integrity is correct, False otherwise
+        """
+        log.info("Validating integrity of slice descriptor '{0}'"
+                 .format(slice.id))
+        slice.load_config_values()
+
+        for subnet in slice.content.get("slice_ns_subnets"):
+            if slice.check_subnet_id(subnet.get("id")):
+                evtlog.log("Replicate subnet id '{0}'"
+                           .format(subnet.get("id")),
+                           "Error loading the subnet of "
+                           "slice descriptor id='{0}'"
+                           .format(slice.id),
+                           slice.id,
+                           'evt_nstd_itg_subnet_replicate_id')
+                return
+            slice.load_ns_subnet(subnet)
+
+        for vld in slice.content.get("slice_vld"):
+            if slice.check_vld_id(vld.get("id")):
+                evtlog.log("Replicate vld id '{0}'"
+                           .format(vld.get("id")),
+                           "Error loading the vld of "
+                           "slice descriptor id='{0}'"
+                           .format(slice.id),
+                           slice.id,
+                           'evt_nstd_itg_vld_replicate_id')
+                return
+            slice.load_vld(vld)
+        return True
+
+    def validate_sla(self, sla_path):
+        """
+        Validate one or multiple 5GTANGO sla (SLAD) descriptors.
+        By default, it performs the following validations: syntax, integrity.
+        :param sla_path: sla descriptor SLAD filename or
+                          a directory to search for sla
+        :return: True if all validations were successful, False otherwise
+        """
+        if os.path.isdir(sla_path):
+            log.info("Validating sla descriptors in path '{0}'".format(sla_path))
+            sla_files = list_files(sla_path, self._dext)
+            for sla in sla_files:
+                log.info("Detected file {0} order validation..."
+                         .format(sla))
+                if not self.validate_sla(sla):
+                    return
+            return True
+
+        log.info("Validating sla descriptor '{0}'".format(sla_path))
+        log.info("... syntax: {0}, integrity: {1}"
+                 .format(self._syntax, self._integrity))
+        sla = self._storage.create_sla(sla_path)
+        if not(sla) or sla.content is None:
+            evtlog.log("Invalid sla descriptor",
+                       "Couldn't store SLAD of file '{0}'".format(sla_path),
+                       sla_path,
+                       'evt_sla_invalid_descriptor')
+            return
+
+        if self._syntax and not self._validate_sla_syntax(sla):
+            return True
+
+        if self._integrity and not self._validate_sla_integrity(sla):
+            return True
+        return True
+    def _validate_sla_syntax(self, sla):
+        """
+        Validate the syntax of a sla (SLAD) against its schema.
+        :param sla: sla to validate
+        :return: True if syntax is correct, None otherwise
+        """
+        log.info("Validating syntax of sla descriptor '{0}'".format(sla.id))
+        if not self._schema_validator.validate(
+                sla.content, SchemaValidator.SCHEMA_SLA_DESCRIPTOR):
+            evtlog.log("Invalid SLAD syntax",
+                       "Invalid syntax in sla descriptor'{0}': {1}"
+                       .format(sla.id, self._schema_validator.error_msg),
+                       sla.id,
+                       'evt_slad_stx_invalid')
+            return
+        return True
+    def _validate_sla_integrity(self, sla):
+        """
+        Validate the existence of all elements in the slad descriptor i.e. configuration
+        parameters...
+        :sla: sla to validate
+        :return: True if integrity is correct, False otherwise
+        """
+        log.info("Validating integrity of SLA descriptor '{0}'"
+                 .format(sla.id))
+        sla.load_config_values()
+        sla.load_service_values()
+        sla.load_license_values()
+        return True
+
+
+    def validate_runtime_policy(self, rp_path):
+        """
+        Validate one or multiple 5GTANGO runtime policy (RPD) descriptors.
+        By default, it performs the following validations: syntax, integrity.
+        :param rp_path: runtime policy descriptor RPD filename or
+                          a directory to search for rpd
+        :return: True if all validations were successful, False otherwise
+        """
+        if os.path.isdir(rp_path):
+            log.info("Validating runtime policy descriptors in path '{0}'".format(rp_path))
+            rp_files = list_files(rp_path, self._dext)
+            for rp in rp_files:
+                log.info("Detected file {0} order validation..."
+                         .format(rp))
+                if not self.validate_runtime_policy(rp):
+                    return
+            return True
+
+        log.info("Validating runtime policy descriptor '{0}'".format(rp_path))
+        log.info("... syntax: {0}, integrity: {1}"
+                 .format(self._syntax, self._integrity))
+        rp = self._storage.create_runtime_policy(rp_path)
+        if not(rp) or rp.content is None:
+            evtlog.log("Invalid runtime policy descriptor",
+                       "Couldn't store RPD of file '{0}'".format(rp_path),
+                       rp_path,
+                       'evt_runtime_policy_invalid_descriptor')
+            return
+
+        if self._syntax and not self._validate_runtime_policy_syntax(rp):
+            return True
+
+        if self._integrity and not self._validate_runtime_policy_integrity(rp):
+            return True
+        return True
+    def _validate_runtime_policy_syntax(self, rp):
+        """
+        Validate the syntax of a runtime policy descriptor (RPD) against its schema.
+        :param policy: runtime policy descriptor (RPD) to validate
+        :return: True if syntax is correct, None otherwise
+        """
+        log.info("Validating syntax of runtime policy descriptor '{0}'".format(rp.id))
+        if not self._schema_validator.validate(
+                rp.content, SchemaValidator.SCHEMA_RP_DESCRIPTOR):
+            evtlog.log("Invalid RPD syntax",
+                       "Invalid syntax in rp descriptor'{0}': {1}"
+                       .format(rp.id, self._schema_validator.error_msg),
+                       rp.id,
+                       'evt_rpd_stx_invalid')
+            return
+        return True
+    def _validate_runtime_policy_integrity(self, rp):
+        """
+        Validate the existence of all elements in the rpd descriptor i.e. configuration
+        parameters...
+        :rp: rp to validate
+        :return: True if integrity is correct, False otherwise
+        """
+        log.info("Validating integrity of RP descriptor '{0}'"
+                 .format(rp.id))
         return True

@@ -46,6 +46,9 @@ class SchemaValidator(object):
     SCHEMA_SERVICE_DESCRIPTOR = 'NSD'
     SCHEMA_FUNCTION_DESCRIPTOR = 'VNFD'
     SCHEMA_TEST_DESCRIPTOR = 'TSTD'
+    SCHEMA_SLICE_DESCRIPTOR = 'NSTD'
+    SCHEMA_SLA_DESCRIPTOR = 'SLAD'
+    SCHEMA_RP_DESCRIPTOR = 'RPD'
     def __init__(self, workspace, preload=False):
         # Assign parameters
         coloredlogs.install(level=workspace.log_level)
@@ -93,7 +96,25 @@ class SchemaValidator(object):
                                       'test-descriptor/test-schema.yml'),
                 'remote': self._schemas_remote_master +
                 '/test-descriptor/test-descriptor-schema.yml'
-            }
+            },
+            self.SCHEMA_SLICE_DESCRIPTOR: {
+                'local': os.path.join(self._schemas_local_master,
+                                      'slice-descriptor/nstd-schema.yml'),
+                'remote': self._schemas_remote_master +
+                '/slice-descriptor/nst-schema.yml'
+            },
+            self.SCHEMA_SLA_DESCRIPTOR: {
+                'local': os.path.join(self._schemas_local_master,
+                                      'sla-template-descriptor/sla-template-schema.yml'),
+                'remote': self._schemas_remote_master +
+                '/sla-template-descriptor/sla-template-schema.yml'
+            },
+            self.SCHEMA_RP_DESCRIPTOR: {
+                'local': os.path.join(self._schemas_local_master,
+                                      'policy-descriptor/policy-schema.yml'),
+                'remote': self._schemas_remote_master +
+                '/policy-descriptor/policy-schema.yml'
+            },
         }
 
     @property
@@ -135,7 +156,10 @@ class SchemaValidator(object):
         schemas = [self.SCHEMA_PACKAGE_DESCRIPTOR,
                    self.SCHEMA_SERVICE_DESCRIPTOR,
                    self.SCHEMA_FUNCTION_DESCRIPTOR,
-                   self.SCHEMA_TEST_DESCRIPTOR]
+                   self.SCHEMA_TEST_DESCRIPTOR,
+                   self.SCHEMA_SLICE_DESCRIPTOR,
+                   self.SCHEMA_SLA_DESCRIPTOR,
+                   self.SCHEMA_RP_DESCRIPTOR]
 
         for schema in schemas:
             schema_file = self._schemas[schema]['local']
@@ -164,6 +188,13 @@ class SchemaValidator(object):
             sch[self.SCHEMA_FUNCTION_DESCRIPTOR] = self._schemas[self.SCHEMA_FUNCTION_DESCRIPTOR]
         elif type == self.SCHEMA_TEST_DESCRIPTOR:
             sch[self.SCHEMA_TEST_DESCRIPTOR] = self.schemas[self.SCHEMA_TEST_DESCRIPTOR]
+        elif type == self.SCHEMA_SLICE_DESCRIPTOR:
+            sch[self.SCHEMA_SLICE_DESCRIPTOR] = self._schemas[self.SCHEMA_SLICE_DESCRIPTOR]
+        elif type == self.SCHEMA_SLA_DESCRIPTOR:
+            sch[self.SCHEMA_SLA_DESCRIPTOR] = self._schemas[self.SCHEMA_SLA_DESCRIPTOR]
+        elif type == self.SCHEMA_RP_DESCRIPTOR:
+            sch[self.SCHEMA_RP_DESCRIPTOR] = self._schemas[self.SCHEMA_RP_DESCRIPTOR]
+
         # Verify if local dir structure already exists! If not, create it.
         if not os.path.isdir(self._schemas_local_master):
             log.debug("Schema directory '{}' not found. Creating it."
@@ -298,7 +329,11 @@ class SchemaValidator(object):
         # Gather schema templates ids
         templates = {self.SCHEMA_PACKAGE_DESCRIPTOR,
                      self.SCHEMA_SERVICE_DESCRIPTOR,
-                     self.SCHEMA_FUNCTION_DESCRIPTOR}
+                     self.SCHEMA_FUNCTION_DESCRIPTOR,
+                     self.SCHEMA_TEST_DESCRIPTOR,
+                     self.SCHEMA_SLICE_DESCRIPTOR,
+                     self.SCHEMA_SLA_DESCRIPTOR,
+                     self.SCHEMA_RP_DESCRIPTOR}
 
         # Cycle through templates until a success validation is return
         for schema_id in templates:
@@ -360,7 +395,7 @@ def load_local_schema(filename):
         raise FileNotFoundError
         return
     schema_f = open(filename, 'r')
-    schema = yaml.load(schema_f)
+    schema = yaml.load(schema_f, Loader=yaml.SafeLoader)
     if schema_f != None:
         schema_f.close()
     assert isinstance(schema, dict), "Failed to load schema file '{}'. " \
@@ -377,6 +412,6 @@ def load_remote_schema(template_url):
     response = requests.get(template_url)
     response.raise_for_status()
     tf = response.text
-    schema = yaml.load(tf)
+    schema = yaml.load(tf, Loader=yaml.SafeLoader)
     assert isinstance(schema, dict)
     return schema

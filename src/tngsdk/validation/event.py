@@ -79,13 +79,13 @@ class EventLogger(object):
         configpath = pkg_resources.resource_filename(
             __name__, os.path.join('eventcfg.yml'))
         with open(configpath, 'r') as _f:
-            eventdict = yaml.load(_f)
+            eventdict = yaml.load(_f, Loader=yaml.SafeLoader)
 
         # if existent, load custom eventcfg.yml
         configpath = filename
         if os.path.isfile(configpath):
             with open(configpath, 'r') as _f:
-                custom_eventdict = yaml.load(_f)
+                custom_eventdict = yaml.load(_f, Loader=yaml.SafeLoader)
             # check if all events of custom config are valid
             for cevent, cvalue in custom_eventdict.items():
                 cvalue = str(cvalue).lower()

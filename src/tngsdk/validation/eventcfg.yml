@@ -100,7 +100,7 @@ evt_nsd_top_fwpath_inside_vnf: error
 # NSD [topology] - forwarding path is disrupted, i.e. doesn't continue from the previous ending point
 evt_nsd_top_fwpath_disrupted: error
 
-#NSD [topology] - there are unnused vnfd CP
+#NSD [topology] - there are unused vnfd CP
 evt_nsd_top_topgraph_unnused_cps_vnfd: warning
 
 #NSD [topology] - loops found in the topology
@@ -157,7 +157,8 @@ evt_vnfd_top_loops: error
 
 # VNFD [topology] - cycles were detected
 evt_vnfd_top_cycles: error
-## TEST
+
+##### TEST
 # Test - invalid descriptor file
 evt_test_invalid_descriptor: error
 
@@ -171,8 +172,44 @@ evt_tstd_itg_badsection_phases: error
 evt_tstd_itg_badsection_phases_replicate_id: error
 # TSTD [integrity] - missing steps in phase
 evt_tstd_itg_badsection_steps_missing: error
-### GENERAL
 
+
+
+##### SLICE
+# Slice - invalid descriptor file
+evt_slice_invalid_descriptor: error
+
+# NSTD [syntax] - invalid schema syntax
+evt_nstd_stx_invalid: error
+
+# NSTD [integrity] - duplicate subnet id
+evt_nstd_itg_subnet_replicate_id: error
+
+# NSTD [integrity] - duplicate vld id
+evt_nstd_itg_vld_replicate_id: error
+
+
+##### SLA
+# SLA - invalid descriptor file
+evt_sla_invalid_descriptor: error
+
+# SLAD [syntax] - invalid schema syntax
+evt_slad_stx_invalid: error
+
+
+
+
+##### Runtime policy
+# Runtime policy - invalid descriptor file
+evt_runtime_policy_invalid_descriptor: error
+
+# RPD  [syntax] - invalid schema syntax
+evt_rpd_stx_invalid: error
+
+
+
+
+### GENERAL
 # Duplicate declaration of connection point
 evt_duplicate_cpoint: error
 
