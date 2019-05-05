@@ -309,21 +309,36 @@ class Validator(object):
             self._dpath.append(project_path + i)
         self._dext = project.descriptor_extension
         # load all project descriptors present at source directory
-        log.debug("Loading project service descriptor")
+        log.debug("Loading project descriptors")
         nsd_file = Validator._load_project_service_file(project)
         tstd_files = project.get_tstds()
-        tstd_ok = True
+        rpd_files = project.get_rpds()
+        slice_files = project.get_nstds()
+        sla_files = project.get_slads()
+        descriptors_files = tstd_files + rpd_files + slice_files + sla_files
+        descriptors_ok = True
+
         for _file in tstd_files:
             if not self.validate_test(os.path.join(project_path,_file)):
-                tstd_ok = False
-        if nsd_file and tstd_files:
+                descriptors_ok = False
+        for _file in rpd_files:
+            if not self.validate_runtime_policy(os.path.join(project_path,_file)):
+                descriptors_ok = False
+        for _file in slice_files:
+            if not self.validate_slice(os.path.join(project_path,_file)):
+                descriptors_ok = False
+        for _file in sla_files:
+            if not self.validate_sla(os.path.join(project_path,_file)):
+                descriptors_ok = False
+
+        if nsd_file and descriptors_files:
             nsd_file = project_path + nsd_file
-            return self.validate_service(nsd_file) and tstd_ok
-        elif not(nsd_file) and tstd_ok:
-            return not tstd_ok
+            return self.validate_service(nsd_file) and descriptors_ok
+        elif not(nsd_file) and descriptors_files:
+            return descriptors_ok
         else:
             nsd_file = project_path + nsd_file
-            return not self.validate_service(nsd_file)
+            return self.validate_service(nsd_file)
 
     @staticmethod
     def _load_project_service_file(project):
@@ -1114,10 +1129,10 @@ class Validator(object):
             return
 
         if self._syntax and not self._validate_test_syntax(test):
-            return True
+            return False
 
         if self._integrity and not self._validate_test_integrity(test):
-            return True
+            return False
         return True
     def _validate_test_syntax(self, test):
         """
@@ -1191,9 +1206,9 @@ class Validator(object):
             return
 
         if self._syntax and not self._validate_slice_syntax(slice):
-            return True
+            return False
         if self._integrity and not self._validate_slice_integrity(slice):
-            return True
+            return False
         return True
     def _validate_slice_syntax(self, slice):
         """
@@ -1277,10 +1292,10 @@ class Validator(object):
             return
 
         if self._syntax and not self._validate_sla_syntax(sla):
-            return True
+            return False
 
         if self._integrity and not self._validate_sla_integrity(sla):
-            return True
+            return False
         return True
     def _validate_sla_syntax(self, sla):
         """
@@ -1343,11 +1358,13 @@ class Validator(object):
             return
 
         if self._syntax and not self._validate_runtime_policy_syntax(rp):
-            return True
+            return False
 
         if self._integrity and not self._validate_runtime_policy_integrity(rp):
-            return True
+            return False
         return True
+
+
     def _validate_runtime_policy_syntax(self, rp):
         """
         Validate the syntax of a runtime policy descriptor (RPD) against its schema.

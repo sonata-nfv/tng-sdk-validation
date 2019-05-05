@@ -42,7 +42,8 @@ LOG = logging.getLogger(os.path.basename(__file__))
 
 def dispatch(args, validator):
     """
-        'dispath' set in the 'validator' object the level of validation chosen by the user. By default, the validator
+        'dispath' set in the 'validator' object the level of validation
+        chosen by the user. By default, the validator
         makes topology level validation.
     """
     print("Printing all the arguments: {}\n".format(args))
@@ -69,7 +70,8 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
         if validator.validate_function(args.vnfd):
-            if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
+            if ((validator.error_count == 0) and
+            (len(validator.customErrors) == 0)):
                 print("No errors found in the VNFD")
             else:
                 print("Errors in validation")
@@ -129,7 +131,7 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
 
-        if validator.validate_project(args.project_path):
+        if not validator.validate_project(args.project_path):
             print('Cant validate the project descriptors')
         else:
             if validator.error_count == 0:
