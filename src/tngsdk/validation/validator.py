@@ -1168,7 +1168,7 @@ class Validator(object):
         log.info("Validating integrity of test descriptor '{0}'"
                  .format(test.id))
 
-        if not test.content["phases"]:
+        if not test.content.get("phases"):
             evtlog.log("Missing 'phases'",
                        "Couldn't load the phases of "
                        "test descriptor id='{0}'"

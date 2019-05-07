@@ -10,7 +10,6 @@ pipeline {
     stage('Unit Tests') {
       steps {
         echo 'Unit Testing..'
-        sh "docker system prune -f"
         sh "docker container ls -a | grep redis_docker && docker rm -f redis_docker || true"
         sh "docker network ls | grep redis_network && docker network rm redis_network || true"
         sh "docker network create --driver bridge redis_network"
