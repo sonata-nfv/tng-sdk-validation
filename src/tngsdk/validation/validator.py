@@ -335,7 +335,7 @@ class Validator(object):
             return self.validate_service(nsd_file) and descriptors_ok
         elif not(nsd_file) and descriptors_files:
             return descriptors_ok
-        elif nsd_file and not(descriptor_files):
+        elif nsd_file and not(descriptors_files):
             nsd_file = project_path + nsd_file
             return self.validate_service(nsd_file)
         else:
