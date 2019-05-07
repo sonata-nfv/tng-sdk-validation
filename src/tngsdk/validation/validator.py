@@ -335,18 +335,15 @@ class Validator(object):
             return self.validate_service(nsd_file) and descriptors_ok
         elif not(nsd_file) and descriptors_files:
             return descriptors_ok
-        else:
+        elif nsd_file and not(descriptor_files):
             nsd_file = project_path + nsd_file
             return self.validate_service(nsd_file)
-        """
-        elif not(nsd_file) and not(descriptors_files):
+        else:
             evtlog.log("No descriptors",
                        "There are not descriptors in this project ",
                        project.project_root,
                        'evt_project_no_descriptors')
             return False
-        """
-
 
     @staticmethod
     def _load_project_service_file(project):
