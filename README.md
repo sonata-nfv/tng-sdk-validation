@@ -86,6 +86,11 @@ The tng-sdk-validation CLI tool can be used to validate one of the following com
 
 * `--test`
 
+* `--sla`
+
+* `--slice`
+
+* `--policy`
 ### Some examples of validator calls:
 
 ```
@@ -125,7 +130,7 @@ docker run --rm -d --name tng-sdk-validate registry.sonata-nfv.eu:5000/tng-sdk-v
 ```
 
 ### Validation
-Validator running as a service needs a **redis BSD** listening in port **6379** to perform the validation. Therefore: 
+Validator running as a service needs a **redis BSD** listening in port **6379** to perform the validation. Therefore:
 
 ```
 #installation of redis server

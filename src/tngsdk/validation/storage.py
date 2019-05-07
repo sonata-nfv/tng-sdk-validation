@@ -55,6 +55,9 @@ class DescriptorStorage(object):
         self._functions = {}
         self._units = {}
         self._tests = {}
+        self._slices = {}
+        self._slas = {}
+        self._runtime_policies = {}
 
     @property
     def packages(self):
@@ -82,19 +85,17 @@ class DescriptorStorage(object):
     @property
     def tests(self):
         """
-        Provides the stores tests
+        Provides the stored tests
         :return: dictionary of tests
         """
-    def service(self, sid):
+        return self._tests
+    @property
+    def slices(self):
         """
-        Obtain the service for the provided service id
-        :param sid: service id
-        :return: service descriptor object
+        Provides the stored slices
+        :return: dictionary of slices
         """
-        if sid not in self.services:
-            log.error("Service id='{0}' is not stored.".format(sid))
-            return
-        return self.services[sid]
+        return self._slices
 
     def create_package(self, descriptor_file):
         """
@@ -113,6 +114,16 @@ class DescriptorStorage(object):
         self._packages[new_package.id] = new_package
         return new_package
 
+    def service(self, sid):
+        """
+        Obtain the service for the provided service id
+        :param sid: service id
+        :return: service descriptor object
+        """
+        if sid not in self.services:
+            log.error("Service id='{0}' is not stored.".format(sid))
+            return
+        return self.services[sid]
     def create_service(self, descriptor_file):
         """
         Create and store a service based on the provided descriptor filename.
@@ -143,7 +154,6 @@ class DescriptorStorage(object):
             log.error("Function descriptor id='{0}' is not stored.".format(fid))
             return
         return self.functions[fid]
-
     def create_function(self, descriptor_file):
         """
         Create and store a function based on the provided descriptor filename.
@@ -162,15 +172,14 @@ class DescriptorStorage(object):
 
     def test(self, tid):
         """
-        Obtain the function for the provided test id
+        Obtain the test for the provided test id
         :param tid: test id
         :return: test descriptor object
         """
         if tid not in self._tests[tid]:
             log.error("Test descriptor id='{0}' is not stored.".format(fid))
             return
-        return self.functions[fid]
-
+        return self.tests[tid]
     def create_test(self, descriptor_file):
         """
         Create and store a test based on the provided descriptor filename.
@@ -180,7 +189,6 @@ class DescriptorStorage(object):
         :return: created test object or, if id exists, the stored test.
         """
         if not os.path.isfile(descriptor_file):
-            print(descriptor_file)
             return
         new_test = Test(descriptor_file)
         if not new_test.content:
@@ -193,6 +201,102 @@ class DescriptorStorage(object):
 
         self._tests[new_test.id] = new_test
         return new_test
+
+    def slice(self, sid):
+        """
+        Obtain the slice for the provided slice id
+        :param tid: test id
+        :return: test descriptor object
+        """
+        if sid not in self._slices[sid]:
+            log.error("Slice descriptor id='{0}' is not stored.".format(sid))
+            return
+        return self.slices[sid]
+    def create_slice(self, descriptor_file):
+        """
+        Create and store a slice based on the provided descriptor filename.
+        If a slice is already stored with the same id, it will return the
+        stored slice.
+        :param descriptor_file: slice descriptor filename
+        :return: created slice object or, if id exists, the stored slice.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_slice = Slice(descriptor_file)
+        if not new_slice.content:
+            return
+        content = new_slice.content
+        new_slice.name = content["name"]
+
+        if new_slice.id in self._slices.keys():
+            return self._slices[new_slice.id]
+
+        self._slices[new_slice.id] = new_slice
+        return new_slice
+
+    def sla(self, sla_id):
+        """
+        Obtain the sla for the provided sla id
+        :param sla_id: sla id
+        :return: sla descriptor object
+        """
+        if sla_id not in self._slas[sla_id]:
+            log.error("SLA descriptor id='{0}' is not stored.".format(sla_id))
+            return
+        return self.slas[sla_id]
+    def create_sla(self, descriptor_file):
+        """
+        Create and store a sla based on the provided descriptor filename.
+        If a sla is already stored with the same id, it will return the
+        stored sla.
+        :param descriptor_file: sla descriptor filename
+        :return: created sla object or, if id exists, the stored sla.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_sla = SLA(descriptor_file)
+        if not new_sla.content:
+            return
+        content = new_sla.content
+        new_sla.name = content["name"]
+
+        if new_sla.id in self._slas.keys():
+            return self._slas[new_sla.id]
+
+        self._slas[new_sla.id] = new_sla
+        return new_sla
+
+    def runtime_policy(self, rpid):
+        """
+        Obtain the sla for the provided sla id
+        :param rpid: rpid
+        :return: rp descriptor object
+        """
+        if rpid not in self._runtime_policies[rpid]:
+            log.error("RP descriptor id='{0}' is not stored.".format(rpid))
+            return
+        return self.runtime_policies[rpid]
+    def create_runtime_policy(self, descriptor_file):
+        """
+        Create and store a rp based on the provided descriptor filename.
+        If a rp is already stored with the same id, it will return the
+        stored sla.
+        :param descriptor_file: rp descriptor filename
+        :return: created rp object or, if id exists, the stored rp.
+        """
+        if not os.path.isfile(descriptor_file):
+            return
+        new_runtime_policy = Runtime_Policy(descriptor_file)
+        if not new_runtime_policy.content:
+            return
+        content = new_runtime_policy.content
+        new_runtime_policy.name = content["name"]
+
+        if new_runtime_policy.id in self._runtime_policies.keys():
+            return self._runtime_policies[new_runtime_policy.id]
+
+        self._runtime_policies[new_runtime_policy.id] = new_runtime_policy
+        return new_runtime_policy
 
 class Node:
     def __init__(self, nid):
@@ -459,6 +563,7 @@ class Descriptor(Node):
         Load connection points of the descriptor.
         It reads the section 'connection_points' of the descriptor contents.
         """
+
         if 'connection_points' not in self.content:
             return
         for cp in self.content['connection_points']:
@@ -1292,10 +1397,10 @@ class Function(Descriptor):
                         return
 
                     unit = self.units[vdu['id']]
-
+                    if 'connection_points' not in vdu:
+                        return
                     for cp in vdu['connection_points']:
                         unit.add_connection_point(cp['id'])
-
                 return True
             elif cduExist:
                 for cdu in self.content['cloudnative_deployment_units']:
@@ -1310,6 +1415,8 @@ class Function(Descriptor):
                             unit.add_connection_point(cp['id'])
                             if 'port' in cp:
                                 unit.add_port(cp['id'],cp['port'])
+                    else:
+                        return
                 return True
             else:
                 return
@@ -1654,8 +1761,6 @@ class Probe:
     @property
     def description(self):
         return self._description
-
-
 class Step:
     def __init__(self):
         self._name = ""
@@ -1692,7 +1797,6 @@ class Step:
         @property
         def run(self):
             return self._run
-
 class Phase:
     def __init__(self, phase):
         self._id = phase["id"]
@@ -1716,7 +1820,6 @@ class Phase:
             if "probes" in step.keys():
                 for probe in step["probes"]:
                     new_probe = Probe()
-
 class Test:
     def __init__(self, descriptor_file):
         self._id = None
@@ -1790,6 +1893,7 @@ class Test:
         content = read_descriptor_file(self._filename)
         if content:
             self.content = content
+
     @name.setter
     def name(self, value):
         self._name = value
@@ -1826,3 +1930,478 @@ class Test:
                 new_phase.load_steps(phase["steps"])
                 self.phases.append(Phase(phase))
         return True
+class Slice_vld:
+    def __init__(self):
+        self._id = None
+        self._name = None
+        self._mgt_network = None
+        self._type = None
+        self._root_bandwidth = None
+        self._root_bandwidth_unit = None
+        self._leaf_bandwidth = None
+        self._leaf_bandwidth_unit = None
+        self._physical_network = None
+        self._segmentation_id = None
+        self._nsd_connection_point_ref = None
+
+    @property
+    def id(self):
+        return self._id
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @property
+    def mgt_network(self):
+        return self._mgt_network
+    @mgt_network.setter
+    def mgt_network(self, value):
+        self._mgt_network = value
+
+    @property
+    def type(self):
+        return self._type
+    @type.setter
+    def type(self, value):
+        self._type = value
+
+    @property
+    def root_bandwidth(self):
+        return self._root_bandwidth
+    @root_bandwidth.setter
+    def root_bandwidth(self, value):
+        self._root_bandwidth = value
+
+    @property
+    def root_bandwidth_unit(self):
+        return self._root_bandwidth_unit
+    @root_bandwidth_unit.setter
+    def root_bandwidth_unit(self, value):
+        self._root_bandwidth_unit = value
+
+    @property
+    def leaf_bandwidth(self):
+        return self._leaf_bandwidth
+    @leaf_bandwidth.setter
+    def leaf_bandwidth(self, value):
+        self._leaf_bandwidth = value
+
+    @property
+    def leaf_bandwidth_unit(self):
+        return self._leaf_bandwidth_unit
+    @leaf_bandwidth_unit.setter
+    def leaf_bandwidth_unit(self, value):
+        self._leaf_bandwidth_unit = value
+
+    @property
+    def phisical_network(self):
+        return self._phisical_network
+    @phisical_network.setter
+    def phisical_network(self, value):
+        self._phisical_network = value
+
+    @property
+    def segmentation_id(self):
+        return self._segmentation_id
+    @segmentation_id.setter
+    def segmentation_id(self, value):
+        self._segmentation_id = value
+
+    @property
+    def phisical_network(self):
+        return self._phisical_network
+    @phisical_network.setter
+    def phisical_network(self, value):
+        self._phisical_network = value
+
+class Ns_subnet:
+    def __init__(self):
+        self._id = None
+        self._nsd_ref = None
+        self._nsd_name = None
+        self._nsd_version = None
+        self._nsd_vendor = None
+        self._sla_name = None
+        self._sla_ref = None
+        self._is_shared = None
+
+    @property
+    def id(self):
+        return self._id
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def nsd_ref(self):
+        return self._nsd_ref
+    @nsd_ref.setter
+    def nsd_ref(self, value):
+        self._nsd_ref = value
+
+    @property
+    def nsd_name(self):
+        return self._nsd_name
+    @nsd_name.setter
+    def nsd_name(self, value):
+        self._nsd_name = value
+
+    @property
+    def nsd_version(self):
+        return self._nsd_version
+    @nsd_version.setter
+    def nsd_version(self, value):
+        self._nsd_version = value
+
+    @property
+    def nsd_vendor(self):
+        return self._nsd_version
+    @nsd_vendor.setter
+    def nsd_vendor(self, value):
+        self._nsd_vendor = value
+
+    @property
+    def sla_name(self):
+        return self._sla_name
+    @sla_name.setter
+    def sla_name(self, value):
+        self._sla_name = value
+
+    @property
+    def sla_ref(self):
+        return self._sla_ref
+    @sla_ref.setter
+    def sla_ref(self, value):
+        self._sla_ref = value
+
+    @property
+    def is_shared(self):
+        return self._sla_ref
+    @is_shared.setter
+    def is_shared(self, value):
+        self._is_shared = value
+
+
+class Slice:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._content = None
+        self._filename = None
+        self.filename = descriptor_file
+        self._SNSSAI_identifier = {}
+        self._onboardingState = None
+        self._operationalState = None
+        self._usageState = None
+        self._5qi_value = None
+        self._slice_ns_subnets = []
+        self._slice_vld = []
+
+
+    @property
+    def SNSSAI_identifier(self):
+        return self._id
+    @SNSSAI_identifier.setter
+    def SNSSAI_identifier(self, value):
+        self._SNSSAI_identifier = value
+    @property
+    def id(self):
+        return self._id
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def content(self):
+        """
+        Content of the descriptor
+        :return: descriptor content
+        """
+        return self._content
+
+    @property
+    def onboardingState(self):
+        return self._onboardingState
+    @onboardingState.setter
+    def onboardingState(self, value):
+        self._onboardingState = value
+
+    @property
+    def operationalState(self):
+        return self._operationalState
+    @operationalState.setter
+    def operationalState(self, value):
+        self._operationalState = value
+
+    @property
+    def usageState(self):
+        return self._usageState
+    @usageState.setter
+    def usageState(self, value):
+        self._usageState = value
+
+    @property
+    def _5qui_value(self):
+        return self._5qui_value
+    @_5qui_value.setter
+    def _5qui_value(self, value):
+        self._5qui_value = value
+
+
+    @content.setter
+    def content(self, content):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: content, an OrderedDictsubnet
+        """
+        self._content = content
+        self._id = descriptor_id(self._content)
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content
+
+    def check_subnet_id(self, id):
+        """
+        :id: id of the subnet
+        :return: True if the id exists, False otherwise
+        """
+
+        for subnet in self._slice_ns_subnets:
+            if id == subnet.id:
+                return True
+        return False
+
+    def check_vld_id(self, id):
+        """
+        :id: id of the vld
+        :return: True if the id exists, False otherwise
+        """
+
+        for vld in self._slice_vld:
+            if id == vld.id:
+                return True
+        return False
+    def load_config_values(self):
+        SNSSAI_identifier = self.content.get("SNSSAI_identifier")
+        if SNSSAI_identifier:
+            self.SNSSAI_identifier = SNSSAI_identifier
+        onboardingState = self.content.get("onboardingState")
+        if onboardingState:
+            self.onboardingState = onboardingState
+        operationalState = self.content.get("operationalState")
+        if operationalState:
+            self.operationalState = operationalState
+        usageState = self.content.get("usageState")
+        if usageState:
+            self.usageState = usageState
+        _5qui_value = self.content.get("5qui_value")
+        if _5qui_value:
+            self._5qui_value = _5qui_value
+    def load_ns_subnet(self, subnet):
+        #It is not necessary check if the parameter exist because they are required in the schema.
+        new_subnet = Ns_subnet()
+        new_subnet.id = subnet.get("id")
+        new_subnet.nsd_ref = subnet.get("nsd-ref")
+        new_subnet.nsd_name = subnet.get("nsd-name")
+        new_subnet.nsd_version = subnet.get("nsd-version")
+        new_subnet.nsd_vendor = subnet.get("nsd-vendor")
+        new_subnet.sla_name = subnet.get("sla-name")
+        new_subnet.sla_ref = subnet.get("sla-ref")
+        new_subnet.is_shared = subnet.get("is-shared")
+        self._slice_ns_subnets.append(new_subnet)
+        return True
+
+    def load_vld(self, slice_vld):
+        new_vld = Slice_vld()
+        new_vld.id = slice_vld.get("id")
+        new_vld.name = slice_vld.get("name")
+        new_vld.type = slice_vld.get("type")
+        new_vld._nsd_connection_point_ref = slice_vld.get("_nsd_connection_point_ref")
+        self._slice_vld.append(new_vld)
+
+
+class SLA:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._content = None
+        self._filename = None
+        self.filename = descriptor_file
+        self._offer_date = None
+        self._expiration_date = None
+        self._template_name = None
+        self._provider_name = None
+        self._template_initiator = None
+        self._service = {}
+        self._guaranteeTerms = []
+        self._license = {}
+    @property
+    def id(self):
+        return self._id
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def content(self):
+        """
+        Content of the descriptor
+        :return: descriptor content
+        """
+        return self._content
+
+    @property
+    def offer_date(self):
+        return serf._offer_date
+    @offer_date.setter
+    def offer_date(self, value):
+        self._offer_date = value
+
+    @property
+    def expiration_date(self):
+        return self._expiration_date
+    @expiration_date.setter
+    def expiration_date(self, value):
+        self._expiration_date = value
+
+    @property
+    def template_name(self):
+        return self._template_name
+    @template_name.setter
+    def template_name(self, value):
+        self._template_name = value
+    @property
+    def provider_name(self):
+        return self._provider_name
+    @property
+    def template_initiator(self):
+        return self._template_initiator
+    @property
+    def service(self):
+        return self._service
+    @property
+    def license(self):
+        return self._license
+
+
+
+    @content.setter
+    def content(self, content):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: content, an OrderedDict
+        """
+        self._content = content
+        self._id = descriptor_id(self._content)
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content
+
+    def load_config_values(self):
+        offer_date = self.content.get("sla_template").get("offer_date")
+        expiration_date = self.content.get("sla_template").get("expiration_date")
+        template_name = self.content.get("sla_template").get("template_name")
+        provider_name = self.content.get("sla_template").get("provider_name")
+        template_initiator = self.content.get("sla_template").get("template_initiator")
+
+        if offer_date:
+            self._offer_date = offer_date
+        if expiration_date:
+            self._expiration_date = expiration_date
+        if template_name:
+            self._template_name = template_name
+        if provider_name:
+            self._provider_name = provider_name
+        if template_initiator:
+            self._template_initiator = template_initiator
+
+    def load_service_values(self):
+        service = self.content.get("sla_template").get("service")
+        if service:
+            self._service = service
+
+    def load_license_values(self):
+        license = self.content.get("sla_template").get("licenses")
+        if license:
+            self._license = license
+class Runtime_Policy:
+    def __init__(self, descriptor_file):
+        self._id = None
+        self._content = None
+        self._filename = None
+        self.filename = descriptor_file
+        self._network_service = {}
+
+    @property
+    def id(self):
+        return self._id
+    @property
+    def filename(self):
+        """
+        Filename of the descriptor
+        :return: descriptor filename
+        """
+        return self._filename
+
+    @property
+    def content(self):
+        """
+        Content of the descriptor
+        :return: descriptor content
+        """
+        return self._content
+
+    @content.setter
+    def content(self, content):
+        """
+        Sets the descriptor dictionary.
+        This modification will impact the id of the descriptor.
+        :param value: content, an OrderedDict
+        """
+        self._content = content
+        self._id = descriptor_id(self._content)
+
+    @filename.setter
+    def filename(self, value):
+        """
+        Sets the descriptor filename.
+        This modification will impact the content and id of the descriptor.
+        :param value: descriptor filename
+        """
+        self._filename = value
+        content = read_descriptor_file(self._filename)
+        if content:
+            self.content = content

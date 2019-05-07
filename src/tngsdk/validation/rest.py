@@ -96,7 +96,6 @@ if app.config['CACHE_TYPE'] == 'redis':
         if app.config['REDIS_USER'] and app.config['REDIS_PASSWD'] else ''
     redis_url = 'redis://' + redis_auth + app.config['REDIS_HOST'] + \
                 ':' + app.config['REDIS_PORT']
-
     cache = Cache(app, config={'CACHE_TYPE': 'redis',
                                'CACHE_DEFAULT_TIMEOUT': 0,
                                'CACHE_REDIS_URL': redis_url})

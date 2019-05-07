@@ -42,7 +42,8 @@ LOG = logging.getLogger(os.path.basename(__file__))
 
 def dispatch(args, validator):
     """
-        'dispath' set in the 'validator' object the level of validation chosen by the user. By default, the validator
+        'dispath' set in the 'validator' object the level of validation
+        chosen by the user. By default, the validator
         makes topology level validation.
     """
     print("Printing all the arguments: {}\n".format(args))
@@ -69,7 +70,8 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
         if validator.validate_function(args.vnfd):
-            if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
+            if ((validator.error_count == 0) and
+            (len(validator.customErrors) == 0)):
                 print("No errors found in the VNFD")
             else:
                 print("Errors in validation")
@@ -129,7 +131,7 @@ def dispatch(args, validator):
         else:
             print("Default mode: Syntax, integrity and topology validation")
 
-        if validator.validate_project(args.project_path):
+        if not validator.validate_project(args.project_path):
             print('Cant validate the project descriptors')
         else:
             if validator.error_count == 0:
@@ -150,17 +152,79 @@ def dispatch(args, validator):
             print("Default test descriptor validation syntax and integrity")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
-    if not validator.validate_test(args.tstd):
-        print('Cant validate the test descriptors')
-    else:
-        if validator.error_count == 0:
-            if len(validator.customErrors) == 0:
+        if not validator.validate_test(args.tstd):
+            print('Cant validate the test descriptors')
+        else:
+            if validator.error_count == 0 and len(validator.customErrors) == 0:
                 print("No errors found in the validation of the test descriptors")
             else:
                 print("Errors in validation")
-    return validator
+        return validator
+    elif args.nstd:
+        print("Slice descriptor validation")
+        validator.schema_validator.load_schemas("NSTD")
+
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False, custom=False)
+        elif args.integrity:
+            print("Integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+        else:
+            print("Default test descriptor validation syntax and integrity")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+
+        if not validator.validate_slice(args.nstd):
+            print('Cant validate the slice descriptors')
+        else:
+            if validator.error_count == 0 and len(validator.customErrors) == 0:
+                print("No errors found in the validation of the slice descriptors")
+            else:
+                print("Errors in validation")
+        return validator
+    elif args.slad:
+        print("SLA descriptor validation")
+        validator.schema_validator.load_schemas("SLAD")
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False, custom=False)
+        elif args.integrity:
+            print("Integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+        else:
+            print("Default test descriptor validation syntax and integrity")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+
+        if not validator.validate_sla(args.slad):
+            print('Cant validate the sla descriptors')
+        else:
+            if validator.error_count == 0 and len(validator.customErrors) == 0:
+                print("No errors found in the validation of the sla descriptors")
+            else:
+                print("Errors in validation")
+        return validator
+    elif args.rpd:
+        print("RP descriptor validation")
+        validator.schema_validator.load_schemas("RPD")
+        if args.syntax:
+            print("Syntax validation")
+            validator.configure(syntax=True, integrity=False, topology=False, custom=False)
+        elif args.integrity:
+            print("Integrity validation")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+        else:
+            print("Default test descriptor validation syntax and integrity")
+            validator.configure(syntax=True, integrity=True, topology=False, custom=False)
+
+        if not validator.validate_runtime_policy(args.rpd):
+            print('Cant validate the sla descriptors')
+        else:
+            if validator.error_count == 0 and len(validator.customErrors) == 0:
+                print("No errors found in the validation of the sla descriptors")
+            else:
+                print("Errors in validation")
+        return validator
 def check_args(args):
-    # TODO: the validator accepts two level parameter in the input parametes i.e. -i -s. It does not have sense
     if args.project_path:
         if not(args.custom):
             return True
@@ -202,15 +266,35 @@ def check_args(args):
         else:
             return True
     elif args.tstd:
-        # TODO: Does the test descriptor have to bear some type of custom rules?
+        # TODO have custom rules sense here?
         if args.topology or args.custom:
             print("Invalid parameters. The validation level "
                   "of the test descriptor is syntax or integrity")
         else:
             return True
+    elif args.nstd:
+        # TODO have custom rules sense here?
+        if args.topology or args.custom:
+            print("Invalid parameters. The validation level "
+                  "of the slice descriptor is syntax or integrity")
+        else:
+            return True
+    elif args.slad:
+        # TODO have custom rules sense here?
+        if args.topology or args.custom:
+            print("Invalid parameters. The validation level "
+                  "of the sla descriptor is syntax or integrity")
+        else:
+            return True
+    elif args.rpd:
+        # TODO have custom rules sense here?
+        if args.topology or args.custom:
+            print("Invalid parameters. The validation level "
+                  "of the sla descriptor is syntax or integrity")
+        else:
+            return True
     else:
-        return False
-
+        return True
 
 def parse_args(input_args=None):
     #TODO Examples for custom rules.
@@ -225,16 +309,32 @@ def parse_args(input_args=None):
     - Validation of project descriptors in the default workspace ($ HOME/.tng-workspace).
         tng-sdk-validate --project path/to/project/
 
-    - Validation of service descriptors.
+    - Validation of service (NSD) descriptors.
         tng-sdk-validate  --service path/to/example_nsd.yml --dpath path/to/function_folder --dext yml
 
-    - Validation of all function (VNF/CNF) descriptors in a folder.
+    - Validation of all function (VNFD/CNFD) descriptors in a folder.
         tng-sdk-validate --function path/to/function_folder/
         tng-sdk-validate --function path/to/function_folder/ --dext yml
 
-    - Validation of individual function (VNF/CNF) descriptor.
+    - Validation of individual function (VNFD/CNFD) descriptor.
         tng-sdk-validate --function path/to/example_function.yml
         tng-sdk-validate --function path/to/example_function.yml --dext yml
+
+    - Validation of individual test (TSTD) descriptor.
+        tng-sdk-validate --test path/to/example_test.yml
+        tng-sdk-validate --test path/to/example_test.yml --dext yml
+
+    - Validation of individual network slice template (NSTD) descriptor.
+        tng-sdk-validate --slice path/to/example_slice.yml
+        tng-sdk-validate --slice path/to/example_slice.yml --dext yml
+
+    - Validation of individual sla (SLAD) descriptor.
+        tng-sdk-validate --sla path/to/example_sla.yml
+        tng-sdk-validate --sla path/to/example_sla.yml --dext yml
+
+    - Validation of individual runtime policy (RPD) descriptor.
+        tng-sdk-validate --policy path/to/example_policy.yml
+        tng-sdk-validate --policy path/to/example_policy.yml --dext yml
     """)
 
     exclusive_parser = parser.add_mutually_exclusive_group(
@@ -263,10 +363,26 @@ def parse_args(input_args=None):
         required=False,
         default=None
     )
+
     exclusive_parser.add_argument(
-        "--package",
-        help="Validate the specified package descriptor.",
-        dest="package_file",
+        "--slice",
+        help="Validate the specified netwok slice template descriptor.",
+        dest="nstd",
+        required=False,
+        default=None
+    )
+    exclusive_parser.add_argument(
+        "--policy",
+        help="Validate the specified runtime policy descriptor.",
+        dest="rpd",
+        required=False,
+        default=None
+    )
+
+    exclusive_parser.add_argument(
+        "--sla",
+        help="Validate the specified SLA descriptor.",
+        dest="slad",
         required=False,
         default=None
     )
