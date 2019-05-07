@@ -41,7 +41,7 @@ RUN pip install pycodestyle
 #WORKDIR /opt
 RUN git clone https://github.com/sonata-nfv/tng-sdk-project.git
 WORKDIR tng-sdk-project
-#RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt
 RUN python setup.py install
 RUN tng-workspace
 
@@ -58,4 +58,3 @@ EXPOSE 5001
 CMD ["tng-sdk-validate","--api"]
 # This command leaves the tng-sdk-validate tool running in API mode
 # Listening at por 5001
-#RUN tng-sdk-validate --api
