@@ -279,9 +279,6 @@ def check_args(args):
                   "of the slice descriptor is syntax or integrity")
         else:
             return True
-    else:
-        return True
-    """
     elif args.slad:
         # TODO have custom rules sense here?
         if args.topology or args.custom:
@@ -296,8 +293,8 @@ def check_args(args):
                   "of the sla descriptor is syntax or integrity")
         else:
             return True
-    """
-
+    else:
+        return True
 
 def parse_args(input_args=None):
     #TODO Examples for custom rules.
@@ -374,7 +371,6 @@ def parse_args(input_args=None):
         required=False,
         default=None
     )
-    """
     exclusive_parser.add_argument(
         "--policy",
         help="Validate the specified runtime policy descriptor.",
@@ -390,7 +386,6 @@ def parse_args(input_args=None):
         required=False,
         default=None
     )
-    """
     exclusive_parser.add_argument(
         "--service",
         help="Validate the specified service descriptor. "

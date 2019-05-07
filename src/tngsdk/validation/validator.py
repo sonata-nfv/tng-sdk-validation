@@ -313,9 +313,9 @@ class Validator(object):
         nsd_file = Validator._load_project_service_file(project)
         tstd_files = project.get_tstds()
         slice_files = project.get_nstds()
-        #rpd_files = project.get_rpds()
-        #sla_files = project.get_slads()
-        descriptors_files = tstd_files + slice_files#rpd_files + sla_files
+        rpd_files = project.get_rpds()
+        sla_files = project.get_slads()
+        descriptors_files = tstd_files + slice_files + rpd_files + sla_files
         descriptors_ok = True
 
         for _file in tstd_files:
@@ -324,14 +324,12 @@ class Validator(object):
         for _file in slice_files:
             if not self.validate_slice(os.path.join(project_path,_file)):
                 descriptors_ok = False
-        """
         for _file in rpd_files:
             if not self.validate_runtime_policy(os.path.join(project_path,_file)):
                 descriptors_ok = False
         for _file in sla_files:
             if not self.validate_sla(os.path.join(project_path,_file)):
                 descriptors_ok = False
-        """
         if nsd_file and descriptors_files:
             nsd_file = project_path + nsd_file
             return self.validate_service(nsd_file) and descriptors_ok
@@ -340,6 +338,15 @@ class Validator(object):
         else:
             nsd_file = project_path + nsd_file
             return self.validate_service(nsd_file)
+        """
+        elif not(nsd_file) and not(descriptors_files):
+            evtlog.log("No descriptors",
+                       "There are not descriptors in this project ",
+                       project.project_root,
+                       'evt_project_no_descriptors')
+            return False
+        """
+
 
     @staticmethod
     def _load_project_service_file(project):
