@@ -14,7 +14,7 @@ evt_project_service_invalid: error
 evt_project_service_multiple: error
 
 # Project - there are not descriptors
-evt_project_no_descriptors: error
+evt_project_no_descriptors: warning
 
 ### PACKAGE
 
