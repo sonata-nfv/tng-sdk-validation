@@ -330,13 +330,14 @@ class Validator(object):
         for _file in sla_files:
             if not self.validate_sla(os.path.join(project_path,_file)):
                 descriptors_ok = False
+
         if nsd_file and descriptors_files:
-            nsd_file = project_path + nsd_file
+            nsd_file = os.path.join(project_path, nsd_file)
             return self.validate_service(nsd_file) and descriptors_ok
         elif not(nsd_file) and descriptors_files:
             return descriptors_ok
         elif nsd_file and not(descriptors_files):
-            nsd_file = project_path + nsd_file
+            nsd_file = os.path.join(project_path, nsd_file)
             return self.validate_service(nsd_file)
         else:
             evtlog.log("No descriptors",
@@ -354,21 +355,22 @@ class Validator(object):
         """
 
         # load project service descriptor (NSD)
-        nsd_files = project.get_nsds()
-        if not nsd_files:
+        nsd_file = project.get_nsds()
+
+        if isinstance(nsd_file, bool) or not nsd_files:
             log.warning("NSD not found. Couldn't find a service descriptor in project '{0}'".format(project.project_root))
             return False
 
-        if len(nsd_files) > 1:
+        if len(nsd_file) > 1:
             evtlog.log("Multiple NSDs",
                        "Found multiple service descriptors in project "
                        "'{0}': {1}"
                        .format(project.project_root, nsd_files),
                        project.project_root,
                        'evt_project_service_multiple')
-            return Falsetel
+            return False
 
-        return nsd_files[0]
+        return nsd_file
 
     def validate_service(self, nsd_file):
         """
