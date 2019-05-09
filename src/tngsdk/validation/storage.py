@@ -1390,33 +1390,38 @@ class Function(Descriptor):
             vduExist = 'virtual_deployment_units' in self.content
             cduExist = 'cloudnative_deployment_units' in self.content
             if vduExist:
-                for vdu in self.content['virtual_deployment_units']:
-                    if vdu['id'] not in self.units.keys():
+                for vdu in self.content.get('virtual_deployment_units'):
+                    if vdu.get('id') not in self.units.keys():
                         log.error("Unit id='{0}' is not associated with function "
-                                  "id='{1}".format(vdu['id'], self.id))
+                                  "id='{1}".format(vdu.get('id'), self.id))
                         return
 
-                    unit = self.units[vdu['id']]
-                    if 'connection_points' not in vdu:
-                        return
-                    for cp in vdu['connection_points']:
-                        unit.add_connection_point(cp['id'])
+                    unit = self.units.get(vdu.get('id'))
+                    if vdu.get('connection_points') is None:
+                        True
+                    elif len(vdu.get('connection_points')) == 0:
+                        True
+                    else:
+                        for cp in vdu.get('connection_points'):
+                            unit.add_connection_point(cp.get('id'))
                 return True
             elif cduExist:
-                for cdu in self.content['cloudnative_deployment_units']:
-                    if cdu['id'] not in self.units.keys():
+                for cdu in self.content.get('cloudnative_deployment_units'):
+                    if cdu.get('id') not in self.units.keys():
                         log.error("Unit id='{0}' is not associated with function "
                                   "id='{1}".format(cdu['id'], self.id))
                         return
 
-                    unit = self.units[cdu['id']]
-                    if cdu.get('connection_points'):
-                        for cp in cdu['connection_points']:
-                            unit.add_connection_point(cp['id'])
-                            if 'port' in cp:
-                                unit.add_port(cp['id'],cp['port'])
+                    unit = self.units[cdu.get('id')]
+                    if cdu.get('connection_points') is None:
+                        True
+                    elif len(cdu.get('connection_points')) == 0:
+                        True
                     else:
-                        return
+                        for cp in cdu.get('connection_points'):
+                            unit.add_connection_point(cp.get('id'))
+                            if 'port' in cp:
+                                unit.add_port(cp.get('id'),cp.get('port'))
                 return True
             else:
                 return
