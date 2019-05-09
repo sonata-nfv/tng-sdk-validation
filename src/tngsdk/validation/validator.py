@@ -811,7 +811,6 @@ class Validator(object):
             vnfd_files = list_files(self._dpath, self._dext)
             log.debug("Found {0} descriptors in dpath='{2}': {1}"
                       .format(len(vnfd_files), vnfd_files, self._dpath))
-
         # load all VNFDs
         path_vnfs = read_descriptor_files(vnfd_files)
 
@@ -830,7 +829,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_itg_function_unavailable')
             return
-
         # store function descriptors referenced in the service
         for func in functions:
             fid = build_descriptor_id(func['vnf_vendor'],
