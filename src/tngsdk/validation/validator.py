@@ -341,7 +341,7 @@ class Validator(object):
             return self.validate_service(nsd_file)
         else:
             evtlog.log("No descriptors",
-                       "There are not descriptors in this project ",
+                       "There are not 5GTANGO descriptors in this project ",
                        project.project_root,
                        'evt_project_no_descriptors')
             return False
@@ -357,20 +357,19 @@ class Validator(object):
         # load project service descriptor (NSD)
         nsd_file = project.get_nsds()
 
-        if isinstance(nsd_file, bool) or not nsd_files:
-            log.warning("NSD not found. Couldn't find a service descriptor in project '{0}'".format(project.project_root))
+        if isinstance(nsd_file, bool) or not nsd_file:
             return False
 
         if len(nsd_file) > 1:
             evtlog.log("Multiple NSDs",
                        "Found multiple service descriptors in project "
                        "'{0}': {1}"
-                       .format(project.project_root, nsd_files),
+                       .format(project.project_root, nsd_file),
                        project.project_root,
                        'evt_project_service_multiple')
             return False
 
-        return nsd_file
+        return nsd_file[0]
 
     def validate_service(self, nsd_file):
         """
@@ -652,7 +651,7 @@ class Validator(object):
                                event_id=evtid,
                                detail_event_id=cycle['cycle_id'])
                 fw_graph['cycles'] = cycles_list
-                fw_graph['event_id'] = evtid
+                fw_graph['event_id'] = evtiddocker
         return True
 
     @staticmethod
