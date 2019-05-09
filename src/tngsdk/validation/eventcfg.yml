@@ -109,7 +109,7 @@ evt_nsd_top_topgraph_unnused_cps_vnfd: warning
 evt_nsd_top_topgraph_loops_in_vnfd: error
 
 # NSD [topology] - there are disconnected vnfd (all cp unnused)
-evt_nsd_top_topgraph_isolated_vnfd: error
+evt_nsd_top_topgraph_isolated_vnfd: warning
 ## FUNCTION
 
 # Function - invalid descriptor file
@@ -149,7 +149,7 @@ evt_vnfd_itg_duplicated_ports_in_CDUs: error
 evt_vnfd_top_topgraph_failed: error
 
 # VNFD [topology] - isolated units were detected
-evt_vnfd_top_isolated_units: error
+evt_vnfd_top_isolated_units: warning
 
 # VNFD [topology] - unnused connection points in units were detected
 evt_vnfd_top_unnused_cps_unit: warning
