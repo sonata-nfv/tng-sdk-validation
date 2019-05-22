@@ -38,23 +38,23 @@ RUN apk update && apk upgrade && apk add --no-cache bash git && apk add --update
 RUN pip install pycodestyle
 
 # install tng-sdk-project first
-#WORKDIR /opt
 RUN git clone https://github.com/sonata-nfv/tng-sdk-project.git
 WORKDIR tng-sdk-project
 RUN pip install -r requirements.txt
 RUN python setup.py install
 RUN tng-workspace
 
+# add the validator folder from your computer and install it
 ADD . /tng-sdk-validation
-
 WORKDIR /tng-sdk-validation
-
 RUN pip install -r requirements.txt
 RUN python setup.py install
 
+# allow the tests of jenkins pipeline
 RUN chmod +x pipeline/test/test_sdk_integration.sh
 
+# set the docker container listening in port 5001
 EXPOSE 5001
+
+# run the validator in api mode
 CMD ["tng-sdk-validate","--api"]
-# This command leaves the tng-sdk-validate tool running in API mode
-# Listening at por 5001

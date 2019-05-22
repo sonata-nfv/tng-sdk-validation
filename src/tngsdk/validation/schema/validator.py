@@ -360,6 +360,8 @@ def write_local_schema(schemas_root, filename, schema):
     :return:
     """
 
+    print("HOLA")
+    print(os.path.dirname(filename))
     if os.path.isfile(filename):
         log.debug("Replacing schema file '{}'".format(filename))
         print("Replacing schema file '{}'".format(filename))

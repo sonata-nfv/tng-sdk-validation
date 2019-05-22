@@ -884,13 +884,10 @@ class Validator(object):
                        vnfd_path,
                        'evt_function_invalid_descriptor')
             return
-
         if self._syntax and not self._validate_function_syntax(func):
             return True
-
         if self._integrity and not self._validate_function_integrity(func):
             return True
-
         if self._topology and not self._validate_function_topology(func):
             return True
 
@@ -1056,7 +1053,6 @@ class Validator(object):
                         .format(len(isolated_units)),
                         func.id,
                         "evt_vnfd_top_isolated_units")
-            return
 
         unnused_cps = func.detect_unnused_cps_units()
         if unnused_cps:

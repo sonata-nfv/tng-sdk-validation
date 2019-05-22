@@ -17,58 +17,14 @@ import logging
 log = logging.getLogger(__name__)
 evtlog = event.get_logger('validator.events')
 
-# #TODO read this rules form an external YAML file
-# rules = [
-# # vdu_resource_requirements_cpu_vcpus < 2
-#   {
-#    "conditions":
-#    { "all":
-#      [{ "name": "vdu_resource_requirements_cpu_vcpus",
-#         "operator": "less_than",
-#         "value": 6
-#      }]
-#    },
-#    "actions":
-#       [{ "name": "raise_error",
-#          "params": {"error_text": "The number of CPUs must be \
-#                                    higher than 2!"},
-#       }]
-#    }
-# ]
+class DescriptorVDU(object):
 
-
-class Descriptor(object):
-
-    def __init__(self,
-                 func
-                 # id,
-                 # vdu_resource_requirements_cpu_freq,
-                 # vdu_resource_requirements_cpu_vcpus,
-                 # vdu_resource_requirements_memory_size,
-                 # vdu_resource_connection_points_mng
-                 ):
-        self.func = func
-        self.errors = []
-        # self.id=id
-        # self.vdu_resource_requirements_cpu_vcpus= \
-        #       vdu_resource_requirements_cpu_vcpus
-        # self.vdu_resource_requirements_cpu_freq= \
-        #       vdu_resource_requirements_cpu_freq
-        # self.vdu_resource_requirements_memory_size= \
-        #       vdu_resource_requirements_memory_size
-        # self.vdu_resource_connection_points_mng= \
-        #       vdu_resource_connection_points_mng
-
-        # #TODO use VNFD file as input and populate all the variables
-        # print(dir(self.func))
-        # print(self.func.content['virtual_deployment_units'][0]['vm_image_format'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['cpu']['vcpus'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['memory']['size'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['memory']['size_unit'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['storage']['size'])
-        # print(self.func.content['virtual_deployment_units'][0]['resource_requirements']['storage']['size_unit'])
-        # print(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id'])
-        # print(type(self.func.content['virtual_deployment_units'][0]['connection_points'][0]['id']))
+    def __init__(self):
+        self._errors = []
+        self._storage = {}
+        self._cpu = {}
+        self._memory = {}
+        self._network = {}
 
     def display_error(self, error_text):
         log.info("Error detected in custom rules validation: {}"
@@ -79,65 +35,87 @@ class Descriptor(object):
                  .format(warning_text))
 
 
-class DescriptorVariables(BaseVariables):
+class DescriptorVariablesVDU(BaseVariables):
 
     def __init__(self, descriptor):
-        self.func = descriptor.func
+        self._storage = descriptor._storage
+        self._cpu = descriptor._cpu
+        self._memory = descriptor._memory
+        self._network = descriptor._network
 
-    # @numeric_rule_variable(label='Freq of vCPUs')
-    # def Descriptorvdu_resource_requirements_cpu_freq(self):
-    #     return (self.descriptor.vdu_resource_requirements_cpu_freq)
-
-    # @string_rule_variable()
-    # def current_month(self):
-    #     return datetime.datetime.now().strftime("%B")
-
+    # virtual_deployment_units/resource_requirements/memory
     @numeric_rule_variable(label='Size of RAM')
     def vdu_resource_requirements_ram_size(self):
-        # return (self.descriptor.vdu_resource_requirements_memory_size)
-        # TODO add checkings if proceed
-        return (self.func.content['virtual_deployment_units'][0]
-                ['resource_requirements']['memory']
-                ['size'])
-
+        size = self._memory.get("size")
+        if size:
+            return size
+        else:
+            return -1
     @string_rule_variable(label='Unit of RAM')
     def vdu_resource_requirements_ram_size_unit(self):
-        # TODO add checkings if proceed
-        return (str(self.func.content['virtual_deployment_units'][0]
-                ['resource_requirements']['memory']
-                ['size_unit']))
+        size_unit = self._memory.get("size_unit")
+        if size_unit:
+            return size_unit
+        else:
+            return ""
 
+    # virtual_deployment_units/resource_requirements/cpu
     @numeric_rule_variable(label='Number of vCPUs')
     def vdu_resource_requirements_cpu_vcpus(self):
-        # return (self.descriptor.vdu_resource_requirements_cpu_vcpus)
-        # TODO add checkings if proceed
-        return (self.func.content['virtual_deployment_units'][0]
-                ['resource_requirements']['cpu']
-                ['vcpus'])
+        vcpus = self._cpu.get("vcpus")
+        if vcpus:
+            return vcpus
+        else:
+            return -1
 
+    # virtual_deployment_units/resource_requirements/storage
     @numeric_rule_variable(label='Size of storage')
     def vdu_resource_requirements_storage_size(self):
-        # TODO add checkings if proceed
-        return (self.func.content['virtual_deployment_units'][0]
-                ['resource_requirements']['storage']
-                ['size'])
+        size = self._storage.get("size")
+        if size:
+            return size
+        else:
+            return -1
 
     @string_rule_variable(label='Unit of storage')
     def vdu_resource_requirements_storage_size_unit(self):
-        # TODO add checkings if proceed
-        return (str(self.func.content['virtual_deployment_units'][0]
-                ['resource_requirements']['storage']
-                ['size_unit']))
+        size_unit = self._storage.get("size_unit")
+        if size_unit:
+            return size_unit
+        else:
+            return ""
 
+    # virtual_deployment_units/network
+    @numeric_rule_variable(label='size of BW')
+    def vdu_resource_requirements_network_network_interface_bandwidth(self):
+        if self._network:
+            size = self._network.get("network_interface_bandwidth")
+            if size:
+                return size
+            else:
+                return -1
+        else:
+            return -1
+    @string_rule_variable(label='Unit of BW')
+    def vdu_resource_requirements_network_network_interface_bandwidth_unit(self):
+        if self._network:
+            size_unit = self._network.get("network_interface_bandwidth_unit")
+            if size_unit:
+                return size_unit
+            else:
+                return ""
+        else:
+            return ""
+
+    @boolean_rule_variable(label='SR-IOV')
+    def vdu_resource_requirements_network_network_interface_card_capabilities_SRIOV(self):
+        return False
+    @boolean_rule_variable(label='Mirroring')
+    def vdu_resource_requirements_network_network_interface_card_capabilities_mirroring(self):
+        return False
     @string_rule_variable(label='Format of VM')
     def vdu_vm_resource_format(self):
-        # TODO add checkings if proceed
-        return (str(self.func.content['virtual_deployment_units'][0]
-                ['vm_image_format']))
-
-    # @numeric_rule_variable(label='Number of mgmt points')
-    # def vdu_resource_connection_points_mng(self):
-    #     return (self.descriptor.vdu_resource_connection_points_mng)
+        return self._vm_image_format
 
 
 class DescriptorActions(BaseActions):
@@ -145,17 +123,9 @@ class DescriptorActions(BaseActions):
     def __init__(self, descriptor):
         self.descriptor = descriptor
 
-    # @rule_action(params={"sale_percentage": FIELD_NUMERIC})
-    # def put_on_sale(self, sale_percentage):
-    #     self.product.price = (1.0 - sale_percentage) * self.product.price
-    #     self.product.save()
-
-    # @rule_action(params={"number_to_order": FIELD_NUMERIC})
-    # def order_more(self, number_to_order):
-    #     self.product.order(number_to_order)
     @rule_action(params={"error_text": FIELD_TEXT})
     def raise_error(self, error_text):
-        self.descriptor.errors.append(error_text)
+        self.descriptor._errors.append(error_text)
         self.descriptor.display_error(error_text)
 
     @rule_action(params={"error_text": FIELD_TEXT})
@@ -164,29 +134,9 @@ class DescriptorActions(BaseActions):
 
 
 def process_rules(custom_rule_file, descriptor_file_name):
-    # def process_rules(custom_rule_file):
-
-    # Read YAML rule file
-    if not os.path.isfile(custom_rule_file):
-        log.error("Invalid custom rule file")
-        exit(1)
-
-    try:
-        fn_custom_rule = open(custom_rule_file, "r")
-    except IOError:
-        log.error("Error opening custom rule file: "
-                  "File does not appear to exist.")
-        exit(1)
-
-    try:
-        rules = yaml.load(fn_custom_rule)
-    except (yaml.YAMLError, yaml.MarkedYAMLError) as e:
-        log.error("The rule file seems to have contain invalid YAML syntax."
-                  " Please fix and try again. Error: {}".format(str(e)))
-        exit(1)
-
+    rules = load_rules_yaml(custom_rule_file)
     storage = DescriptorStorage()
-    # descriptor_source = read_descriptor_file(descriptor_file_name)
+
     func = storage.create_function(descriptor_file_name)
     if not func:
         evtlog.log("Invalid function descriptor, Couldn't store "
@@ -195,25 +145,39 @@ def process_rules(custom_rule_file, descriptor_file_name):
                    'evt_function_invalid_descriptor')
         exit(1)
 
-    # TODO populate descriptor from file
-    # descriptor= Descriptor(func,"cona",1000,5,5,1)
-    descriptor = Descriptor(func)
+    for vdu in func.content.get("virtual_deployment_units"):
+        descriptor = DescriptorVDU()
+        descriptor._storage = vdu.get("resource_requirements").get("storage")
+        descriptor._cpu = vdu.get("resource_requirements").get("cpu")
+        descriptor._memory = vdu.get("resource_requirements").get("memory")
+        descriptor._network = vdu.get("resource_requirements").get("network")
+        triggered = run_all(rule_list=rules,
+                            defined_variables=DescriptorVariablesVDU(descriptor),
+                            defined_actions=DescriptorActions(descriptor),
+                            stop_on_first_trigger=False)
+    return descriptor._errors
 
-    variables = DescriptorVariables(descriptor)
-    rule_to_export = export_rule_data(DescriptorVariables, DescriptorActions)
+def load_rules_yaml(custom_rule_file):
+        if not os.path.isfile(custom_rule_file):
+            log.error("Invalid custom rule file")
+            exit(1)
 
-    # print("DUMP OF RULES: \n"+json.dumps(rules))
-    # Execute all the rules
+        try:
+            fn_custom_rule = open(custom_rule_file, "r")
+        except IOError:
+            log.error("Error opening custom rule file: "
+                      "File does not appear to exist.")
+            exit(1)
 
-    triggered = run_all(rule_list=rules,
-                        defined_variables=DescriptorVariables(descriptor),
-                        defined_actions=DescriptorActions(descriptor),
-                        stop_on_first_trigger=False)
-    return descriptor.errors
-
+        try:
+            rules = yaml.load(fn_custom_rule, Loader=yaml.SafeLoader)
+        except (yaml.YAMLError, yaml.MarkedYAMLError) as e:
+            log.error("The rule file seems to have contain invalid YAML syntax."
+                      " Please fix and try again. Error: {}".format(str(e)))
+            exit(1)
+        return rules
 
 if __name__ == "__main__":
-
     if len(sys.argv) != 3:
         # if len(sys.argv)!= 2:
         log.error("This script takes exactly two arguments: "
@@ -232,4 +196,3 @@ if __name__ == "__main__":
         exit(1)
 
     process_rules(custom_rule_file, descriptor_file_name)
-    # process_rules(custom_rule_file)
