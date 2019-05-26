@@ -1,0 +1,288 @@
+{
+    "swagger" : "2.0",
+    "info" : {
+      "description" : "This is the API of the 5GTANGO TNG-SDK-VALIDATION tool.",
+      "version" : "1.0.0",
+      "title" : "5GTANGO TNG-SDK-VALIDATION tool API",
+      "contact" : {
+        "email" : "info@quobis.com"
+      },
+      "license" : {
+        "name" : "Apache 2.0",
+        "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+      }
+    },
+    "tags" : [ {
+      "name" : "admins",
+      "description" : "Secured Admin-only calls"
+    }, {
+      "name" : "developers",
+      "description" : "Operations available to regular developers"
+    } ],
+    "paths" : {
+      "/validations" : {
+        "post" : {
+          "tags" : [ "validations" ],
+          "summary" : "Put some summary",
+          "description" : "It instructs the validator to perform the validatrion of the specified object according to the specified parameters",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "syntax",
+            "type" : "boolean",
+            "description" : "Level syntax validation"
+          }, {
+            "in" : "query",
+            "name" : "integrity",
+            "type" : "boolean",
+            "description" : "Level integrity validation"
+          }, {
+            "in" : "query",
+            "name" : "topology",
+            "type" : "boolean",
+            "description" : "Level topology validation"
+          }, {
+            "in" : "query",
+            "name" : "custom",
+            "description" : "Level custom rules validation",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "function",
+            "description" : "Allow funcion validation",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "service",
+            "description" : "Allow service validation",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "project",
+            "description" : "Allow project validation",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "workspace",
+            "description" : "Select the workspace to do the validation",
+            "type" : "string"
+          }, {
+            "in" : "query",
+            "name" : "sync",
+            "description" : "Request synchronous handled of request",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "dpath",
+            "description" : "Specify a directory to search descriptors, it is useful when --service mode is chosen.",
+            "type" : "string"
+          }, {
+            "in" : "query",
+            "name" : "path",
+            "description" : "Specify a directory to search for descriptors. Used when source is 'local' or url",
+            "type" : "string"
+          }, {
+            "in" : "query",
+            "name" : "dext",
+            "description" : "Specify the extension of the function descriptors files",
+            "type" : "string"
+          }, {
+            "in" : "query",
+            "name" : "cfile",
+            "description" : "Specify a directory to search for files with the rules to do the custom rules validation",
+            "type" : "string"
+          }, {
+            "in" : "query",
+            "name" : "source",
+            "description" : "Specify source of the descriptor file, it can be a URL, local or embedded. In the first two cases a path parameter is required.",
+            "type" : "string",
+            "enum" : [ "embedded", "local", "url" ]
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "synchronous answer results of the validation process",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "201" : {
+              "description" : "asynchronous answer result of the validation process",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "404" : {
+              "description" : "Do not find descriptor in the path"
+            }
+          }
+        },
+        "get" : {
+          "tags" : [ "validations" ],
+          "description" : "Take the validations stored in cache",
+          "responses" : {
+            "200" : {
+              "description" : "search results matching criteria",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "404" : {
+              "description" : "bad input parameter"
+            }
+          }
+        },
+        "delete" : {
+          "tags" : [ "validations" ],
+          "description" : "Delete the validations stored in cache",
+          "responses" : {
+            "200" : {
+              "description" : "The validations were deleted"
+            }
+          }
+        }
+      },
+      "/validations/<string:validationId>/topology" : {
+        "get" : {
+          "tags" : [ "validations" ],
+          "description" : "Get the topology validation of the descriptor with the ID",
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "400" : {
+              "description" : "Bad request, could not get the net topology"
+            },
+            "404" : {
+              "description" : "Bad request, validation with that ID does not have net topology"
+            }
+          }
+        }
+      },
+      "/validations/<string:validationId>/fwgraph" : {
+        "get" : {
+          "tags" : [ "validations" ],
+          "description" : "Take the fwgraph of the descriptor with the ID",
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "400" : {
+              "description" : "Bad request, could not get the fwgraph with that ID"
+            },
+            "404" : {
+              "description" : "Does not exist the fwgraph in the validation with that ID"
+            }
+          }
+        }
+      },
+      "/validations/<string:validationId>" : {
+        "get" : {
+          "tags" : [ "validations" ],
+          "description" : "Get the validation with that ID",
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation. Return the validation",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "404" : {
+              "description" : "Validation with that ID does not exist"
+            }
+          }
+        },
+        "delete" : {
+          "description" : "Delete the validation with that ID",
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation. Deleted validation"
+            },
+            "404" : {
+              "description" : "Validation with that ID does not exist"
+            }
+          }
+        }
+      },
+      "/resources" : {
+        "get" : {
+          "description" : "Get the resources in cache",
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation. Return the stored resources",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "404" : {
+              "description" : "No resources in cache"
+            }
+          }
+        }
+      },
+      "/watchers" : {
+        "get" : {
+          "tags" : [ "watchers" ],
+          "description" : "Get the watchers stored in cache",
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation"
+            }
+          }
+        },
+        "post" : {
+          "description" : "Create a new observed resource. The service will subscribe to any change in the file an will perform a validation when modification in the file takes place",
+          "parameters" : [ {
+            "in" : "query",
+            "name" : "syntax",
+            "description" : "indicates that syntax of the object must be validated",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "integrity",
+            "description" : "indicates that integrity must be validated",
+            "type" : "boolean"
+          }, {
+            "in" : "query",
+            "name" : "topology",
+            "description" : "indicates that topology must be validated",
+            "type" : "boolean"
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "Successfully operation"
+            },
+            "400" : {
+              "description" : "Bad request"
+            }
+          }
+        },
+        "delete" : {
+          "description" : "Reseting the watchers",
+          "responses" : {
+            "200" : {
+              "description" : "The watchers have been reseted"
+            }
+          }
+        }
+      },
+      "/pings" : {
+        "get" : {
+          "description" : "Return an 'OK' if all is OK",
+          "tags" : [ "pings" ],
+          "responses" : {
+            "200" : {
+              "description" : "OK"
+            }
+          }
+        }
+      }
+    },
+    "host" : "virtserver.swaggerhub.com",
+    "basePath" : "/Quobis/tng-sdk-validation-swagger/1.0.0",
+    "schemes" : [ "https" ]
+  }
