@@ -12,19 +12,11 @@
         "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
       }
     },
-    "tags" : [ {
-      "name" : "admins",
-      "description" : "Secured Admin-only calls"
-    }, {
-      "name" : "developers",
-      "description" : "Operations available to regular developers"
-    } ],
     "paths" : {
       "/validations" : {
         "post" : {
-          "tags" : [ "validations" ],
           "summary" : "Put some summary",
-          "description" : "It instructs the validator to perform the validatrion of the specified object according to the specified parameters",
+          "description" : "It instructs the validator to perform the validation of the specified object according to the specified parameters",
           "parameters" : [ {
             "in" : "query",
             "name" : "syntax",
@@ -116,8 +108,7 @@
           }
         },
         "get" : {
-          "tags" : [ "validations" ],
-          "description" : "Take the validations stored in cache",
+          "description" : "Gives the validations stored in cache",
           "responses" : {
             "200" : {
               "description" : "search results matching criteria",
@@ -131,7 +122,6 @@
           }
         },
         "delete" : {
-          "tags" : [ "validations" ],
           "description" : "Delete the validations stored in cache",
           "responses" : {
             "200" : {
@@ -140,10 +130,57 @@
           }
         }
       },
-      "/validations/<string:validationId>/topology" : {
+      "/validations/{validationId}" : {
         "get" : {
-          "tags" : [ "validations" ],
-          "description" : "Get the topology validation of the descriptor with the ID",
+          "description" : "Gets the validation object of the specified validation ID",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "validationId",
+            "required" : true,
+            "type" : "string",
+            "description" : "UIID of the validation object."
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation. Return the validation",
+              "schema" : {
+                "type" : "string"
+              }
+            },
+            "404" : {
+              "description" : "Validation with that ID does not exist"
+            }
+          }
+        },
+        "delete" : {
+          "description" : "Deletes the validation object of the specified validation ID",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "validationId",
+            "required" : true,
+            "type" : "string",
+            "description" : "UIID of the validation object."
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "Succesfully operation. Deleted validation"
+            },
+            "404" : {
+              "description" : "Validation with that ID does not exist"
+            }
+          }
+        }
+      },
+      "/validations/{validationId}/topology" : {
+        "get" : {
+          "description" : "Gets the topology validation of the specified validation ID",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "validationId",
+            "required" : true,
+            "type" : "string",
+            "description" : "UIID of the validation object."
+          } ],
           "responses" : {
             "200" : {
               "description" : "Succesfully operation",
@@ -160,10 +197,16 @@
           }
         }
       },
-      "/validations/<string:validationId>/fwgraph" : {
+      "/validations/{validationId}/fwgraph" : {
         "get" : {
-          "tags" : [ "validations" ],
-          "description" : "Take the fwgraph of the descriptor with the ID",
+          "description" : "Gets the topology validation of the specified validation ID",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "validationId",
+            "required" : true,
+            "type" : "string",
+            "description" : "UIID of the validation object."
+          } ],
           "responses" : {
             "200" : {
               "description" : "Succesfully operation",
@@ -176,34 +219,6 @@
             },
             "404" : {
               "description" : "Does not exist the fwgraph in the validation with that ID"
-            }
-          }
-        }
-      },
-      "/validations/<string:validationId>" : {
-        "get" : {
-          "tags" : [ "validations" ],
-          "description" : "Get the validation with that ID",
-          "responses" : {
-            "200" : {
-              "description" : "Succesfully operation. Return the validation",
-              "schema" : {
-                "type" : "string"
-              }
-            },
-            "404" : {
-              "description" : "Validation with that ID does not exist"
-            }
-          }
-        },
-        "delete" : {
-          "description" : "Delete the validation with that ID",
-          "responses" : {
-            "200" : {
-              "description" : "Succesfully operation. Deleted validation"
-            },
-            "404" : {
-              "description" : "Validation with that ID does not exist"
             }
           }
         }
@@ -226,7 +241,6 @@
       },
       "/watchers" : {
         "get" : {
-          "tags" : [ "watchers" ],
           "description" : "Get the watchers stored in cache",
           "responses" : {
             "200" : {
@@ -273,7 +287,6 @@
       "/pings" : {
         "get" : {
           "description" : "Return an 'OK' if all is OK",
-          "tags" : [ "pings" ],
           "responses" : {
             "200" : {
               "description" : "OK"
@@ -282,7 +295,7 @@
         }
       }
     },
+    "schemes" : [ "https" ],
     "host" : "virtserver.swaggerhub.com",
-    "basePath" : "/Quobis/tng-sdk-validation-swagger/1.0.0",
-    "schemes" : [ "https" ]
+    "basePath" : "/Quobis/tng-sdk-validation-swagger/1.0.0"
   }
