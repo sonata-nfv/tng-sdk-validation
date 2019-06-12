@@ -75,7 +75,6 @@ class TngSdkValidationCliTest(unittest.TestCase):
         input_args = ['--syntax', '--function',
                       SAMPLE_DIR + 'samples/functions/valid-syntax-tng/' +
                       'tcpdump-vnfd-tng.yml']
-        print("####################### {}".format(input_args))
         args = cli.parse_args(input_args)
         print("Test arguments: {}".format(args))
         check_args = cli.check_args(args)

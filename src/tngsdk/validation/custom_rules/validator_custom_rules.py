@@ -25,13 +25,13 @@ class DescriptorVDU(object):
         self._cpu = {}
         self._memory = {}
         self._network = {}
-
+        self._vm_images_format = ""
     def display_error(self, error_text):
-        log.info("Error detected in custom rules validation: {}"
+        log.error("Error detected in custom rules validation: {}"
                  .format(error_text))
 
     def display_warning(self, warning_text):
-        log.info("Warning detected in custom rules validation: {}"
+        log.error("Warning detected in custom rules validation: {}"
                  .format(warning_text))
 
 
@@ -42,7 +42,7 @@ class DescriptorVariablesVDU(BaseVariables):
         self._cpu = descriptor._cpu
         self._memory = descriptor._memory
         self._network = descriptor._network
-
+        self._vm_images_format = descriptor._vdu_images_format
     # virtual_deployment_units/resource_requirements/memory
     @numeric_rule_variable(label='Size of RAM')
     def vdu_resource_requirements_ram_size(self):
@@ -106,7 +106,6 @@ class DescriptorVariablesVDU(BaseVariables):
                 return ""
         else:
             return ""
-
     @boolean_rule_variable(label='SR-IOV')
     def vdu_resource_requirements_network_network_interface_card_capabilities_SRIOV(self):
         return False
@@ -115,8 +114,7 @@ class DescriptorVariablesVDU(BaseVariables):
         return False
     @string_rule_variable(label='Format of VM')
     def vdu_vm_resource_format(self):
-        return self._vm_image_format
-
+        return self._vm_images_format
 
 class DescriptorActions(BaseActions):
 
@@ -151,6 +149,7 @@ def process_rules(custom_rule_file, descriptor_file_name):
         descriptor._cpu = vdu.get("resource_requirements").get("cpu")
         descriptor._memory = vdu.get("resource_requirements").get("memory")
         descriptor._network = vdu.get("resource_requirements").get("network")
+        descriptor._vdu_images_format = vdu.get("_vm_image_format")
         triggered = run_all(rule_list=rules,
                             defined_variables=DescriptorVariablesVDU(descriptor),
                             defined_actions=DescriptorActions(descriptor),
@@ -163,14 +162,12 @@ def load_rules_yaml(custom_rule_file):
             exit(1)
 
         try:
-            fn_custom_rule = open(custom_rule_file, "r")
+            with open(custom_rule_file, "r") as fn_custom_rule:
+                rules = yaml.load(fn_custom_rule, Loader=yaml.SafeLoader)
         except IOError:
             log.error("Error opening custom rule file: "
                       "File does not appear to exist.")
             exit(1)
-
-        try:
-            rules = yaml.load(fn_custom_rule, Loader=yaml.SafeLoader)
         except (yaml.YAMLError, yaml.MarkedYAMLError) as e:
             log.error("The rule file seems to have contain invalid YAML syntax."
                       " Please fix and try again. Error: {}".format(str(e)))
