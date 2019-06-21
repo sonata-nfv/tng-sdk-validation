@@ -46,4 +46,4 @@
   actions:
     - name: raise_warning
       params:
-        error_text: Docker is not the recommend VM format, use a virtual mahcine instead
+        error_text: Docker is not the recommend VM format, use a virtual machine instead

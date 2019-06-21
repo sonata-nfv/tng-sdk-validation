@@ -38,7 +38,7 @@ from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 
 
-SAMPLE_DIR = 'src/tngsdk/validation/tests/'
+SAMPLE_DIR = 'src/tngsdk/validation/'
 
 
 class TngSdkValidationCliTest(unittest.TestCase):

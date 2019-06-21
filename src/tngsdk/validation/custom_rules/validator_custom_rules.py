@@ -19,7 +19,9 @@ evtlog = event.get_logger('validator.events')
 
 class DescriptorVDU(object):
 
-    def __init__(self):
+    def __init__(self, vnfd_id):
+        self._vnfd_id = vnfd_id
+        self._vdu_id = ""
         self._errors = []
         self._storage = {}
         self._cpu = {}
@@ -27,8 +29,8 @@ class DescriptorVDU(object):
         self._network = {}
         self._vm_images_format = ""
     def display_error(self, error_text):
-        log.error("Error detected in custom rules validation: {}"
-                 .format(error_text))
+        log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                 .format(self._vnfd_id, self._vdu_id, error_text))
 
     def display_warning(self, warning_text):
         log.error("Warning detected in custom rules validation: {}"
@@ -144,7 +146,8 @@ def process_rules(custom_rule_file, descriptor_file_name):
         exit(1)
 
     for vdu in func.content.get("virtual_deployment_units"):
-        descriptor = DescriptorVDU()
+        descriptor = DescriptorVDU(func.id)
+        descriptor._vdu_id = vdu.get("id")
         descriptor._storage = vdu.get("resource_requirements").get("storage")
         descriptor._cpu = vdu.get("resource_requirements").get("cpu")
         descriptor._memory = vdu.get("resource_requirements").get("memory")

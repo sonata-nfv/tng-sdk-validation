@@ -44,7 +44,7 @@ from requests.exceptions import RequestException
 #                                    on_packaging_done
 from tngsdk.validation.rest import app
 
-SAMPLES_DIR = 'src/tngsdk/validation/tests/'
+SAMPLES_DIR = 'src/tngsdk/validation/'
 
 
 # class MockResponse(object):
