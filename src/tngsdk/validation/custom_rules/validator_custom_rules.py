@@ -33,13 +33,15 @@ class DescriptorVDU(object):
                  .format(self._vnfd_id, self._vdu_id, error_text))
 
     def display_warning(self, warning_text):
-        log.error("Warning detected in custom rules validation: {}"
+        log.warning("Warning detected in custom rules validation: {}"
                  .format(warning_text))
 
 
 class DescriptorVariablesVDU(BaseVariables):
 
     def __init__(self, descriptor):
+        self._vnfd_id = descriptor._vnfd_id
+        self._vdu_id = descriptor._vdu_id
         self._storage = descriptor._storage
         self._cpu = descriptor._cpu
         self._memory = descriptor._memory
@@ -59,6 +61,8 @@ class DescriptorVariablesVDU(BaseVariables):
         if size_unit:
             return size_unit
         else:
+            log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                     .format(self._vnfd_id, self._vdu_id, "'size_unit' is not present in 'memory'"))
             return ""
 
     # virtual_deployment_units/resource_requirements/cpu
@@ -85,6 +89,8 @@ class DescriptorVariablesVDU(BaseVariables):
         if size_unit:
             return size_unit
         else:
+            log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                     .format(self._vnfd_id, self._vdu_id, "'size_unit' is not present in 'storage'"))
             return ""
 
     # virtual_deployment_units/network
@@ -105,8 +111,12 @@ class DescriptorVariablesVDU(BaseVariables):
             if size_unit:
                 return size_unit
             else:
+                log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                         .format(self._vnfd_id, self._vdu_id, "'network_interface_bandwidth_unit' is not present in 'network'"))
                 return ""
         else:
+            log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                     .format(self._vnfd_id, self._vdu_id, "'network' is not present in 'resource_requirements'"))
             return ""
     @boolean_rule_variable(label='SR-IOV')
     def vdu_resource_requirements_network_network_interface_card_capabilities_SRIOV(self):
@@ -152,7 +162,7 @@ def process_rules(custom_rule_file, descriptor_file_name):
         descriptor._cpu = vdu.get("resource_requirements").get("cpu")
         descriptor._memory = vdu.get("resource_requirements").get("memory")
         descriptor._network = vdu.get("resource_requirements").get("network")
-        descriptor._vdu_images_format = vdu.get("_vm_image_format")
+        descriptor._vdu_images_format = vdu.get("vm_image_format")
         triggered = run_all(rule_list=rules,
                             defined_variables=DescriptorVariablesVDU(descriptor),
                             defined_actions=DescriptorActions(descriptor),
