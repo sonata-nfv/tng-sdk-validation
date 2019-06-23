@@ -61,7 +61,7 @@ class DescriptorVariablesVDU(BaseVariables):
         if size_unit:
             return size_unit
         else:
-            log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+            log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                      .format(self._vnfd_id, self._vdu_id, "'size_unit' is not present in 'memory'"))
             return ""
 
@@ -89,7 +89,7 @@ class DescriptorVariablesVDU(BaseVariables):
         if size_unit:
             return size_unit
         else:
-            log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+            log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                      .format(self._vnfd_id, self._vdu_id, "'size_unit' is not present in 'storage'"))
             return ""
 
@@ -111,11 +111,11 @@ class DescriptorVariablesVDU(BaseVariables):
             if size_unit:
                 return size_unit
             else:
-                log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                          .format(self._vnfd_id, self._vdu_id, "'network_interface_bandwidth_unit' is not present in 'network'"))
                 return ""
         else:
-            log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+            log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                      .format(self._vnfd_id, self._vdu_id, "'network' is not present in 'resource_requirements'"))
             return ""
     @boolean_rule_variable(label='SR-IOV')

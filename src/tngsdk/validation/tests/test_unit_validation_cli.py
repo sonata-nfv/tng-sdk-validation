@@ -34,11 +34,12 @@
 import unittest
 import tempfile
 import shutil
+import os
 from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 
 
-SAMPLE_DIR = 'src/tngsdk/validation/'
+SAMPLE_DIR = os.path.join('src', 'tngsdk', 'validation/')
 
 
 class TngSdkValidationCliTest(unittest.TestCase):
@@ -355,7 +356,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
         check_args = cli.check_args(args)
         self.assertTrue(check_args)
         result_validator = cli.dispatch(args, validator)
-        self.assertEqual(len(result_validator.customErrors), 2)
+        self.assertEqual(len(result_validator.customErrors), 4)
 
 
 if __name__ == "__main__":

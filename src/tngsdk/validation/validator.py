@@ -665,24 +665,28 @@ class Validator(object):
                 pass
 
         service.build_topology_graph(level=3, bridges=False)
+        try:
+            for lvl in range(0, 4):
+                g = service.build_topology_graph(level=lvl, bridges=False)
+                nx.write_graphml(g, os.path.join(graphsdir,
+                                                 "{0}-lvl{1}.graphml"
+                                                 .format(service.id, lvl)))
 
-        for lvl in range(0, 4):
-            g = service.build_topology_graph(level=lvl, bridges=False)
-            nx.write_graphml(g, os.path.join(graphsdir,
-                                             "{0}-lvl{1}.graphml"
-                                             .format(service.id, lvl)))
-            g = service.build_topology_graph(level=lvl, bridges=True)
-            nx.write_graphml(g, os.path.join(graphsdir,
-                                             "{0}-lvl{1}-br.graphml"
-                                             .format(service.id, lvl)))
+                g = service.build_topology_graph(level=lvl, bridges=True)
+                nx.write_graphml(g, os.path.join(graphsdir,
+                                                 "{0}-lvl{1}-br.graphml"
+                                                 .format(service.id, lvl)))
 
-        g = service.build_topology_graph(level=3, bridges=True,
-                                         vdu_inner_connections=False)
-        service.complete_graph = nx.generate_graphml(g, encoding='utf-8',
-                                                     prettyprint=True)
-        nx.write_graphml(g, os.path.join(graphsdir,
-                                         "{0}-lvl3-complete.graphml"
-                                         .format(service.id)))
+            g = service.build_topology_graph(level=3, bridges=True,
+                                             vdu_inner_connections=False)
+            service.complete_graph = nx.generate_graphml(g, encoding='utf-8',
+                                                         prettyprint=True)
+            nx.write_graphml(g, os.path.join(graphsdir,
+                                             "{0}-lvl3-complete.graphml"
+                                             .format(service.id)))
+        except nx.exception.NetworkXError:
+            log.warning("A problem creating the graph images appeared")
+            #print(nx.__file__)
 
     def _validate_service_syntax(self, service):
         """

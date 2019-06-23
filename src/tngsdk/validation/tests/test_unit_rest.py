@@ -35,6 +35,7 @@ import unittest
 import json
 import time
 import ast
+import os
 import requests
 from requests_toolbelt import MultipartEncoder
 from unittest.mock import patch
@@ -44,7 +45,7 @@ from requests.exceptions import RequestException
 #                                    on_packaging_done
 from tngsdk.validation.rest import app
 
-SAMPLES_DIR = 'src/tngsdk/validation/'
+SAMPLES_DIR = os.path.join('src', 'tngsdk', 'validation', 'samples')
 
 
 # class MockResponse(object):
@@ -83,7 +84,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
     def test_rest_validation_function_syntax_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'function=true&path=' + SAMPLES_DIR +
-                          'samples/functions/' +
+                          '/functions/' +
                           'valid-syntax-tng/default-vnfd-tng.yml&' +
                           'source=local')
         data = r.data.decode('utf-8')
@@ -96,7 +97,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
     def test_rest_validation_function_syntax_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'function=true&path=' + SAMPLES_DIR +
-                          'samples/functions/' +
+                          '/functions/' +
                           'invalid-syntax-tng/invalid-default-vnfd-tng.yml&' +
                           'source=local')
         data = r.data.decode('utf-8')
@@ -109,7 +110,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
     def test_rest_validation_service_syntax_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'service=true&path=' + SAMPLES_DIR +
-                          'samples/services/' +
+                          '/services/' +
                           'valid-son/valid.yml&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
@@ -121,7 +122,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
     def test_rest_validation_service_syntax_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'service=true&path=' + SAMPLES_DIR +
-                          'samples/services/' +
+                          '/services/' +
                           'invalid-syntax-tng/required_properties.yml&' +
                           'source=local')
         data = r.data.decode('utf-8')
@@ -135,7 +136,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/' +
+                          '/' +
                           'functions/valid-son/firewall-vnfd.yml&' +
                           'source=local')
         data = r.data.decode('utf-8')
@@ -149,7 +150,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/functions/invalid_integrity-son/' +
+                          '/functions/invalid_integrity-son/' +
                           'firewall-vnfd.yml&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
@@ -161,10 +162,10 @@ class TngSdkValidationRestTest(unittest.TestCase):
     def test_rest_validation_service_integrity_ok(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&service=true&path=' +
-                          SAMPLES_DIR + 'samples/' +
+                          SAMPLES_DIR + '/' +
                           'services/valid-son/valid.yml&dpath=' +
                           SAMPLES_DIR +
-                          'samples/functions/valid-son/' +
+                          '/functions/valid-son/' +
                           '&dext=yml&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
@@ -176,10 +177,10 @@ class TngSdkValidationRestTest(unittest.TestCase):
     def test_rest_validation_service_integrity_ko(self):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&service=true&path=' +
-                          SAMPLES_DIR + 'samples/' +
+                          SAMPLES_DIR + '/' +
                           'services/valid-son/valid.yml&dpath=' +
                           SAMPLES_DIR +
-                          'samples/functions/invalid_integrity-son/' +
+                          '/functions/invalid_integrity-son/' +
                           '&dext=yml&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
@@ -192,7 +193,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '/functions/valid-son/firewall-vnfd.yml' +
                           '&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
@@ -219,9 +220,9 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&service=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/services/valid-son/valid.yml&dpath=' +
+                          '/services/valid-son/valid.yml&dpath=' +
                           SAMPLES_DIR +
-                          'samples/functions/valid-son/&dext=yml' +
+                          '/functions/valid-son/&dext=yml' +
                           '&source=local')
         data = r.data.decode('utf-8')
         d = json.loads(data)
@@ -249,7 +250,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&service=true' +
                           '&function=true&&project=true&source=local&path=' +
-                          SAMPLES_DIR + 'samples/' +
+                          SAMPLES_DIR + '/' +
                           'functions/valid-son/firewall-vnfd.yml')
         data = r.data.decode('utf-8')
 
@@ -281,7 +282,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&source=local' +
                           '&service=true&path=' + SAMPLES_DIR +
-                          'samples/services/valid-son/valid.yml')
+                          '/services/valid-son/valid.yml')
         data = r.data.decode('utf-8')
         d = ast.literal_eval(data)
         expected_message = ('Need function descriptors path (dpath) and the extension ' +
@@ -293,7 +294,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&' +
                           'source=local&custom=true' +
-                          '&function=true&path=' + SAMPLES_DIR + 'samples/' +
+                          '&function=true&path=' + SAMPLES_DIR + '/' +
                           'functions/valid-son/firewall-vnfd.yml')
         data = r.data.decode('utf-8')
         d = ast.literal_eval(data)
@@ -305,7 +306,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         url = ("/api/v1/validations?function=true&" +
                "source=embedded&sync=true&integrity=true&" +
                "syntax=true&topology=true")
-        descriptor = open(SAMPLES_DIR + '/samples/functions/valid-son/' +
+        descriptor = open(SAMPLES_DIR + '/functions/valid-son/' +
                           'firewall-vnfd.yml', 'rb')
         data = {
                 'descriptor': (descriptor.name, descriptor,
@@ -320,9 +321,9 @@ class TngSdkValidationRestTest(unittest.TestCase):
         url = ("/api/v1/validations?function=true&" +
                "source=embedded&sync=true&integrity=true&" +
                "syntax=true&topology=true&custom=true")
-        descriptor = open(SAMPLES_DIR + '/samples/functions/valid-son/' +
+        descriptor = open(SAMPLES_DIR + '/functions/valid-son/' +
                           'firewall-vnfd.yml', 'rb')
-        rules = open(SAMPLES_DIR + '/samples/custom_rules/rules/' +
+        rules = open(SAMPLES_DIR + '/custom_rules/rules/' +
                      'custom_rule_1.yml', 'rb')
         data = {
                 'descriptor': (descriptor.name, descriptor,
@@ -338,7 +339,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?async=true&syntax=true&' +
                           'integrity=true&topology=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '/functions/valid-son/firewall-vnfd.yml' +
                           '&source=local')
         self.assertEqual(r.status_code, 201)
         data = r.data.decode('utf-8')
@@ -355,7 +356,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?async=true&syntax=true&' +
                           'integrity=true&topology=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '/functions/valid-son/firewall-vnfd.yml' +
                           '&source=local')
         self.assertEqual(r.status_code, 201)
         data = r.data.decode('utf-8')
@@ -381,7 +382,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '/functions/valid-son/firewall-vnfd.yml' +
                           '&source=local')
         self.assertEqual(r.status_code, 200)
         resources = self.app.get('/api/v1/resources')
@@ -395,7 +396,7 @@ class TngSdkValidationRestTest(unittest.TestCase):
         r = self.app.post('/api/v1/validations?sync=true&syntax=true&' +
                           'integrity=true&topology=true&function=true' +
                           '&path=' + SAMPLES_DIR +
-                          'samples/functions/valid-son/firewall-vnfd.yml' +
+                          '/functions/valid-son/firewall-vnfd.yml' +
                           '&source=local')
         self.assertEqual(r.status_code, 200)
         data = r.data.decode('utf-8')

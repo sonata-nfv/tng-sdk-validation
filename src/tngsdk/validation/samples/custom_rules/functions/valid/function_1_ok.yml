@@ -44,13 +44,16 @@ virtual_deployment_units:
     vm_image_format: "qcow2"
     resource_requirements:
       cpu:
-        vcpus: 4
+        vcpus: 5
       memory:
         size: 8
         size_unit: "GB"
       storage:
-        size: 4
+        size: 5
         size_unit: "GB"
+      network:
+        network_interface_bandwidth: 5
+        network_interface_bandwidth_unit: "Mbps"
     monitoring_parameters:
       - name: "vm_cpu_perc"
         unit: "Percentage"
