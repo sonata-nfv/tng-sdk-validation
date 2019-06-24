@@ -36,7 +36,7 @@ from tngsdk.validation.cli import parse_args
 from tngsdk.validation.validator import Validator
 
 
-SAMPLES_DIR = os.path.join('src', 'tngsdk', 'validation', 'tests', 'samples')
+SAMPLES_DIR = os.path.join('src', 'tngsdk', 'validation', 'samples')
 
 
 class TngSdkValidationTest(unittest.TestCase):
@@ -60,7 +60,6 @@ class TngSdkValidationTest(unittest.TestCase):
         service_path = os.path.join(SAMPLES_DIR, 'services', 'valid-son',
                                     'valid.yml')
         functions_path = os.path.join(SAMPLES_DIR, 'functions', 'valid-son')
-
         validator = Validator()
         validator.configure(syntax=True, integrity=True, topology=True,
                             dpath=functions_path)

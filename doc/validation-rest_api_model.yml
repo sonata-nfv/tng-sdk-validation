@@ -15,7 +15,7 @@ tags:
   - name: developers
     description: Operations available to regular developers
 paths:
-          
+
   /validations:
     post:
       tags:
@@ -62,10 +62,10 @@ paths:
         - in: query
           name: sync
           description: |
-            parametyer to indicate if the request must be processed in synchronous way
-            returnig the result of the validation within a 200 OK reply to the POST to create 
-            the validation resource, if this param is omitted or False then the request is 
-            replied with a 202 Accepted and the result of the validation must be requested 
+            parameter to indicate if the request must be processed in synchronous way
+            returnig the result of the validation within a 200 OK reply to the POST to create
+            the validation resource, if this param is omitted or False then the request is
+            replied with a 202 Accepted and the result of the validation must be requested
             against the validation resource passed in the validation uuid
           required: false
           schema:
@@ -119,7 +119,7 @@ paths:
  #          name: pkg_pubkey
  #        description: pubkey of the package to be validated
  #       schema:
- #         type: string    
+ #         type: string
       responses:
         '200':
           description: synchronous answer results of the validation process
@@ -135,10 +135,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationAsyncResult'
-          
+
         '400':
           description: Bad input parameter. A descriptive message will be provided with the error reply
-  
+
     get:
       tags:
         - developers
@@ -153,7 +153,7 @@ paths:
           description: (Not available yet) resource ID to return
           required: false
           schema:
-            type: string  
+            type: string
         - in: query
           name: skip
           description: (Not available yet)  number of records to skip for pagination
@@ -180,20 +180,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/resourceItem'
         '400':
-          description: bad input parameter      
-  
+          description: bad input parameter
+
     delete:
       tags:
         - developers
-      summary: delete all validations cached 
+      summary: delete all validations cached
       description: |
-        This endpoint delete all validations cached 
+        This endpoint delete all validations cached
       responses:
-        '200': 
+        '200':
           description: if the validations wares deleted
-    
-    
-  /validations/{validationId}:  
+
+
+  /validations/{validationId}:
     get:
       tags:
         - developers
@@ -203,12 +203,12 @@ paths:
       parameters:
         - in: path
           name: validationId
-          description: validation ID of validation objects to return 
+          description: validation ID of validation objects to return
           required: true
           schema:
             type: string
       responses:
-        '200': 
+        '200':
           description: returns a validation report
           content:
             application/json:
@@ -218,30 +218,30 @@ paths:
                   $ref: '#/components/schemas/ValidationSyncResult'
         '404':
           description: If the validation specified by validationId was not exist in cache
-          
+
     delete:
       tags:
         - developers
       summary: delete a validation cached specified by validationId
       description: |
-        This endpoint delete validation cached specified by validationId 
+        This endpoint delete validation cached specified by validationId
       parameters:
         - in: path
           name: validationId
-          description: validation ID of validation objects to delete 
+          description: validation ID of validation objects to delete
           required: true
           schema:
             type: string
       responses:
-        '200': 
+        '200':
           description: if the validation was deleted
         '404':
           description: If the validation specified by validationId was not exist in cache
- 
-        
- 
-  # to complete        
-          
+
+
+
+  # to complete
+
   /validations/{validationId}/topology:
     get:
       tags:
@@ -268,8 +268,8 @@ paths:
                   $ref: '#/components/schemas/TopologyObject'
         '400':
           description: bad input parameter
-          
-   # in the previous version the graph was accesed with path /fwgraphs        
+
+   # in the previous version the graph was accesed with path /fwgraphs
   /validations/{validationId}/fwgraph:
     get:
       tags:
@@ -296,7 +296,7 @@ paths:
                   $ref: '#/components/schemas/FwgraphObject'
         '400':
           description: bad input parameter
-          
+
   /resources:
     get:
       tags:
@@ -317,7 +317,7 @@ paths:
           description: (Not available yet) resource ID to return
           required: false
           schema:
-            type: string  
+            type: string
         - in: query
           name: skip
           description: (Not available yet) number of records to skip for pagination
@@ -345,7 +345,7 @@ paths:
                   $ref: '#/components/schemas/ValidationAsyncResult'
         '400':
           description: bad input parameter
- 
+
   /watchers:
     get:
       tags:
@@ -361,7 +361,7 @@ paths:
           required: false
           schema:
             type: string
-          # missing parameters for pagination  
+          # missing parameters for pagination
       responses:
         '200':
           description: search results matching criteria
@@ -374,8 +374,8 @@ paths:
                   $ref: '#/components/schemas/WatchObject'
         '400':
           description: bad input parameter
-        '404': 
-          description: No validation found  
+        '404':
+          description: No validation found
         '503':
           description: error in the validation service
     post:
@@ -398,7 +398,7 @@ paths:
           description: indicates that topology must be validated
           schema:
             type: boolean
-        
+
       responses:
           '202':
             description: watchers correcty created
@@ -406,8 +406,8 @@ paths:
             description: bad parameters
           '503':
             description: service not available
-          
-    
+
+
     delete:
       tags:
         - developers
@@ -415,13 +415,13 @@ paths:
       responses:
         '200':
           description: watchers correcty deleted
-    
+
 components:
   schemas:
     ValidationAsyncResult:
       type: object
       properties:
-        vid: 
+        vid:
           type: string
         rid:
           type: string
@@ -430,7 +430,7 @@ components:
         topology:
           type: boolean
         integrity:
-          type: boolean  
+          type: boolean
         validation_type:
           description: indicates the type of validations included in this validation instance
           type: string
@@ -456,7 +456,7 @@ components:
                   type:
                     type: string
                     enum: [ validation ]
-                    
+
         type:
           description: indicates the type of resource
           type: string
@@ -465,23 +465,23 @@ components:
           description: hash of the resource used to detect if there have been changes in a resource
           type: string
         includedResources:
-          description: resources which belong to this 
+          description: resources which belong to this
           type: array
-          items: 
+          items:
             $ref: '#/components/schemas/resourceItem'
-            
+
     TopologyObject:
       type: object
       properties:
         id:
           type: integer
-    
+
     FwgraphObject:
       type: object
       properties:
         id:
           type: integer
-    
+
     WatchObject:
       type: object
       properties:
@@ -499,7 +499,7 @@ components:
           type: boolean
         topology:
           type: boolean
-          
+
     ValidationSyncResult:
       type: object
       properties:
@@ -510,7 +510,7 @@ components:
         topology:
           type: boolean
         integrity:
-          type: boolean 
+          type: boolean
         custom:
           type: boolean
         #the field for the custom file is missing

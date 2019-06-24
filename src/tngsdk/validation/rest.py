@@ -219,6 +219,26 @@ validations_parser.add_argument("project",
                                 required=False,
                                 help="If True indicates that the request "
                                      "if for a project descriptor validation")
+validations_parser.add_argument("test",
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="Test descriptor validation")
+validations_parser.add_argument("sla",
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="SLA descriptor validation")
+validations_parser.add_argument("slice",
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="Slice descriptor validation")
+validations_parser.add_argument("policy",
+                                location="args",
+                                type=inputs.boolean,
+                                required=False,
+                                help="Runtime policy descriptor validation")
 validations_parser.add_argument("workspace",
                                 location="args",
                                 required=False,
@@ -410,7 +430,6 @@ class Validation(Resource):
         args = validations_parser.parse_args()
         log.info("POST to /validation w. args: {}".format(args))
         check_correct_args = check_args(args)
-
         if check_correct_args is True:
             keypath, path = process_request(args)
             if not keypath or not path:
@@ -602,6 +621,18 @@ def _validate_object(args, path, keypath, obj_type):
             log.info("Validating Project descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_project(path)
+        elif args['test']:
+            log.info("Validation Test descriptor: {}".format(path))
+            validator.validate_test(path)
+        elif args['sla']:
+            log.info("Validation SLA descriptor: {}".format(path))
+            validator.validate_sla(path)
+        elif args['slice']:
+            log.info("Validation Slice descriptor: {}".format(path))
+            validator.validate_slice(path)
+        elif args['policy']:
+            log.info("Validation Runtime Policy descriptor: {}".format(path))
+            validator.validate_runtime_policy(path)
 
     json_result = gen_report_result(vid, validator)
     net_topology = gen_report_net_topology(validator)
@@ -1111,12 +1142,20 @@ def get_resources():
 
 
 def check_obj_type(args):
-    if (args.function):
+    if args.function:
         return 'function'
-    elif (args.service):
+    elif args.service:
         return 'service'
-    elif (args.project):
+    elif args.project:
         return 'project'
+    elif args.sla:
+        return 'sla'
+    elif args.slice:
+        return 'slice'
+    elif args.policy:
+        return 'policy'
+    elif args.test:
+        return 'test'
 
 
 def gen_validation_key(path, otype, s, i, t, c, cfile=None):
@@ -1231,13 +1270,28 @@ def check_args(args):
             and args.topology is None):
         log.info('Need to specify at least one type of validation')
         return {"error_message": "Missing validation"}, 400
-    if (args.function is None and args.service is None
-            and args.project is None):
+    if (
+        args.function is None and args.service is None and
+        args.project is None and args.test is None and
+        args.slice is None and args.policy is None and
+        args.sla is None
+        ):
         log.info('Need to specify the type of the descriptor that will ' +
                  'be validated (function, service, project)')
         return {"error_message": "Missing service, function " +
                 "and project parameters"}, 400
-
+    if (
+        (args.function and args.test) or (args.function and args.sla) or
+        (args.function and args.policy) or (args.function and args.slice) or
+        (args.service and args.test) or (args.service and args.sla) or
+        (args.service and args.policy) or (args.service and args.slice) or
+        (args.project and args.test) or (args.project and args.sla) or
+        (args.project and args.policy) or (args.project and args.slice)
+        ):
+       log.info("Not possible to validate two types of descriptor in the" +
+                " same request")
+       return {"error_message": "Not possible to validate function descriptor" +
+               " and service descriptor and project descriptor in the same request"}, 400
     if (args.function and args.service):
         log.info("Not possible to validate function descriptor and service descriptor in the" +
                  " same request")

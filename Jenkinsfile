@@ -15,8 +15,8 @@ pipeline {
         sh "docker network create --driver bridge redis_network"
         sh "docker run -d --name redis_docker -p 6379:6379 --network redis_network redis"
         sh "docker run --network redis_network -e VAPI_REDIS_HOST='redis_docker' -i --rm registry.sonata-nfv.eu:5000/tng-sdk-validation pytest -v --ignore=src/tngsdk/validation/gui/"
-        sh "docker rm -f redis_docker"
-        sh "docker network rm redis_network"
+        sh "docker rm -f redis_docker || true"
+        sh "docker network rm redis_network || true"
       }
     }
     stage('Code Style check') {
