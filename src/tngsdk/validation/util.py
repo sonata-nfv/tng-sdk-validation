@@ -30,8 +30,9 @@ import logging
 from tngsdk.validation import event
 # import event
 
-log = logging.getLogger(__name__)
-evtlog = event.get_logger('validator.events')
+from tngsdk.validation.logger import TangoLogger
+LOG = TangoLogger.getLogger(__name__)
+evtLOG = event.get_logger('validator.events')
 
 
 def read_descriptor_files(files):
@@ -49,7 +50,7 @@ def read_descriptor_files(files):
             continue
         did = descriptor_id(content)
         if did in descriptors.keys():
-            log.error("Duplicate descriptor in files: '{0}' <==> '{1}'"
+            LOG.error("Duplicate descriptor in files: '{0}' <==> '{1}'"
                       .format(file, descriptors[did]))
             continue
         descriptors[did] = file
@@ -65,14 +66,14 @@ def read_descriptor_file(file):
         try:
             descriptor = yaml.load(_file, Loader=yaml.SafeLoader)
         except yaml.YAMLError as exc:
-            evtlog.log("Invalid descriptor",
+            evtLOG.log("Invalid descriptor",
                        "Error parsing descriptor file: {0}".format(exc),
                        file,
                        'evt_invalid_descriptor')
             return
 
         if not descriptor:
-            evtlog.log("Invalid descriptor",
+            evtLOG.log("Invalid descriptor",
                        "Couldn't read descriptor file: '{0}'".format(file),
                        file,
                        'evt_invalid_descriptor')
@@ -81,7 +82,7 @@ def read_descriptor_file(file):
         if 'vendor' not in descriptor or \
                 'name' not in descriptor or \
                 'version' not in descriptor:
-            log.warning("Invalid SONATA descriptor file: '{0}'. Missing "
+            LOG.warning("Invalid SONATA descriptor file: '{0}'. Missing "
                         "'vendor', 'name' or 'version'. Ignoring."
                         .format(file))
             return

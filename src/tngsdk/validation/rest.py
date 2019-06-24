@@ -58,12 +58,12 @@ from tngsdk.validation import cli
 from tngsdk.validation.validator import Validator
 from tngsdk.validation.event import EventLogger
 from tngsdk.project.workspace import Workspace
-
+from tngsdk.validation.logger import TangoLogger
 # To implement watchdogs to subscribe to changes in any descriptor file
 # from watchdog.observers import Observer
 # from watchdog.events import FileSystemEventHandler
 
-log = logging.getLogger(os.path.basename(__file__))
+LOG = TangoLogger.getLogger(__name__)
 
 
 app = Flask(__name__)
@@ -105,7 +105,7 @@ elif app.config['CACHE_TYPE'] == 'simple':
                                'CACHE_DEFAULT_TIMEOUT': 0})
 
 else:
-    print("Invalid cache type.")
+    LOG.info("Invalid cache type.")
     sys.exit(1)
 
 # keep temporary request errors
@@ -129,7 +129,7 @@ class Validatewatchers(FileSystemEventHandler):
 
 
 def initialize(debug=False):
-    log.info("Initializing validator service descriptor")
+    LOG.info("Initializing validator service descriptor")
 
     cache.clear()
     cache.add('debug', debug)
@@ -159,10 +159,10 @@ def serve_forever(args, debug=True):
     app.cliargs = args
     if (args.mode == 'local' and args.workspace_path):
         ws_root = os.path.expanduser(args.workspace_path)
-        log.info(ws_root)
+        LOG.info(ws_root)
         ws = Workspace.__create_from_descriptor__(ws_root)
         if not ws:
-            log.error("Could not find a SONATA workspace at "
+            LOG.error("Could not find a SONATA workspace at "
                       "at the specified location")
             exit(1)
         load_watch_dirs(ws)
@@ -360,7 +360,7 @@ class Resources(Resource):
 
     def delete(self):
 
-        log.info('Deleting cached resources.')
+        LOG.info('Deleting cached resources.')
         flush_resources()
         return 200
 
@@ -390,7 +390,7 @@ class DeleteValidation(Resource):
             return ('Validation with id {} does not exist'
                     .format(validationId), 404)
         else:
-            log.info('Deleting validation {}'.format(validationId))
+            LOG.info('Deleting validation {}'.format(validationId))
             validations = cache.get('validations')
             del validations[validationId]
             cache.set('validations', validations)
@@ -416,7 +416,7 @@ class Validation(Resource):
     @api_v1.response(400, "Bad request: Could not validate"
                           "the given descriptor.")
     def delete(self):
-        log.info('Deleting cached validations.')
+        LOG.info('Deleting cached validations.')
         flush_validations()
         return 200
 
@@ -428,7 +428,7 @@ class Validation(Resource):
 
     def post(self, **kwargs):
         args = validations_parser.parse_args()
-        log.info("POST to /validation w. args: {}".format(args))
+        LOG.info("POST to /validation w. args: {}".format(args))
         check_correct_args = check_args(args)
         if check_correct_args is True:
             keypath, path = process_request(args)
@@ -473,7 +473,7 @@ class Watch(Resource):
         return result
 
     def delete(self):
-        log.info('Reseting watchers')
+        LOG.info('Reseting watchers')
         flush_watchers()
         return 200
 
@@ -497,10 +497,10 @@ def _validate_object(args, path, keypath, obj_type):
             custom_resource = get_resource(custom_rid)
         elif(args['custom'] and args['source'] == 'embedded'):
             if 'descriptor' not in request.files:
-                log.degub('Miss descriptor file in the request')
+                LOG.degub('Miss descriptor file in the request')
                 return 'Miss descriptor file in the request', 400
             if 'rules' not in request.files:
-                log.degub('Miss rules file in the request')
+                LOG.degub('Miss rules file in the request')
                 return 'Miss rules file in the request', 400
             rules_path = get_file(request.files['rules'])
             custom_rid = gen_resource_key(rules_path)
@@ -514,12 +514,12 @@ def _validate_object(args, path, keypath, obj_type):
                     if(custom_resource):
                         if(validation['resources']['customRules']
                            ['hashFile'] == custom_hashFile):
-                            log.info("Returning cached result "
+                            LOG.info("Returning cached result "
                                      "for '{0}'".format(vid))
                             update_resource_validation(rid, vid)
                             return validation
                 else:
-                    log.info("Returning cached result for '{0}'".format(vid))
+                    LOG.info("Returning cached result for '{0}'".format(vid))
                     update_resource_validation(rid, vid)
                     return validation
         elif obj_type == 'service':
@@ -533,16 +533,16 @@ def _validate_object(args, path, keypath, obj_type):
                     for vn_cached in validation['resources']['vnfd']:
                         if((vn_cached['id'] == vnfd_rid) &
                            (vn_cached['hashFile'] == vnfd_hashFile)):
-                            log.info('Resource {} is cached'
+                            LOG.info('Resource {} is cached'
                                      .format(vnfd_rid))
                         else:
                             one_vnfd_not_cached = True
                 if one_vnfd_not_cached:
-                    log.info("Returning cached result for '{0}'".format(vid))
+                    LOG.info("Returning cached result for '{0}'".format(vid))
                     update_resource_validation(rid, vid)
                     return validation
 
-    log.info("Starting validation [type={}, path={}, syntax={}, "
+    LOG.info("Starting validation [type={}, path={}, syntax={}, "
              "integrity={}, topology={}, custom={}, "
              "resource_id:={}, validationId={}, dpath={}, "
              "dext={}]"
@@ -561,7 +561,7 @@ def _validate_object(args, path, keypath, obj_type):
         set_resource(rid, keypath, obj_type, hashFile, vid)
 
     if args['source'] == 'embedded':
-        log.info('File embedded in request')
+        LOG.info('File embedded in request')
         # Save file passed in the request
         descriptor_path = path
         validator = Validator()
@@ -587,15 +587,15 @@ def _validate_object(args, path, keypath, obj_type):
                                                 or False))
 
         if args['function']:
-            log.info("Validating Function descriptor: {}".format(descriptor_path))
+            LOG.info("Validating Function descriptor: {}".format(descriptor_path))
             # TODO check if the function is a valid file path
             validator.validate_function(descriptor_path)
     else:
         if (args['source'] == 'local'):
-            log.info('Local file')
+            LOG.info('Local file')
             path = args['path']
         elif (args['source'] == 'url'):
-            log.info('URL file')
+            LOG.info('URL file')
             path = get_url(args['path'])
 
         validator = Validator()
@@ -609,29 +609,29 @@ def _validate_object(args, path, keypath, obj_type):
                             workspace_path=(args['workspace'] or None))
 
         if args['function']:
-            log.info("Validating Function descriptor: {}".format(path))
+            LOG.info("Validating Function descriptor: {}".format(path))
             validator.validate_function(path)
 
         elif args['service']:
-            log.info("Validating Service descriptor: {}".format(path))
+            LOG.info("Validating Service descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_service(path)
 
         elif args['project']:
-            log.info("Validating Project descriptor: {}".format(path))
+            LOG.info("Validating Project descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_project(path)
         elif args['test']:
-            log.info("Validation Test descriptor: {}".format(path))
+            LOG.info("Validation Test descriptor: {}".format(path))
             validator.validate_test(path)
         elif args['sla']:
-            log.info("Validation SLA descriptor: {}".format(path))
+            LOG.info("Validation SLA descriptor: {}".format(path))
             validator.validate_sla(path)
         elif args['slice']:
-            log.info("Validation Slice descriptor: {}".format(path))
+            LOG.info("Validation Slice descriptor: {}".format(path))
             validator.validate_slice(path)
         elif args['policy']:
-            log.info("Validation Runtime Policy descriptor: {}".format(path))
+            LOG.info("Validation Runtime Policy descriptor: {}".format(path))
             validator.validate_runtime_policy(path)
 
     json_result = gen_report_result(vid, validator)
@@ -665,7 +665,7 @@ def _validate_object(args, path, keypath, obj_type):
 
 def install_watchers(watch_path, obj_type, syntax, integrity, topology,
                      custom):
-    log.info("Setting watchers for {0} validation on path: {1}"
+    LOG.info("Setting watchers for {0} validation on path: {1}"
              .format(obj_type, watch_path))
     if os.path.isdir(watch_path):
         Validatewatchers(watch_path, _validate_object_from_watch)
@@ -686,15 +686,15 @@ def load_watch_dirs(workspace):
     if not workspace:
         return
 
-    log.info("Loading validator watcherss")
+    LOG.info("Loading validator watcherss")
 
     for watch_path, watch in workspace.validate_watchers.items():
         if watch_exists(watch_path):
-            log.warning("watchers path '{0}' does not exist. Ignoring."
+            LOG.warning("watchers path '{0}' does not exist. Ignoring."
                         .format(watch_path))
             continue
 
-        log.debug("Loading validator watchers: {0}".format(watch_path))
+        LOG.debug("Loading validator watchers: {0}".format(watch_path))
 
         assert (watch['type'] == 'project' or watch['type'] == 'package' or
                 watch['type'] == 'service' or watch['type'] == 'function')
@@ -735,16 +735,16 @@ def _validate_object_watcher(args, path, keypath, obj_type):
                 if(custom_resource):
                     if(validation['resources']['customRules']
                        ['hashFile'] == custom_hashFile):
-                        log.info("Returning cached result "
+                        LOG.info("Returning cached result "
                                  "for '{0}'".format(vid))
                         update_resource_validation(rid, vid)
                         return validation
             else:
-                log.info("Returning cached result for '{0}'".format(vid))
+                LOG.info("Returning cached result for '{0}'".format(vid))
                 update_resource_validation(rid, vid)
                 return validation
 
-    log.info("Starting validation [type={}, path={}, syntax={}, "
+    LOG.info("Starting validation [type={}, path={}, syntax={}, "
              "integrity={}, topology={}, custom={}, "
              "resource_id:={}, validationId={}]"
              .format(obj_type, path, args['syntax'],
@@ -768,17 +768,17 @@ def _validate_object_watcher(args, path, keypath, obj_type):
                         workspace_path=(args['workspace'] or False))
 
     if obj_type == 'function':
-        log.info("Validating Function descriptor: {}".format(path))
+        LOG.info("Validating Function descriptor: {}".format(path))
         # TODO check if the function is a valid file path
         validator.validate_function(path)
 
     elif obj_type == 'service':
-        log.info("Validating Service descriptor: {}".format(path))
+        LOG.info("Validating Service descriptor: {}".format(path))
         # TODO check if the function is a valid file path
         validator.validate_service(path)
 
     elif obj_type == 'project':
-        log.info("Validating Project descriptor: {}".format(path))
+        LOG.info("Validating Project descriptor: {}".format(path))
         # TODO check if the function is a valid file path
         validator.validate_project(path)
 
@@ -806,7 +806,7 @@ def _validate_object_watcher(args, path, keypath, obj_type):
 
 
 def set_watch(path, obj_type, syntax, integrity, topology, custom):
-    log.debug("Caching watch '{0}".format(path))
+    LOG.debug("Caching watch '{0}".format(path))
     watchers = cache.get('watchers')
 
     if not watchers:
@@ -837,13 +837,13 @@ def get_watch(path):
 
 
 def _validate_object_from_watch(path):
-    log.info(path)
+    LOG.info(path)
     if not watch_exists(path):
-        log.error("Invalid cached watch. Cannot proceed with validation")
+        LOG.error("Invalid cached watch. Cannot proceed with validation")
         return
 
     watch = get_watch(path)
-    log.info("Validating {0} from watch: {1}".format(watch['type'], path))
+    LOG.info("Validating {0} from watch: {1}".format(watch['type'], path))
     # result = _validate_object(watch, path, path, watch['type'])
     rid = gen_resource_key(path)
     vid = gen_validation_key(path, watch['type'], watch['syntax'],
@@ -854,11 +854,11 @@ def _validate_object_from_watch(path):
     validation = get_validation(vid)
     if resource and validation:
         if(resource['hashFile'] == hashFile):
-            log.info("Returning cached result for '{0}'".format(vid))
+            LOG.info("Returning cached result for '{0}'".format(vid))
             update_resource_validation(rid, vid)
             result = validation
     else:
-        log.info("Starting validation [type={}, path={}, syntax={}, "
+        LOG.info("Starting validation [type={}, path={}, syntax={}, "
                  "integrity={}, topology={}, custom={}, "
                  "resource_id:={}, validationId={}]"
                  .format(watch['type'], path, watch['syntax'],
@@ -873,17 +873,17 @@ def _validate_object_from_watch(path):
                             custom=(watch['custom'] or False))
 
         if watch['type'] == 'function':
-            log.info("Validating Function descriptor: {}".format(path))
+            LOG.info("Validating Function descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_function(path)
 
         elif watch['type'] == 'service':
-            log.info("Validating Service descriptor: {}".format(path))
+            LOG.info("Validating Service descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_service(path)
 
         elif watch['type'] == 'project':
-            log.info("Validating Project descriptor: {}".format(path))
+            LOG.info("Validating Project descriptor: {}".format(path))
             # TODO check if the function is a valid file path
             validator.validate_project(path)
 
@@ -908,7 +908,7 @@ def _validate_object_from_watch(path):
 
     if not result:
         return
-    log.info(result)
+    LOG.info(result)
 
 
 def gen_watchers():
@@ -953,7 +953,7 @@ def flush_resources():
 
 def gen_report_result(validationId, validator):
 
-    log.info("Building result report for {0}".format(validationId))
+    LOG.info("Building result report for {0}".format(validationId))
     report = dict()
     report['validationId'] = '/validations/' + validationId
 
@@ -972,7 +972,7 @@ def gen_report_result(validationId, validator):
 
 def gen_report_net_topology(validator):
 
-    log.info("Building result report net topology")
+    LOG.info("Building result report net topology")
     report = list()
     for sid, service in validator.storage.services.items():
         graph_repr = ''
@@ -993,7 +993,7 @@ def gen_report_net_topology(validator):
 
 
 def gen_report_net_fwgraph(validator):
-    log.info("Building result report net fwgraph")
+    LOG.info("Building result report net fwgraph")
     report = list()
 
     for sid, service in validator.storage.services.items():
@@ -1008,7 +1008,7 @@ def gen_report_net_fwgraph(validator):
 
 def set_resource(rid, path, obj_type, hashFile, vid_related):
 
-    log.info("Caching resource {0}".format(rid))
+    LOG.info("Caching resource {0}".format(rid))
     resources = cache.get('resources')
     if not resources:
         resources = dict()
@@ -1026,7 +1026,7 @@ def set_resource(rid, path, obj_type, hashFile, vid_related):
     else:
         resources[rid]['validations'] = []
         resources[rid]['validations'].append('/validations/' + vid_related)
-    log.info(resources[rid])
+    LOG.info(resources[rid])
     cache.set('resources', resources)
 
 
@@ -1049,7 +1049,7 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
                    custom_hashFile=None, result=None, net_topology=None,
                    net_fwgraph=None, dpath=None, dext=None):
 
-    log.info("Caching validation '{0}'".format(vid))
+    LOG.info("Caching validation '{0}'".format(vid))
     validations = cache.get('validations')
     if not validations:
         validations = dict()
@@ -1071,7 +1071,7 @@ def set_validation(vid, rid, path, obj_type, syntax, integrity, topology,
         validations[vid]['resources']['nsd'] = {'id': '/resources/' + rid,
                                                 'hashFile': hashFile}
         if (syntax and not integrity and not topology and not custom):
-            log.info('Not vnfds in service descriptor syntax validation')
+            LOG.info('Not vnfds in service descriptor syntax validation')
         else:
             vnfds = get_service_validation_resources(dpath)
             validations[vid]['resources']['vnfd'] = []
@@ -1177,13 +1177,13 @@ def gen_validation_key(path, otype, s, i, t, c, cfile=None):
 
 def update_resource_validation(rid, vid):
     if not validation_exists(vid):
-        log.error("Internal error: failed to update resource")
+        LOG.error("Internal error: failed to update resource")
         return
 
     if not resource_exists(rid):
         return
 
-    log.debug("Updating resource '{0}' to: '{1}'".format(rid, vid))
+    LOG.debug("Updating resource '{0}' to: '{1}'".format(rid, vid))
     resources = cache.get('resources')
     resources[rid]['latest_vid'] = vid
     cache.set('resources', resources)
@@ -1241,14 +1241,14 @@ def get_local(path):
     artifact_root = add_artifact_root()
     if os.path.isfile(path):
         filepath = os.path.join(artifact_root, os.path.basename(path))
-        log.debug("Copying local file: '{0}'".format(filepath))
+        LOG.debug("Copying local file: '{0}'".format(filepath))
         shutil.copyfile(path, filepath)
         set_artifact(filepath)
 
     elif os.path.isdir(path):
         dirname = os.path.basename(os.path.abspath(path))
         filepath = os.path.join(artifact_root, dirname)
-        log.debug("Copying local tree: '{0}'".format(filepath))
+        LOG.debug("Copying local tree: '{0}'".format(filepath))
         shutil.copytree(path, filepath)
         set_artifact(filepath)
         for root, dirs, files in os.walk(filepath):
@@ -1258,7 +1258,7 @@ def get_local(path):
                 set_artifact(os.path.join(root, f))
     else:
         req_errors.append("Invalid local path: '{0}'".format(path))
-        log.error("Invalid local path: '{0}'".format(path))
+        LOG.error("Invalid local path: '{0}'".format(path))
         return
 
     return filepath
@@ -1268,7 +1268,7 @@ def check_args(args):
 
     if (args.syntax is None and args.integrity is None
             and args.topology is None):
-        log.info('Need to specify at least one type of validation')
+        LOG.info('Need to specify at least one type of validation')
         return {"error_message": "Missing validation"}, 400
     if (
         args.function is None and args.service is None and
@@ -1276,7 +1276,7 @@ def check_args(args):
         args.slice is None and args.policy is None and
         args.sla is None
         ):
-        log.info('Need to specify the type of the descriptor that will ' +
+        LOG.info('Need to specify the type of the descriptor that will ' +
                  'be validated (function, service, project)')
         return {"error_message": "Missing service, function " +
                 "and project parameters"}, 400
@@ -1288,31 +1288,31 @@ def check_args(args):
         (args.project and args.test) or (args.project and args.sla) or
         (args.project and args.policy) or (args.project and args.slice)
         ):
-       log.info("Not possible to validate two types of descriptor in the" +
+       LOG.info("Not possible to validate two types of descriptor in the" +
                 " same request")
        return {"error_message": "Not possible to validate function descriptor" +
                " and service descriptor and project descriptor in the same request"}, 400
     if (args.function and args.service):
-        log.info("Not possible to validate function descriptor and service descriptor in the" +
+        LOG.info("Not possible to validate function descriptor and service descriptor in the" +
                  " same request")
         return {"error_message": "Not possible to validate function descriptor" +
                 " and service descriptor and project descriptor in the same request"}, 400
 
     if (args.function and args.project):
-        log.info("Not possible to validate function descriptor and project descriptor in the" +
+        LOG.info("Not possible to validate function descriptor and project descriptor in the" +
                  " same request")
         return {"error_message": "Not possible to validate function descriptor" +
                 " and project descriptor in the same request"}, 400
 
     if (args.service and args.project):
-        log.info("Not possible to validate service descriptor and project descriptor in the" +
+        LOG.info("Not possible to validate service descriptor and project descriptor in the" +
                  " same request")
         return {"error_message": "Not possible to validate service descriptor" +
                 " and project descriptor in the same request"}, 400
 
     if (args.source == 'local' or args.source == 'url'):
         if (args.path is None):
-            log.info('With local or url source the path of this ' +
+            LOG.info('With local or url source the path of this ' +
                      'source should be specified')
             return {"error_message": "File path need it when local or " +
                     "url source are used"}, 400
@@ -1320,7 +1320,7 @@ def check_args(args):
     if (args.service and
             (args.integrity or args.topology or args.custom)):
         if (args.dpath is None or args.dext is None):
-            log.info('With integrity or topology validation of a service descriptor' +
+            LOG.info('With integrity or topology validation of a service descriptor' +
                      ' we need to specify the path of the function descriptors ' +
                      '(dpath) and the extension of it (dext)')
             return {"error_message": "Need function descriptors path " +
@@ -1329,7 +1329,7 @@ def check_args(args):
 
     if (args.custom and args.source == 'local'):
         if (args.cfile is None):
-            log.info('With custom rules validation the path of ' +
+            LOG.info('With custom rules validation the path of ' +
                      'the file with the rules should be specified ' +
                      '(cfile)')
             return {"error_message": "Need rules file path" +
@@ -1337,7 +1337,7 @@ def check_args(args):
                     "descriptor"}, 400
     # if (args.project):
     #     if (args.workspace is None):
-    #         log.info('With project validation the workspace path ' +
+    #         LOG.info('With project validation the workspace path ' +
     #                  'of the project should be specified (workspace)')
     #         return {"error_message": "Need workspace path " +
     #                 "(workspace) to validate project"}, 400
@@ -1361,7 +1361,7 @@ def add_artifact_root():
 
 
 def set_artifact(artifact_path):
-    log.debug("Caching artifact '{0}'".format(artifact_path))
+    LOG.debug("Caching artifact '{0}'".format(artifact_path))
     artifacts = cache.get('artifacts')
     if not artifacts:
         artifacts = list()

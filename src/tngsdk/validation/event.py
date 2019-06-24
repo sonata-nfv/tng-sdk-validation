@@ -3,15 +3,15 @@ import logging
 import os
 import pkg_resources
 import uuid
-
-log = logging.getLogger(__name__)
+from tngsdk.validation.logger import TangoLogger
+LOG = TangoLogger.getLogger(__name__)
 
 
 class EventLogger(object):
 
     def __init__(self, name):
         self._name = name
-        self._log = logging.getLogger(name)
+        self._LOG = TangoLogger.getLogger(name)
         self._events = dict()
 
         # load events config
@@ -47,9 +47,9 @@ class EventLogger(object):
 
             # log header upon new key
             if level == 'error':
-                self._log.error(header)
+                self._LOG.error(header)
             elif level == 'warning':
-                self._log.warning(header)
+                self._LOG.warning(header)
             elif level == 'none':
                 pass
 
@@ -61,9 +61,9 @@ class EventLogger(object):
 
         # log message
         if level == 'error':
-            self._log.error(msg)
+            self._LOG.error(msg)
         elif level == 'warning':
-            self._log.warning(msg)
+            self._LOG.warning(msg)
         elif level == 'none':
             pass
 
@@ -92,7 +92,7 @@ class EventLogger(object):
                 if cevent not in eventdict.keys() or not \
                         (cvalue == 'error' or cvalue == 'warning' or
                          cvalue == 'none'):
-                    log.warning("Failed parsing custom event config file "
+                    LOG.warning("Failed parsing custom event config file "
                                 "'{0}': '{1}: {2}' is not a valid event or "
                                 "has an invalid value. Assuming defaults."
                                 .format(configpath, cevent, cvalue))

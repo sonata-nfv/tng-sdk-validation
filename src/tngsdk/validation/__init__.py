@@ -36,18 +36,44 @@ import os
 
 from tngsdk.validation import cli, rest
 from tngsdk.validation.validator import Validator
+from tngsdk.validation.logger import TangoLogger
 
-LOG = logging.getLogger(os.path.basename(__file__))
+LOG = TangoLogger.getLogger(os.path.basename(__file__))
 
-
-def logging_setup():
-    os.environ["COLOREDLOGS_LOG_FORMAT"] \
-    = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+def setup_logging(args):
+    """
+    Configure logging.
+    """
+    log_level = logging.INFO
+    # get loglevel from environment or --loglevel
+    log_level_str = os.environ.get("LOGLEVEL", "INFO")
+    if args.log_level:  # overwrite if present
+        log_level_str = args.log_level
+    # parse
+    log_level_str = str(log_level_str).lower()
+    if log_level_str == "debug":
+        log_level = logging.DEBUG
+    elif log_level_str == "info":
+        log_level = logging.INFO
+    elif log_level_str == "warning":
+        log_level = logging.WARNING
+    elif log_level_str == "error":
+        log_level = logging.ERROR
+    else:
+        LOG.info("Loglevel '{}' unknown.".format(log_level_str))
+    # if "-v" is there set to debug
+    if args.verbose:
+        log_level = logging.DEBUG
+    # select logging mode
+    log_json = os.environ.get("LOGJSON", args.logjson)
+    # configure all TangoLoggers
+    TangoLogger.reconfigure_all_tango_loggers(
+        log_level=log_level, log_json=log_json)
 
 
 def main():
-    logging_setup()
     args = cli.parse_args()
+    setup_logging(args)
     # TODO better log configuration (e.g. file-based logging)
     if args.verbose:
         coloredlogs.install(level="DEBUG")
@@ -58,7 +84,7 @@ def main():
     if cli.check_args(args):
         if args.api:
             # TODO start validator in service mode
-            print("Validator started as an API in IP: {} and port {}"
+            LOG.info("Validator started as an API in IP: {} and port {}"
                   .format(args.service_address, args.service_port))
             rest.serve_forever(args)
             pass
@@ -70,4 +96,4 @@ def main():
                 exit(1)  # exit with error code
             exit(0)
     else:
-        print('Invalid arguments. Please check the help (-h)')
+        LOG.info('Invalid arguments. Please check the help (-h)')

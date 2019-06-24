@@ -37,10 +37,10 @@ from collections import OrderedDict
 from tngsdk.validation.util import descriptor_id, read_descriptor_file
 # from util import read_descriptor_file, descriptor_id
 from tngsdk.validation import event
+from tngsdk.validation.logger import TangoLogger
+LOG = TangoLogger.getLogger(__name__)
 
-
-log = logging.getLogger(__name__)
-evtlog = event.get_logger('validator.events')
+evtLOG = event.get_logger('validator.events')
 
 
 class DescriptorStorage(object):
@@ -121,7 +121,7 @@ class DescriptorStorage(object):
         :return: service descriptor object
         """
         if sid not in self.services:
-            log.error("Service id='{0}' is not stored.".format(sid))
+            LOG.error("Service id='{0}' is not stored.".format(sid))
             return
         return self.services[sid]
     def create_service(self, descriptor_file):
@@ -151,7 +151,7 @@ class DescriptorStorage(object):
         :return: function descriptor object
         """
         if fid not in self._functions[fid]:
-            log.error("Function descriptor id='{0}' is not stored.".format(fid))
+            LOG.error("Function descriptor id='{0}' is not stored.".format(fid))
             return
         return self.functions[fid]
     def create_function(self, descriptor_file):
@@ -177,7 +177,7 @@ class DescriptorStorage(object):
         :return: test descriptor object
         """
         if tid not in self._tests[tid]:
-            log.error("Test descriptor id='{0}' is not stored.".format(fid))
+            LOG.error("Test descriptor id='{0}' is not stored.".format(fid))
             return
         return self.tests[tid]
     def create_test(self, descriptor_file):
@@ -209,7 +209,7 @@ class DescriptorStorage(object):
         :return: test descriptor object
         """
         if sid not in self._slices[sid]:
-            log.error("Slice descriptor id='{0}' is not stored.".format(sid))
+            LOG.error("Slice descriptor id='{0}' is not stored.".format(sid))
             return
         return self.slices[sid]
     def create_slice(self, descriptor_file):
@@ -241,7 +241,7 @@ class DescriptorStorage(object):
         :return: sla descriptor object
         """
         if sla_id not in self._slas[sla_id]:
-            log.error("SLA descriptor id='{0}' is not stored.".format(sla_id))
+            LOG.error("SLA descriptor id='{0}' is not stored.".format(sla_id))
             return
         return self.slas[sla_id]
     def create_sla(self, descriptor_file):
@@ -273,7 +273,7 @@ class DescriptorStorage(object):
         :return: rp descriptor object
         """
         if rpid not in self._runtime_policies[rpid]:
-            log.error("RP descriptor id='{0}' is not stored.".format(rpid))
+            LOG.error("RP descriptor id='{0}' is not stored.".format(rpid))
             return
         return self.runtime_policies[rpid]
     def create_runtime_policy(self, descriptor_file):
@@ -334,7 +334,7 @@ class Node:
         :param cp: connection point ID
         """
         if cp in self.connection_points:
-            evtlog.log("Duplicate connection point",
+            evtLOG.log("Duplicate connection point",
                        "The CP id='{0}' is already stored in node "
                        "id='{1}'".format(cp, self.id),
                        self.id,
@@ -344,7 +344,7 @@ class Node:
         # check if connection point has the correct format
         s_cp = cp.split(':')
         if len(s_cp) != 1:
-            evtlog.log("Invalid_connection_point",
+            evtLOG.log("Invalid_connection_point",
                        "The CP id='{0}' is invalid. The separator ':' is "
                        "reserved to reference connection points"
                        .format(cp),
@@ -352,7 +352,7 @@ class Node:
                        'evt_invalid_cpoint')
             return
 
-        log.debug("Node id='{0}': adding connection point '{1}'"
+        LOG.debug("Node id='{0}': adding connection point '{1}'"
                   .format(self.id, cp))
 
         self._connection_points.append(cp)
@@ -578,7 +578,7 @@ class Descriptor(Node):
 
         # check number of connection point references
         if len(cp_refs) < 1:
-            evtlog.log("Bad number of connection points",
+            evtLOG.log("Bad number of connection points",
                        "The vlink id='{0}' must have at lease 1 connection "
                        "point reference"
                        .format(vb_id),
@@ -588,7 +588,7 @@ class Descriptor(Node):
 
         # check for duplicate virtual links
         if vb_id in self.vlinks.keys() or vb_id in self.vbridges.keys():
-            evtlog.log("Duplicate virtual link",
+            evtLOG.log("Duplicate virtual link",
                        "The vlink id='{0}' is already defined"
                        .format(vb_id),
                        self.id,
@@ -599,7 +599,7 @@ class Descriptor(Node):
         for cp in cp_refs:
             s_cp = cp.split(':')
             if len(s_cp) > 2:
-                evtlog.log("Invalid connection point reference",
+                evtLOG.log("Invalid connection point reference",
                            "The connection point reference '{0}' of vlink"
                            " id='{1}' has an incorrect format: found multiple "
                            "separators ':'"
@@ -617,7 +617,7 @@ class Descriptor(Node):
         """
         # check number of connection point references
         if len(cp_refs) != 2:
-            evtlog.log("Bad number of connection points",
+            evtLOG.log("Bad number of connection points",
                        "The vlink id='{0}' must have exactly 2 connection "
                        "point references"
                        .format(vl_id),
@@ -627,7 +627,7 @@ class Descriptor(Node):
 
         # check for duplicate virtual links
         if vl_id in self.vlinks.keys() or vl_id in self.vbridges.keys():
-            evtlog.log("Duplicate virtual link",
+            evtLOG.log("Duplicate virtual link",
                        "The vlink id='{0}' is already defined"
                        .format(vl_id),
                        self.id,
@@ -638,7 +638,7 @@ class Descriptor(Node):
         for cp in cp_refs:
             s_cp = cp.split(':')
             if len(s_cp) > 2:
-                evtlog.log("Invalid connection point reference",
+                evtLOG.log("Invalid connection point reference",
                            "The connection point reference '{0}' of vlink"
                            " id='{1}' has an incorrect format: found multiple "
                            "separators ':'"
@@ -661,7 +661,7 @@ class Descriptor(Node):
             return
         for vl in self.content['virtual_links']:
             if not vl['id']:
-                evtlog.log("Missing virtual link ID",
+                evtLOG.log("Missing virtual link ID",
                            "A virtual link is missing its ID",
                            self.id,
                            'evt_invalid_vlink')
@@ -903,16 +903,16 @@ class Service(Descriptor):
         :param vnf_id: vnf id, defined in the service descriptor content
         """
         if type(func) is not Function:
-            log.error("The function (VNF) id='{0}' has an invalid type"
+            LOG.error("The function (VNF) id='{0}' has an invalid type"
                       .format(func.id))
             return
 
         if func.id in self.functions:
-            log.error("The function (VNF) id='{0}' is already associated with "
+            LOG.error("The function (VNF) id='{0}' is already associated with "
                       "service id='{1}'".format(func.id, self.id))
             return
 
-        log.debug("Service '{0}': associating function id='{1}' with vnf_id="
+        LOG.debug("Service '{0}': associating function id='{1}' with vnf_id="
                   "'{2}'".format(self.id, func.id, vnf_id))
 
         self._functions[func.id] = func
@@ -1040,7 +1040,7 @@ class Service(Descriptor):
 
         # build vlinks topology graph
         if not self.vlinks and not self.vbridges:
-            log.warning("No links were found")
+            LOG.warning("No links were found")
         for vl_id, vl in self.vlinks.items():
 
             if level >= 1:
@@ -1159,7 +1159,7 @@ class Service(Descriptor):
                     pos = cp['position']
 
                     if len(s_cpr) == 1 and cpr not in self.connection_points:
-                        evtlog.log("Undefined connection point",
+                        evtLOG.log("Undefined connection point",
                                    "Connection point '{0}' of forwarding path "
                                    "'{1}' is not defined"
                                    .format(cpr, fpath['fp_id']),
@@ -1171,7 +1171,7 @@ class Service(Descriptor):
                         func = self.mapped_function(s_cpr[0])
                         if not func or (func and s_cpr[1]
                                         not in func.connection_points):
-                            evtlog.log("Undefined connection point",
+                            evtLOG.log("Undefined connection point",
                                        "Connection point '{0}' of forwarding "
                                        "path '{1}' is not defined"
                                        .format(cpr, fpath['fp_id']),
@@ -1180,7 +1180,7 @@ class Service(Descriptor):
                             return
 
                     if pos in path_dict:
-                        evtlog.log("Duplicate reference in FG",
+                        evtLOG.log("Duplicate reference in FG",
                                    "Duplicate referenced position '{0}' "
                                    "in forwarding path id='{1}'. Ignoring "
                                    "connection point: '{2}'"
@@ -1307,10 +1307,10 @@ class Function(Descriptor):
 
         if unit.id in self.units:
             if isinstance(unit,VDU_unit):
-                log.error("The unit (VDU) id='{0}' is already associated with "
+                LOG.error("The unit (VDU) id='{0}' is already associated with "
                           "function (VNF) id='{1}'".format(unit.id, self.id))
             else:
-                log.error("The unit (CDU) id='{0}' is already associated with "
+                LOG.error("The unit (CDU) id='{0}' is already associated with "
                           "function (VNF) id='{1}'".format(unit.id, self.id))
             return
 
@@ -1341,7 +1341,7 @@ class Function(Descriptor):
 
                     except (requests.Timeout, requests.ConnectionError):
 
-                        evtlog.log("VDU image not found",
+                        evtLOG.log("VDU image not found",
                                    "Failed to verify the existence of VDU image at"
                                    " the address '{0}'. VDU id='{1}'"
                                    .format(vdu_image_path, vdu['id']),
@@ -1363,7 +1363,7 @@ class Function(Descriptor):
             return True
 
         else:
-            log.error("Function id={0} is missing the "
+            LOG.error("Function id={0} is missing the "
                       "'virtual_deployment_units or cloudnative_deployment_units' section"
                       .format(self.id))
             return
@@ -1392,7 +1392,7 @@ class Function(Descriptor):
             if vduExist:
                 for vdu in self.content.get('virtual_deployment_units'):
                     if vdu.get('id') not in self.units.keys():
-                        log.error("Unit id='{0}' is not associated with function "
+                        LOG.error("Unit id='{0}' is not associated with function "
                                   "id='{1}".format(vdu.get('id'), self.id))
                         return
 
@@ -1408,7 +1408,7 @@ class Function(Descriptor):
             elif cduExist:
                 for cdu in self.content.get('cloudnative_deployment_units'):
                     if cdu.get('id') not in self.units.keys():
-                        log.error("Unit id='{0}' is not associated with function "
+                        LOG.error("Unit id='{0}' is not associated with function "
                                   "id='{1}".format(cdu['id'], self.id))
                         return
 
@@ -1915,7 +1915,7 @@ class Test:
             return False
         for phase in self.content["phases"]:
             if self.get_phase_by_id(phase["id"]):
-                evtlog.log("Replicate 'phase id'",
+                evtLOG.log("Replicate 'phase id'",
                            "Couldn't load the phases of "
                            "test descriptor id='{0}'"
                            .format(self.id),
@@ -1925,7 +1925,7 @@ class Test:
             else:
                 new_phase = Phase(phase)
                 if "steps" not in phase.keys():
-                    evtlog.log("Missing 'steps'",
+                    evtLOG.log("Missing 'steps'",
                                "Couldn't load the steps of "
                                "test descriptor id='{0}'"
                                .format(self.id),
