@@ -36,7 +36,8 @@ from requests.exceptions import RequestException
 from jsonschema import SchemaError
 from jsonschema import ValidationError
 
-log = logging.getLogger(__name__)
+from tngsdk.validation.logger import TangoLogger
+LOG = TangoLogger.getLogger(__name__)
 
 
 class SchemaValidator(object):
@@ -197,20 +198,20 @@ class SchemaValidator(object):
 
         # Verify if local dir structure already exists! If not, create it.
         if not os.path.isdir(self._schemas_local_master):
-            log.debug("Schema directory '{}' not found. Creating it."
+            LOG.debug("Schema directory '{}' not found. Creating it."
                       .format(self._schemas_local_master))
-            print("Schema directory '{}' not found. Creating it."
+            LOG.info("Schema directory '{}' not found. Creating it."
                   .format(self._schemas_local_master))
 
             os.mkdir(self._schemas_local_master)
         else:
-            print("Schema directory '{}' found. We do not need to create it."
+            LOG.info("Schema directory '{}' found. We do not need to create it."
                   .format(self._schemas_local_master))
         for schema_type, paths in sch.items():
             schema_addr = paths['remote']
             if validators.url(schema_addr):
                 try:
-                    log.debug("Loading schema '{}' from remote location '{}'"
+                    LOG.debug("Loading schema '{}' from remote location '{}'"
                               .format(schema_type, schema_addr))
                     self._schemas_library[schema_type] = \
                         load_remote_schema(schema_addr)
@@ -219,13 +220,13 @@ class SchemaValidator(object):
                                        self._schemas[schema_type]['local'],
                                        self._schemas_library[schema_type])
                 except RequestException as e:
-                    log.debug("Could not load schema '{}' from remote "
+                    LOG.debug("Could not load schema '{}' from remote "
                                 "location '{}', error: {}"
                                 .format(schema_type, schema_addr, e))
-                    print("There has had a problem in the connection and is not possible reload the schema."
+                    LOG.info("There has had a problem in the connection and is not possible reload the schema."
                           " It will be used the stored schema in {}".format(self._schemas[schema_type]['local']))
             else:
-                log.warning("Invalid schema URL '{}' it will be used the stored schema".format(schema_addr))
+                LOG.warning("Invalid schema URL '{}' it will be used the stored schema".format(schema_addr))
 
     def load_schema(self, template, reload=False):
         """
@@ -241,7 +242,7 @@ class SchemaValidator(object):
         """
         # Check if template is already loaded and present in _schemas_library
         if template in self._schemas_library and not reload:
-            log.debug("Loading previous stored schema for {}"
+            LOG.debug("Loading previous stored schema for {}"
                       .format(template))
 
             return self._schemas_library[template]
@@ -250,7 +251,7 @@ class SchemaValidator(object):
         schema_addr = self._schemas[template]['remote']
         if validators.url(schema_addr):
             try:
-                log.debug("Loading schema '{}' from remote location '{}'"
+                LOG.debug("Loading schema '{}' from remote location '{}'"
                           .format(template, schema_addr))
 
                 # Load schema from remote source
@@ -264,17 +265,17 @@ class SchemaValidator(object):
                 return self._schemas_library[template]
 
             except RequestException as e:
-                log.warning("Could not load schema '{}' from remote "
+                LOG.warning("Could not load schema '{}' from remote "
                             "location '{}', error: {}"
                             .format(template, schema_addr, e))
         else:
-            log.warning("Invalid schema URL '{}'".format(schema_addr))
+            LOG.warning("Invalid schema URL '{}'".format(schema_addr))
 
         # Load Offline Schema
         schema_addr = self._schemas[template]['local']
         if os.path.isfile(schema_addr):
             try:
-                log.debug("Loading schema '{}' from local file '{}'"
+                LOG.debug("Loading schema '{}' from local file '{}'"
                           .format(template, schema_addr))
 
                 self._schemas_library[template] = \
@@ -283,13 +284,13 @@ class SchemaValidator(object):
                 return self._schemas_library[template]
 
             except FileNotFoundError:
-                log.warning("Could not load schema '{}' from local file '{}'"
+                LOG.warning("Could not load schema '{}' from local file '{}'"
                             .format(template, schema_addr))
 
         else:
-            log.warning("Schema file '{}' not found.".format(schema_addr))
+            LOG.warning("Schema file '{}' not found.".format(schema_addr))
 
-        log.error("Failed to load schema '{}'".format(template))
+        LOG.error("Failed to load schema '{}'".format(template))
 
     def validate(self, descriptor, schema_id):
         """
@@ -307,16 +308,16 @@ class SchemaValidator(object):
                 exit(0)
 
         except ValidationError as e:
-            log.error("Failed to validate descriptor against schema '{}'"
+            LOG.error("Failed to validate descriptor against schema '{}'"
                       .format(schema_id))
             self.error_msg = e.message
-            log.error(e.message)
+            LOG.error(e.message)
             return
 
         except SchemaError as e:
-            log.error("Invalid Schema '{}'".format(schema_id))
+            LOG.error("Invalid Schema '{}'".format(schema_id))
             self.error_msg = e.message
-            log.debug(e)
+            LOG.debug(e)
             return
 
     def get_descriptor_type(self, descriptor):
@@ -346,8 +347,8 @@ class SchemaValidator(object):
                 continue
 
             except SchemaError as error_detail:
-                log.error("Invalid Schema '{}'".format(schema_id))
-                log.debug(error_detail)
+                LOG.error("Invalid Schema '{}'".format(schema_id))
+                LOG.debug(error_detail)
                 return
 
 
@@ -361,14 +362,14 @@ def write_local_schema(schemas_root, filename, schema):
     """
 
     if os.path.isfile(filename):
-        log.debug("Replacing schema file '{}'".format(filename))
-        print("Replacing schema file '{}'".format(filename))
+        LOG.debug("Replacing schema file '{}'".format(filename))
+        LOG.info("Replacing schema file '{}'".format(filename))
     else:
-        log.debug("Writing schema file '{}'".format(filename))
-        print("Writing schema file '{}'".format(filename))
+        LOG.debug("Writing schema file '{}'".format(filename))
+        LOG.info("Writing schema file '{}'".format(filename))
 
     if not os.path.exists(os.path.dirname(filename)):
-        log.debug("Schema directory '{}' not found. Creating it."
+        LOG.debug("Schema directory '{}' not found. Creating it."
                   .format(schemas_root))
         try:
             os.makedirs(os.path.dirname(filename))
@@ -391,7 +392,7 @@ def load_local_schema(filename):
     """
     # Confirm that schema file exists
     if not os.path.isfile(filename):
-        log.warning("Schema file '{}' does not exist.".format(filename))
+        LOG.warning("Schema file '{}' does not exist.".format(filename))
         raise FileNotFoundError
         return
     schema_f = open(filename, 'r')

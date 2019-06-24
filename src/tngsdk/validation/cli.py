@@ -35,9 +35,10 @@ import sys
 
 from tngsdk.validation.validator import Validator
 from tngsdk.project.project import Project
+from tngsdk.validation.logger import TangoLogger
 
 
-LOG = logging.getLogger(os.path.basename(__file__))
+LOG = TangoLogger.getLogger(__name__)
 
 
 def dispatch(args, validator):
@@ -46,183 +47,182 @@ def dispatch(args, validator):
         chosen by the user. By default, the validator
         makes topology level validation.
     """
-    print("Printing all the arguments: {}\n".format(args))
-
+    LOG.info("Printing all the arguments: {}\n".format(args))
     if args.vnfd:
-        print("VNFD validation")
+        LOG.info("VNFD validation")
         validator.schema_validator.load_schemas("VNFD")
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
                                 custom=False)
         elif args.integrity:
-            print("Syntax and integrity validation")
+            LOG.info("Syntax and integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False,
                                 custom=False)
         elif args.topology:
-            print("Syntax, integrity and topology validation")
+            LOG.info("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=False)
         elif args.custom:
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile)
-            print("Syntax, integrity, topology  and custom rules validation")
+            LOG.info("Syntax, integrity, topology  and custom rules validation")
         else:
-            print("Default mode: Syntax, integrity and topology validation")
+            LOG.info("Default mode: Syntax, integrity and topology validation")
         if validator.validate_function(args.vnfd):
             if ((validator.error_count == 0) and
             (len(validator.customErrors) == 0)):
-                print("No errors found in the VNFD")
+                LOG.info("No errors found in the VNFD")
             else:
-                print("Errors in validation")
+                LOG.info("Errors in validation")
         return validator
 
     elif args.nsd:
-        print("NSD validation")
+        LOG.info("NSD validation")
         validator.schema_validator.load_schemas("NSD")
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False)
         elif args.integrity:
-            print("Syntax and integrity validation")
+            LOG.info("Syntax and integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False,
                                 dpath=args.dpath)
         elif args.topology:
-            print("Syntax, integrity and topology validation")
+            LOG.info("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
                                 dpath=args.dpath)
         elif args.custom:
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile,
                                 dpath=args.dpath)
-            print("Syntax, integrity, topology  and custom rules validation")
+            LOG.info("Syntax, integrity, topology  and custom rules validation")
         else:
             validator.configure(syntax=True, integrity=True, topology=True,
                                 dpath=args.dpath)
-            print("Default mode: Syntax, integrity and topology validation")
+            LOG.info("Default mode: Syntax, integrity and topology validation")
 
         if validator.validate_service(args.nsd):
             if ((validator.error_count == 0) and (len(validator.customErrors) == 0)):
-                    print("No errors found in the Service descriptor validation")
+                    LOG.info("No errors found in the Service descriptor validation")
             else:
-                    print("Errors in custom rules validation")
+                    LOG.info("Errors in custom rules validation")
         return validator
 
     elif args.project_path:
-        print("Project descriptor validation")
+        LOG.info("Project descriptor validation")
         validator.schema_validator.load_schemas("NSD")
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False,
                                 workspace_path=args.workspace_path)
         elif args.integrity:
-            print("Syntax and integrity validation")
+            LOG.info("Syntax and integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False,
                                 workspace_path=args.workspace_path)
         elif args.topology:
-            print("Syntax, integrity and topology validation")
+            LOG.info("Syntax, integrity and topology validation")
             validator.configure(syntax=True, integrity=True, topology=True,
                                 workspace_path=args.workspace_path)
 
         elif args.custom:
             validator.configure(syntax=True, integrity=True, topology=True,
                                 custom=True, cfile=args.cfile)
-            print("Syntax, integrity, topology  and custom rules validation")
+            LOG.info("Syntax, integrity, topology  and custom rules validation")
         else:
-            print("Default mode: Syntax, integrity and topology validation")
+            LOG.info("Default mode: Syntax, integrity and topology validation")
 
         if not validator.validate_project(args.project_path):
-            print('Cant validate the project descriptors')
+            LOG.info('Cant validate the project descriptors')
         else:
             if validator.error_count == 0:
                 if len(validator.customErrors) == 0:
-                    print("No errors found in the validation of the project descriptors")
+                    LOG.info("No errors found in the validation of the project descriptors")
                 else:
-                    print("Errors in custom rules validation")
+                    LOG.info("Errors in custom rules validation")
         return validator
     elif args.tstd:
-        print("Test descriptor validation")
+        LOG.info("Test descriptor validation")
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False, custom=False)
         elif args.integrity:
-            print("Integrity validation")
+            LOG.info("Integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
         else:
-            print("Default test descriptor validation syntax and integrity")
+            LOG.info("Default test descriptor validation syntax and integrity")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
         if not validator.validate_test(args.tstd):
-            print('Cant validate the test descriptors')
+            LOG.info('Cant validate the test descriptors')
         else:
             if validator.error_count == 0 and len(validator.customErrors) == 0:
-                print("No errors found in the validation of the test descriptors")
+                LOG.info("No errors found in the validation of the test descriptors")
             else:
-                print("Errors in validation")
+                LOG.info("Errors in validation")
         return validator
     elif args.nstd:
-        print("Slice descriptor validation")
+        LOG.info("Slice descriptor validation")
         validator.schema_validator.load_schemas("NSTD")
 
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False, custom=False)
         elif args.integrity:
-            print("Integrity validation")
+            LOG.info("Integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
         else:
-            print("Default test descriptor validation syntax and integrity")
+            LOG.info("Default test descriptor validation syntax and integrity")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
         if not validator.validate_slice(args.nstd):
-            print('Cant validate the slice descriptors')
+            LOG.info('Cant validate the slice descriptors')
         else:
             if validator.error_count == 0 and len(validator.customErrors) == 0:
-                print("No errors found in the validation of the slice descriptors")
+                LOG.info("No errors found in the validation of the slice descriptors")
             else:
-                print("Errors in validation")
+                LOG.info("Errors in validation")
         return validator
     elif args.slad:
-        print("SLA descriptor validation")
+        LOG.info("SLA descriptor validation")
         validator.schema_validator.load_schemas("SLAD")
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False, custom=False)
         elif args.integrity:
-            print("Integrity validation")
+            LOG.info("Integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
         else:
-            print("Default test descriptor validation syntax and integrity")
+            LOG.info("Default test descriptor validation syntax and integrity")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
         if not validator.validate_sla(args.slad):
-            print('Cant validate the sla descriptors')
+            LOG.info('Cant validate the sla descriptors')
         else:
             if validator.error_count == 0 and len(validator.customErrors) == 0:
-                print("No errors found in the validation of the sla descriptors")
+                LOG.info("No errors found in the validation of the sla descriptors")
             else:
-                print("Errors in validation")
+                LOG.info("Errors in validation")
         return validator
     elif args.rpd:
-        print("RP descriptor validation")
+        LOG.info("RP descriptor validation")
         validator.schema_validator.load_schemas("RPD")
         if args.syntax:
-            print("Syntax validation")
+            LOG.info("Syntax validation")
             validator.configure(syntax=True, integrity=False, topology=False, custom=False)
         elif args.integrity:
-            print("Integrity validation")
+            LOG.info("Integrity validation")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
         else:
-            print("Default test descriptor validation syntax and integrity")
+            LOG.info("Default test descriptor validation syntax and integrity")
             validator.configure(syntax=True, integrity=True, topology=False, custom=False)
 
         if not validator.validate_runtime_policy(args.rpd):
-            print('Cant validate the sla descriptors')
+            LOG.info('Cant validate the sla descriptors')
         else:
             if validator.error_count == 0 and len(validator.customErrors) == 0:
-                print("No errors found in the validation of the sla descriptors")
+                LOG.info("No errors found in the validation of the sla descriptors")
             else:
-                print("Errors in validation")
+                LOG.info("Errors in validation")
         return validator
 def check_args(args):
     if args.project_path:
@@ -230,26 +230,26 @@ def check_args(args):
             return True
         else:
             if not(args.cfile):
-                print('Invalid parameters. To validate custom_rules of a project descriptors'
+                LOG.info('Invalid parameters. To validate custom_rules of a project descriptors'
                 '--cfile must be specified')
             return False
     elif (args.nsd):
         if args.syntax:
             return True
         elif (args.integrity or args.topology or args.custom) and (not(args.dext) and not(args.dpath)):
-            print("Invalid parameters. To validate the "
+            LOG.info("Invalid parameters. To validate the "
                   "integrity, topology or custom rules of a service descriptors"
                   "both' --dpath' and '--dext' parameters must be "
                   "specified.")
             return False
         elif not(args.syntax) and not(args.integrity) and not(args.topology) and not(args.dpath):
-            print("Invalid parameters. To validate the "
+            LOG.info("Invalid parameters. To validate the "
                   "integrity, topology or custom rules of a service descriptors"
                   "both' --dpath' and '--dext' parameters must be "
                   "specified.")
             return False
         elif args.custom and not(args.cfile):
-            print("Invalid parameters. To validate the "
+            LOG.info("Invalid parameters. To validate the "
                   "custom rules of a service descriptors"
                   "both' --dpath' and '--dext' parameters must be "
                   "specified (to validate the topology/integrity) and "
@@ -259,7 +259,7 @@ def check_args(args):
             return True
     elif args.vnfd:
         if args.custom and not(args.cfile):
-                print("Invalid parameters. To validate the "
+                LOG.info("Invalid parameters. To validate the "
                       "custom rules of a service descriptors"
                       "'--cfile' must be specified")
                 return False
@@ -268,28 +268,29 @@ def check_args(args):
     elif args.tstd:
         # TODO have custom rules sense here?
         if args.topology or args.custom:
-            print("Invalid parameters. The validation level "
+            LOG.info("Invalid parameters. The validation level "
                   "of the test descriptor is syntax or integrity")
         else:
             return True
+
     elif args.nstd:
         # TODO have custom rules sense here?
         if args.topology or args.custom:
-            print("Invalid parameters. The validation level "
+            LOG.info("Invalid parameters. The validation level "
                   "of the slice descriptor is syntax or integrity")
         else:
             return True
     elif args.slad:
         # TODO have custom rules sense here?
         if args.topology or args.custom:
-            print("Invalid parameters. The validation level "
+            LOG.info("Invalid parameters. The validation level "
                   "of the sla descriptor is syntax or integrity")
         else:
             return True
     elif args.rpd:
         # TODO have custom rules sense here?
         if args.topology or args.custom:
-            print("Invalid parameters. The validation level "
+            LOG.info("Invalid parameters. The validation level "
                   "of the sla descriptor is syntax or integrity")
         else:
             return True
@@ -352,6 +353,19 @@ def parse_args(input_args=None):
         required=False,
         default=None
     )
+    parser.add_argument(
+        "--loglevel",
+        help="Directly specify loglevel. Default: INFO",
+        required=False,
+        default=None,
+        dest="log_level")
+    parser.add_argument(
+        "--logjson",
+        help="Use 5GTANGO JSON-based logging. Default: False",
+        required=False,
+        default=False,
+        dest="logjson",
+        action="store_true")
 
     exclusive_parser.add_argument(
         "--project",
@@ -504,5 +518,5 @@ def parse_args(input_args=None):
     )
     if input_args is None:
         input_args = sys.argv[1:]
-    print("CLI input arguments: {}".format(input_args))
+    LOG.info("CLI input arguments: {}".format(input_args))
     return parser.parse_args(input_args)

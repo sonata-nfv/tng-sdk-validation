@@ -6,6 +6,7 @@ from business_rules.fields import *
 from tngsdk.validation.util import read_descriptor_file
 from tngsdk.validation import event
 from tngsdk.validation.storage import DescriptorStorage
+from tngsdk.validation.logger import TangoLogger
 
 import datetime
 import json
@@ -14,7 +15,10 @@ import sys
 import yaml
 import logging
 
-log = logging.getLogger(__name__)
+
+
+
+LOG = TangoLogger.getLogger(__name__)
 evtlog = event.get_logger('validator.events')
 
 class DescriptorVDU(object):
@@ -29,11 +33,11 @@ class DescriptorVDU(object):
         self._network = {}
         self._vm_images_format = ""
     def display_error(self, error_text):
-        log.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+        LOG.error("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                  .format(self._vnfd_id, self._vdu_id, error_text))
 
     def display_warning(self, warning_text):
-        log.warning("Warning detected in custom rules validation: {}"
+        LOG.warning("Warning detected in custom rules validation: {}"
                  .format(warning_text))
 
 
@@ -61,7 +65,7 @@ class DescriptorVariablesVDU(BaseVariables):
         if size_unit:
             return size_unit
         else:
-            log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+            LOG.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                      .format(self._vnfd_id, self._vdu_id, "'size_unit' is not present in 'memory'"))
             return ""
 
@@ -89,7 +93,7 @@ class DescriptorVariablesVDU(BaseVariables):
         if size_unit:
             return size_unit
         else:
-            log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+            LOG.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                      .format(self._vnfd_id, self._vdu_id, "'size_unit' is not present in 'storage'"))
             return ""
 
@@ -111,11 +115,11 @@ class DescriptorVariablesVDU(BaseVariables):
             if size_unit:
                 return size_unit
             else:
-                log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+                LOG.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                          .format(self._vnfd_id, self._vdu_id, "'network_interface_bandwidth_unit' is not present in 'network'"))
                 return ""
         else:
-            log.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
+            LOG.warning("Custom error in descriptor '{}' in vdu_id = '{}'\n{}"
                      .format(self._vnfd_id, self._vdu_id, "'network' is not present in 'resource_requirements'"))
             return ""
     @boolean_rule_variable(label='SR-IOV')
@@ -149,7 +153,7 @@ def process_rules(custom_rule_file, descriptor_file_name):
 
     func = storage.create_function(descriptor_file_name)
     if not func:
-        evtlog.log("Invalid function descriptor, Couldn't store "
+        evtLOG.log("Invalid function descriptor, Couldn't store "
                    "VNF of file '{0}'".format(descriptor_file_name),
                    descriptor_file_name,
                    'evt_function_invalid_descriptor')
@@ -171,18 +175,18 @@ def process_rules(custom_rule_file, descriptor_file_name):
 
 def load_rules_yaml(custom_rule_file):
         if not os.path.isfile(custom_rule_file):
-            log.error("Invalid custom rule file")
+            LOG.error("Invalid custom rule file")
             exit(1)
 
         try:
             with open(custom_rule_file, "r") as fn_custom_rule:
                 rules = yaml.load(fn_custom_rule, Loader=yaml.SafeLoader)
         except IOError:
-            log.error("Error opening custom rule file: "
+            LOG.error("Error opening custom rule file: "
                       "File does not appear to exist.")
             exit(1)
         except (yaml.YAMLError, yaml.MarkedYAMLError) as e:
-            log.error("The rule file seems to have contain invalid YAML syntax."
+            LOG.error("The rule file seems to have contain invalid YAML syntax."
                       " Please fix and try again. Error: {}".format(str(e)))
             exit(1)
         return rules
@@ -190,7 +194,7 @@ def load_rules_yaml(custom_rule_file):
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         # if len(sys.argv)!= 2:
-        log.error("This script takes exactly two arguments: "
+        LOG.error("This script takes exactly two arguments: "
                   "example_descriptor <custom rule file> <descriptor file>")
         exit(1)
 
@@ -198,11 +202,11 @@ if __name__ == "__main__":
     descriptor_file_name = sys.argv[2]
 
     if not os.path.isfile(custom_rule_file):
-        log.error("Invalid custom rule file")
+        LOG.error("Invalid custom rule file")
         exit(1)
 
     if not os.path.isfile(descriptor_file_name):
-        print("Invalid descriptor file")
+        LOG.info("Invalid descriptor file")
         exit(1)
 
     process_rules(custom_rule_file, descriptor_file_name)

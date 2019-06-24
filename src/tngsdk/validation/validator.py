@@ -57,11 +57,11 @@ from tngsdk.validation.util import strip_root, build_descriptor_id
 from tngsdk.validation.schema.validator import SchemaValidator
 from tngsdk.validation import event
 from tngsdk.validation.custom_rules import validator_custom_rules
+from tngsdk.validation.logger import TangoLogger
 
 
-# LOG = logging.getLogger(os.path.basename(__file__))
-log = logging.getLogger(__name__)
-evtlog = event.get_logger('validator.events')
+LOG = TangoLogger.getLogger(__name__)
+evtLOG = event.get_logger('validator.events')
 
 
 class Validator(object):
@@ -100,7 +100,7 @@ class Validator(object):
         self._schema_validator = SchemaValidator(self._workspace, preload=True)
 
         # reset event logger
-        evtlog.reset()
+        evtLOG.reset()
 
         # ANTON: what's this?
         self.source_id = None
@@ -114,7 +114,7 @@ class Validator(object):
         return self._schema_validator
     @property
     def errors(self):
-        return evtlog.errors
+        return evtLOG.errors
 
     @property
     def error_count(self):
@@ -125,7 +125,7 @@ class Validator(object):
 
     @property
     def warnings(self):
-        return evtlog.warnings
+        return evtLOG.warnings
 
     @property
     def warning_count(self):
@@ -218,27 +218,27 @@ class Validator(object):
         caller = inspect.stack()[1][3]
         if (caller != 'validate_function' and caller != 'validate_service' and
                 caller != 'validate_project' and caller != 'validate_package'):
-            log.error("Cannot assert a correct configuration." +
+            LOG.error("Cannot assert a correct configuration." +
                       " Validation scope couldn't be determined. Aborting")
             return
 
         # general rules - apply to all validations
         if self._integrity and not self._syntax:
-            log.error("Cannot validate integrity without " +
+            LOG.error("Cannot validate integrity without " +
                       "validating syntax first. Aborting.")
             return
 
         if self._topology and not self._integrity:
-            log.error("Cannot validate topology without " +
+            LOG.error("Cannot validate topology without " +
                       "validating integrity first. Aborting.")
             return
 
         if self._custom and not self._topology:
-            log.error("Cannot validate custom rules without " +
+            LOG.error("Cannot validate custom rules without " +
                       "validating topology first. Aborting.")
 
         if not self._syntax:
-            log.error("Nothing to validate. Aborting.")
+            LOG.error("Nothing to validate. Aborting.")
             return
 
         if caller == 'validate_package':
@@ -249,14 +249,14 @@ class Validator(object):
             # check SERVICE validation parameters
             if ((self._integrity or self._topology) and not
                     (self._dpath and self._dext)):
-                log.error("Invalid validation parameters. To validate the "
+                LOG.error("Invalid validation parameters. To validate the "
                           "integrity, topology or custom rules of a service descriptors "
                           "both' --dpath' and '--dext' parameters must be "
                           "specified.")
                 return
             if ((self._custom) and not
                     (self._dpath and self._dext and self._cfile)):
-                log.error("Invalid validation parameters. To validate the "
+                LOG.error("Invalid validation parameters. To validate the "
                           "custom rules of a service descriptors"
                           "both' --dpath' and '--dext' parameters must be "
                           "specified (to validate the topology/integrity) and "
@@ -281,11 +281,11 @@ class Validator(object):
             project_path = project + '/'
         # consider cases when project is a path
         if not os.path.isdir(project):
-            log.error("Incorrect path. Try again with a correct project path")
+            LOG.error("Incorrect path. Try again with a correct project path")
             return False
         if type(project) is not Project and os.path.isdir(project):
             if not self._workspace:
-                log.error("Workspace not defined. Unable to validate project")
+                LOG.error("Workspace not defined. Unable to validate project")
                 return
             if self._workspace_path.endswith('/'):
                 (self._workspace.config
@@ -298,8 +298,8 @@ class Validator(object):
             project = Project.load_project(project, workspace=self._workspace_path, translate=False)
         if type(project) is not Project:
             return
-        log.info("Validating project descriptors'{0}'".format(project.project_root))
-        log.info("... syntax: {0}, integrity: {1}, topology: {2}"
+        LOG.info("Validating project descriptors'{0}'".format(project.project_root))
+        LOG.info("... syntax: {0}, integrity: {1}, topology: {2}"
                  .format(self._syntax, self._integrity, self._topology))
 
         # retrieve project configuration
@@ -309,7 +309,7 @@ class Validator(object):
             self._dpath.append(project_path + i)
         self._dext = project.descriptor_extension
         # load all project descriptors present at source directory
-        log.debug("Loading project descriptors")
+        LOG.debug("Loading project descriptors")
         nsd_file = Validator._load_project_service_file(project)
         tstd_files = project.get_tstds()
         slice_files = project.get_nstds()
@@ -340,7 +340,7 @@ class Validator(object):
             nsd_file = os.path.join(project_path, nsd_file)
             return self.validate_service(nsd_file)
         else:
-            evtlog.log("No descriptors",
+            evtLOG.log("No descriptors",
                        "There are not 5GTANGO descriptors in this project ",
                        project.project_root,
                        'evt_project_no_descriptors')
@@ -361,7 +361,7 @@ class Validator(object):
             return False
 
         if len(nsd_file) > 1:
-            evtlog.log("Multiple NSDs",
+            evtLOG.log("Multiple NSDs",
                        "Found multiple service descriptors in project "
                        "'{0}': {1}"
                        .format(project.project_root, nsd_file),
@@ -381,12 +381,12 @@ class Validator(object):
         """
         if not self._assert_configuration():
             return
-        log.info("Validating service descriptor '{0}'".format(nsd_file))
-        log.info("... syntax: {0}, integrity: {1}, topology: {2}"
+        LOG.info("Validating service descriptor '{0}'".format(nsd_file))
+        LOG.info("... syntax: {0}, integrity: {1}, topology: {2}"
                  .format(self._syntax, self._integrity, self._topology))
         service = self._storage.create_service(nsd_file)
         if not service:
-            evtlog.log("Invalid service descriptor",
+            evtLOG.log("Invalid service descriptor",
                        "Failed to read the service descriptor of file '{}'"
                        .format(nsd_file),
                        nsd_file,
@@ -408,11 +408,11 @@ class Validator(object):
         Validate the network topology of a service descriptor.
         :return:
         """
-        log.info("Validating topology of service descriptor '{0}'".format(service.id))
+        LOG.info("Validating topology of service descriptor '{0}'".format(service.id))
 
         isolated_vnf = service.detect_isolated_vnfs()
         if isolated_vnf:
-            evtlog.log("Invalid topology",
+            evtLOG.log("Invalid topology",
                        "The following VNF(s) are isolated in service descriptor {}: {}"
                        .format(service.id, isolated_vnf),
                        service.id,
@@ -420,7 +420,7 @@ class Validator(object):
             return
         loops = service.detect_loops()
         if loops:
-            evtlog.log("Invalid topology",
+            evtLOG.log("Invalid topology",
                        "The following loop(s) were found in the service descriptor {}: {}"
                        .format(service.id,loops),
                        service.id,
@@ -429,7 +429,7 @@ class Validator(object):
 
         unnused_vnf_cps = service.detect_unnused_cps()
         if unnused_vnf_cps:
-            evtlog.log("Invalid topology",
+            evtLOG.log("Invalid topology",
                        "The following CP(s) are unnused in service {}: {}"
                        .format(service.id, unnused_vnf_cps),
                        service.id,
@@ -438,24 +438,24 @@ class Validator(object):
         # build service topology graph with VNF connection points
         service.graph = service.build_topology_graph(level=1, bridges=True)
         if not service.graph:
-            evtlog.log("Invalid topology",
+            evtLOG.log("Invalid topology",
                        "Couldn't build topology graph of service descriptor'{0}'"
                        .format(service.id),
                        service.id,
                        'evt_nsd_top_topgraph_failed')
             return
 
-        log.debug("Built topology graph of service descriptor '{0}': {1}"
+        LOG.debug("Built topology graph of service descriptor '{0}': {1}"
                   .format(service.id, service.graph.edges()))
 
         # write service graphs with different levels and options
         self.write_service_graphs(service)
 
         if nx.is_connected(service.graph):
-            log.debug("Topology graph of service descriptor '{0}' is connected"
+            LOG.debug("Topology graph of service descriptor '{0}' is connected"
                       .format(service.id))
         else:
-            evtlog.log("Disconnected topology",
+            evtLOG.log("Disconnected topology",
                        "Topology graph of service descriptor '{0}' is disconnected"
                        .format(service.id),
                        service.id,
@@ -463,7 +463,7 @@ class Validator(object):
 
         # check if forwarding graphs section is available
         if 'forwarding_graphs' not in service.content:
-            evtlog.log("Forwarding graphs not available",
+            evtLOG.log("Forwarding graphs not available",
                        "No forwarding graphs available in service descriptor id='{0}'"
                        .format(service.id),
                        service.id,
@@ -473,7 +473,7 @@ class Validator(object):
 
         # load forwarding graphs
         if not service.load_forwarding_graphs():
-            evtlog.log("Bad section: 'forwarding_graphs'",
+            evtLOG.log("Bad section: 'forwarding_graphs'",
                        "Couldn't load service descriptor forwarding graphs. ",
                        service.id,
                        'evt_nsd_top_badsection_fwgraph')
@@ -488,7 +488,7 @@ class Validator(object):
 
                 # check if number of connection points is odd
                 if len(fw_path['path']) % 2 != 0:
-                    evtlog.log("Odd number of connection points",
+                    evtLOG.log("Odd number of connection points",
                                "The forwarding path fg_id='{0}', fp_id='{1}' "
                                "has an odd number of connection points".
                                format(fw_graph['fg_id'], fw_path['fp_id']),
@@ -500,7 +500,7 @@ class Validator(object):
 
                 fw_path['trace'] = service.trace_path_pairs(fw_path['path'])
                 if any(pair['break'] is True for pair in fw_path['trace']):
-                    evtlog.log("Invalid forwarding path ({0} breakpoint(s))"
+                    evtLOG.log("Invalid forwarding path ({0} breakpoint(s))"
                                .format(sum(pair['break'] is True
                                            for pair in fw_path['trace'])),
                                "fp_id='{0}':\n{1}"
@@ -517,7 +517,7 @@ class Validator(object):
                     # skip further analysis
                     return
 
-                log.debug("Forwarding path fg_id='{0}', fp_id='{1}': {2}"
+                LOG.debug("Forwarding path fg_id='{0}', fp_id='{1}': {2}"
                           .format(fw_graph['fg_id'], fw_path['fp_id'],
                                   fw_path['trace']))
 
@@ -544,7 +544,7 @@ class Validator(object):
                     if len(s_cp) == 2:
                         func = service.mapped_function(s_cp[0])
                         if not func:
-                            log.error(
+                            LOG.error(
                                 "Internal error: couldn't find corresponding"
                                 " VNFs in forwarding path '{}'"
                                 .format(fw_path['fp_id']))
@@ -558,7 +558,7 @@ class Validator(object):
                     if pair_complete:
                         if prev_node and prev_node == node:
                             evtid = event.generate_evt_id()
-                            evtlog.log("Path within the same VNF",
+                            evtLOG.log("Path within the same VNF",
                                        "The forwarding path fg_id='{0}', "
                                        "fp_id='{1}' contains a path within the"
                                        " same VNF id='{2}'"
@@ -582,7 +582,7 @@ class Validator(object):
 
                     else:
                         if prev_node and prev_node != node:
-                            evtlog.log("Disrupted forwarding path",
+                            evtLOG.log("Disrupted forwarding path",
                                        "The forwarding path fg_id='{0}', "
                                        "fp_id='{1}' is disrupted at the "
                                        "connection point: '{2}'"
@@ -625,7 +625,7 @@ class Validator(object):
 
                     neighbours = fpg.neighbors(node)
                     if next_node not in neighbours:
-                        log.error("Internal error: couldn't find next hop "
+                        LOG.error("Internal error: couldn't find next hop "
                                   "when building structure of cycle: {}"
                                   .format(cycle))
                         continue
@@ -641,7 +641,7 @@ class Validator(object):
             if cycles_list and len(cycles_list) > 0:
                 evtid = event.generate_evt_id()
                 for cycle in cycles_list:
-                    evtlog.log("Found {0} cycle(s) (fg_id='{1}')"
+                    evtLOG.log("Found {0} cycle(s) (fg_id='{1}')"
                                .format(len(cycles_list), fw_graph['fg_id']),
                                "{0}"
                                .format(yaml.dump(cycle['cycle_path'],
@@ -685,8 +685,8 @@ class Validator(object):
                                              "{0}-lvl3-complete.graphml"
                                              .format(service.id)))
         except nx.exception.NetworkXError:
-            log.warning("A problem creating the graph images appeared")
-            #print(nx.__file__)
+            LOG.warning("A problem creating the graph images appeared")
+            #LOG.info(nx.__file__)
 
     def _validate_service_syntax(self, service):
         """
@@ -694,10 +694,10 @@ class Validator(object):
         :param service: service to validate
         :return: True if syntax is correct, None otherwise
         """
-        log.info("Validating syntax of service descriptor'{0}'".format(service.id))
+        LOG.info("Validating syntax of service descriptor'{0}'".format(service.id))
         if not self._schema_validator.validate(
               service.content, SchemaValidator.SCHEMA_SERVICE_DESCRIPTOR):
-            evtlog.log("Invalid NSD syntax",
+            evtLOG.log("Invalid NSD syntax",
                        "Invalid syntax in service descriptor'{0}': {1}"
                        .format(service.id, self._schema_validator.error_msg),
                        service.id,
@@ -716,10 +716,10 @@ class Validator(object):
         :return:
         """
 
-        log.info("Validating integrity of service descriptor '{0}'".format(service.id))
+        LOG.info("Validating integrity of service descriptor '{0}'".format(service.id))
         # get referenced function descriptors (VNFDs)
         if not self._load_service_functions(service):
-            evtlog.log("Function not available",
+            evtLOG.log("Function not available",
                        "Failed to read service function descriptors",
                        service.id,
                        'evt_nsd_itg_function_unavailable')
@@ -728,7 +728,7 @@ class Validator(object):
         # validate service function descriptors (VNFDs)
         for fid, f in service.functions.items():
             if not self.validate_function(f.filename):
-                evtlog.log("Invalid function descriptor",
+                evtLOG.log("Invalid function descriptor",
                            "Failed to validate function descriptor '{0}'"
                            .format(f.filename),
                            service.id,
@@ -736,7 +736,7 @@ class Validator(object):
                 return
         # load service connection points
         if not service.load_connection_points():
-            evtlog.log("Bad section 'connection_points'",
+            evtLOG.log("Bad section 'connection_points'",
                        "Couldn't load the connection points of "
                        "service descriptor id='{0}'"
                        .format(service.id),
@@ -745,7 +745,7 @@ class Validator(object):
             return
         # load service links
         if not service.load_virtual_links():
-            evtlog.log("Bad section 'virtual_links'",
+            evtLOG.log("Bad section 'virtual_links'",
                        "Couldn't load virtual links of service descriptor id='{0}'"
                        .format(service.id),
                        service.id,
@@ -754,7 +754,7 @@ class Validator(object):
         undeclared = service.undeclared_connection_points()
         if undeclared:
             for cxpoint in undeclared:
-                evtlog.log("{0} Undeclared connection point(s)"
+                evtLOG.log("{0} Undeclared connection point(s)"
                            .format(len(undeclared)),
                            "Virtual links section has undeclared connection "
                            "point: {0}".format(cxpoint),
@@ -765,7 +765,7 @@ class Validator(object):
         unused_ifaces = service.unused_connection_points()
         if unused_ifaces:
             for cxpoint in unused_ifaces:
-                evtlog.log("{0} Unused connection point(s)"
+                evtLOG.log("{0} Unused connection point(s)"
                            .format(len(unused_ifaces)),
                            "Unused connection point: {0}"
                            .format(cxpoint),
@@ -777,7 +777,7 @@ class Validator(object):
             for cpr in vl.connection_point_refs:
                 s_cpr = cpr.split(':')
                 if len(s_cpr) == 1 and cpr not in service.connection_points:
-                    evtlog.log("Undefined connection point",
+                    evtLOG.log("Undefined connection point",
                                "Connection point '{0}' in virtual link "
                                "'{1}' is not defined"
                                .format(cpr, vl_id),
@@ -787,7 +787,7 @@ class Validator(object):
                 elif len(s_cpr) == 2:
                     func = service.mapped_function(s_cpr[0])
                     if not func or s_cpr[1] not in func.connection_points:
-                        evtlog.log("Undefined connection point",
+                        evtLOG.log("Undefined connection point",
                                    "Function descriptor (VNFD) of vnf_id='{0}' declared "
                                    "in connection point '{0}' in virtual link "
                                    "'{1}' is not defined"
@@ -805,7 +805,7 @@ class Validator(object):
         :return: True if successful, None otherwise
         """
 
-        log.debug("Loading function descriptors of the service.")
+        LOG.debug("Loading function descriptors of the service.")
         # # get VNFD file list from provided dpath
         if not self._dpath:
             return
@@ -813,20 +813,20 @@ class Validator(object):
             vnfd_files = list(self._dpath)
         else:
             vnfd_files = list_files(self._dpath, self._dext)
-            log.debug("Found {0} descriptors in dpath='{2}': {1}"
+            LOG.debug("Found {0} descriptors in dpath='{2}': {1}"
                       .format(len(vnfd_files), vnfd_files, self._dpath))
         # load all VNFDs
         path_vnfs = read_descriptor_files(vnfd_files)
 
         # check for errors
         if 'network_functions' not in service.content:
-            log.error("Service descriptor doesn't have any functions. "
+            LOG.error("Service descriptor doesn't have any functions. "
                       "Missing 'network_functions' section.")
             return
 
         functions = service.content['network_functions']
         if functions and not path_vnfs:
-            evtlog.log("VNF not found",
+            evtLOG.log("VNF not found",
                        "Service descriptor references VNFs but none could be found in "
                        "'{0}'. Please specify another '--dpath'"
                        .format(self._dpath),
@@ -839,7 +839,7 @@ class Validator(object):
                                       func['vnf_name'],
                                       func['vnf_version'])
             if fid not in path_vnfs.keys():
-                evtlog.log("VNF not found",
+                evtLOG.log("VNF not found",
                            "Referenced function descriptor id='{0}' couldn't "
                            "be loaded".format(fid),
                            service.id,
@@ -867,23 +867,23 @@ class Validator(object):
 
         # validate multiple VNFs
         if os.path.isdir(vnfd_path):
-            log.info("Validating function descriptors in path '{0}'".format(vnfd_path))
+            LOG.info("Validating function descriptors in path '{0}'".format(vnfd_path))
             vnfd_files = list_files(vnfd_path, self._dext)
             for vnfd_file in vnfd_files:
-                log.info("Detected file {0} order validation..."
+                LOG.info("Detected file {0} order validation..."
                          .format(vnfd_file))
                 if not self.validate_function(vnfd_file):
                     return
             return True
 
-        log.info("Validating function descriptor '{0}'".format(vnfd_path))
-        log.info("... syntax: {0}, integrity: {1}, topology: {2},"
+        LOG.info("Validating function descriptor '{0}'".format(vnfd_path))
+        LOG.info("... syntax: {0}, integrity: {1}, topology: {2},"
                  " custom: {3}"
                  .format(self._syntax, self._integrity, self._topology,
                          self._custom))
         func = self._storage.create_function(vnfd_path)
         if not func:
-            evtlog.log("Invalid function descriptor",
+            evtLOG.log("Invalid function descriptor",
                        "Couldn't store VNF/CNF of file '{0}'".format(vnfd_path),
                        vnfd_path,
                        'evt_function_invalid_descriptor')
@@ -921,10 +921,10 @@ class Validator(object):
         :param func: function to validate
         :return: True if syntax is correct, None otherwise
         """
-        log.info("Validating syntax of function descriptor '{0}'".format(func.id))
+        LOG.info("Validating syntax of function descriptor '{0}'".format(func.id))
         if not self._schema_validator.validate(
                 func.content, SchemaValidator.SCHEMA_FUNCTION_DESCRIPTOR):
-            evtlog.log("Invalid VNFD syntax",
+            evtLOG.log("Invalid VNFD syntax",
                        "Invalid syntax in function descriptor'{0}': {1}"
                        .format(func.id, self._schema_validator.error_msg),
                        func.id,
@@ -940,12 +940,12 @@ class Validator(object):
         :param func: function to validate
         :return: True if integrity is correct
         """
-        log.info("Validating integrity of function descriptor '{0}'"
+        LOG.info("Validating integrity of function descriptor '{0}'"
                  .format(func.id))
 
         # load function connection points
         if not func.load_connection_points():
-            evtlog.log("Missing 'connection_points'",
+            evtLOG.log("Missing 'connection_points'",
                        "Couldn't load the connection points of "
                        "function descriptor id='{0}'"
                        .format(func.id),
@@ -955,7 +955,7 @@ class Validator(object):
 
         # load units
         if not func.load_units():
-            evtlog.log("Missing 'virtual_deployment_units or cloudnative_deployment_units'",
+            evtLOG.log("Missing 'virtual_deployment_units or cloudnative_deployment_units'",
                        "Couldn't load the units of function descriptor id='{0}'"
                        .format(func.id),
                        func.id,
@@ -963,7 +963,7 @@ class Validator(object):
             return
         # load connection points of units
         if not func.load_unit_connection_points():
-            evtlog.log("Missing 'connection_points'",
+            evtLOG.log("Missing 'connection_points'",
                        "Couldn't load VDU connection points of "
                        "function descriptor id='{0}'"
                        .format(func.id),
@@ -973,7 +973,7 @@ class Validator(object):
 
         # load function links
         if not func.load_virtual_links():
-            evtlog.log("Bad section 'virtual_links'",
+            evtLOG.log("Bad section 'virtual_links'",
                        "Couldn't load the links of function descriptor id='{0}'"
                        .format(func.id),
                        func.id,
@@ -984,7 +984,7 @@ class Validator(object):
         undeclared = func.undeclared_connection_points()
         if undeclared:
             for cxpoint in undeclared:
-                evtlog.log("{0} Undeclared connection point(s)"
+                evtLOG.log("{0} Undeclared connection point(s)"
                            .format(len(undeclared)),
                            "Virtual links section has undeclared connection "
                            "points: {0}".format(cxpoint),
@@ -996,7 +996,7 @@ class Validator(object):
         unused_ifaces = func.unused_connection_points()
         if unused_ifaces:
             for cxpoint in unused_ifaces:
-                evtlog.log("{0} Unused connection point(s)"
+                evtLOG.log("{0} Unused connection point(s)"
                            .format(len(unused_ifaces)),
                            "Function descriptor has unused connection points: {0}"
                            .format(cxpoint),
@@ -1008,7 +1008,7 @@ class Validator(object):
             for cpr in vl.connection_point_refs:
                 s_cpr = cpr.split(':')
                 if len(s_cpr) == 1 and cpr not in func.connection_points:
-                    evtlog.log("Undefined connection point",
+                    evtLOG.log("Undefined connection point",
                                "Connection point '{0}' in virtual link "
                                "'{1}' is not defined"
                                .format(cpr, vl_id),
@@ -1019,7 +1019,7 @@ class Validator(object):
                     unit = func.units[s_cpr[0]]
                     if not unit or s_cpr[1] not in unit.connection_points:
 
-                        evtlog.log("Undefined connection point(s)",
+                        evtLOG.log("Undefined connection point(s)",
                                    "Invalid connection point id='{0}' "
                                    "of virtual link id='{1}': Unit id='{2}' "
                                    "is not defined"
@@ -1032,7 +1032,7 @@ class Validator(object):
         duplicated_ports = func.search_duplicate_ports()
         if duplicated_ports:
             dic_port_unit = func.get_units_by_ports(duplicated_ports)
-            evtlog.log("Duplicated ports",
+            evtLOG.log("Duplicated ports",
                        "The following CDUs have duplicated ports in function {}: {} "
                        .format(func.id,dic_port_unit),
                        func.id,
@@ -1048,11 +1048,11 @@ class Validator(object):
         :param func: function to validate
         :return: True if topology doesn't present issues
         """
-        log.info("Validating topology of function descriptor '{0}'"
+        LOG.info("Validating topology of function descriptor '{0}'"
                  .format(func.id))
         isolated_units = func.detect_disconnected_units()
         if isolated_units:
-            evtlog.log("Invalid topology graph",
+            evtLOG.log("Invalid topology graph",
                         "{} isolated units were found in the topology"
                         .format(len(isolated_units)),
                         func.id,
@@ -1060,13 +1060,13 @@ class Validator(object):
 
         unnused_cps = func.detect_unnused_cps_units()
         if unnused_cps:
-            evtlog.log( "Invalid toplogy graph",
+            evtLOG.log( "Invalid toplogy graph",
                         "The following CP(s) are not used in function {}: {}".format(func.id, unnused_cps),
                         func.id,
                         "evt_vnfd_top_unnused_cps_unit")
         loops = func.detect_loops()
         if loops:
-            evtlog.log("Invalid toplogy graph",
+            evtLOG.log("Invalid toplogy graph",
                         "{} loop(s) was/were found in the topology"
                         .format(len(loops)),
                         func.id,
@@ -1076,23 +1076,23 @@ class Validator(object):
         bridges = True
         func.graph = func.build_topology_graph(bridges)
         if not func.graph:
-            evtlog.log("Invalid topology graph",
+            evtLOG.log("Invalid topology graph",
                        "Couldn't build topology graph of function descriptor '{0}'"
                        .format(func.id),
                        func.id,
                        'evt_vnfd_top_topgraph_failed')
             return
 
-        log.debug("Built topology graph of function descriptor '{0}': {1}"
+        LOG.debug("Built topology graph of function descriptor '{0}': {1}"
                   .format(func.id, func.graph.edges()))
-        log.info("Built topology graph of function descriptor'{0}': {1}"
+        LOG.info("Built topology graph of function descriptor'{0}': {1}"
                  .format(func.id, func.graph.edges()))
 
         if not(bridges):
             cycles = None
             cycles = nx.cycle_basis(func.graph)
             if cycles:
-                evtlog.log("Invalid topology graph",
+                evtLOG.log("Invalid topology graph",
                            "{} cycle(s) was/were found in the topology"
                            .format(len(cycles)),
                            func.id,
@@ -1100,7 +1100,7 @@ class Validator(object):
                 return
         return True
     def workspace(self):
-        log.warning("workspace not implemented")
+        LOG.warning("workspace not implemented")
 
 
     def validate_test(self, test_path):
@@ -1112,21 +1112,21 @@ class Validator(object):
         :return: True if all validations were successful, False otherwise
         """
         if os.path.isdir(test_path):
-            log.info("Validating test descriptors in path '{0}'".format(test_path))
+            LOG.info("Validating test descriptors in path '{0}'".format(test_path))
             test_files = list_files(test_path, self._dext)
             for test in test_files:
-                log.info("Detected file {0} order validation..."
+                LOG.info("Detected file {0} order validation..."
                          .format(test))
                 if not self.validate_test(test):
                     return
             return True
 
-        log.info("Validating test descriptor '{0}'".format(test_path))
-        log.info("... syntax: {0}, integrity: {1}"
+        LOG.info("Validating test descriptor '{0}'".format(test_path))
+        LOG.info("... syntax: {0}, integrity: {1}"
                  .format(self._syntax, self._integrity))
         test = self._storage.create_test(test_path)
         if not(test) or test.content is None:
-            evtlog.log("Invalid test descriptor",
+            evtLOG.log("Invalid test descriptor",
                        "Couldn't store TSTD of file '{0}'".format(test_path),
                        test_path,
                        'evt_test_invalid_descriptor')
@@ -1144,10 +1144,10 @@ class Validator(object):
         :param test: test to validate
         :return: True if syntax is correct, None otherwise
         """
-        log.info("Validating syntax of test descriptor '{0}'".format(test.id))
+        LOG.info("Validating syntax of test descriptor '{0}'".format(test.id))
         if not self._schema_validator.validate(
                 test.content, SchemaValidator.SCHEMA_TEST_DESCRIPTOR):
-            evtlog.log("Invalid TSTD syntax",
+            evtLOG.log("Invalid TSTD syntax",
                        "Invalid syntax in test descriptor'{0}': {1}"
                        .format(test.id, self._schema_validator.error_msg),
                        test.id,
@@ -1161,11 +1161,11 @@ class Validator(object):
         :test: test to validate
         :return: True if integrity is correct, False otherwise
         """
-        log.info("Validating integrity of test descriptor '{0}'"
+        LOG.info("Validating integrity of test descriptor '{0}'"
                  .format(test.id))
 
         if not test.content.get("phases"):
-            evtlog.log("Missing 'phases'",
+            evtLOG.log("Missing 'phases'",
                        "Couldn't load the phases of "
                        "test descriptor id='{0}'"
                        .format(test.id),
@@ -1177,7 +1177,7 @@ class Validator(object):
             return
         for phase in test.content["phases"]:
             if not phase["steps"]:
-                log.error("Missing steps in phases")
+                LOG.error("Missing steps in phases")
         return True
 
     def validate_slice(self, slice_path):
@@ -1189,21 +1189,21 @@ class Validator(object):
         :return: True if all validations were successful, False otherwise
         """
         if os.path.isdir(slice_path):
-            log.info("Validating slice descriptors in path '{0}'".format(slice_path))
+            LOG.info("Validating slice descriptors in path '{0}'".format(slice_path))
             slice_files = list_files(slice_path, self._dext)
             for slice in slice_files:
-                log.info("Detected file {0} order validation..."
+                LOG.info("Detected file {0} order validation..."
                          .format(slice))
                 if not self.validate_slice(slice):
                     return
             return True
 
-        log.info("Validating slice descriptor '{0}'".format(slice_path))
-        log.info("... syntax: {0}, integrity: {1}"
+        LOG.info("Validating slice descriptor '{0}'".format(slice_path))
+        LOG.info("... syntax: {0}, integrity: {1}"
                  .format(self._syntax, self._integrity))
         slice = self._storage.create_slice(slice_path)
         if not(slice) or slice.content is None:
-            evtlog.log("Invalid slice descriptor",
+            evtLOG.log("Invalid slice descriptor",
                        "Couldn't store NSTD of file '{0}'".format(slice_path),
                        slice_path,
                        'evt_slice_invalid_descriptor')
@@ -1220,10 +1220,10 @@ class Validator(object):
         :param slice: slice to validate
         :return: True if syntax is correct, None otherwise
         """
-        log.info("Validating syntax of slice descriptor '{0}'".format(slice.id))
+        LOG.info("Validating syntax of slice descriptor '{0}'".format(slice.id))
         if not self._schema_validator.validate(
                 slice.content, SchemaValidator.SCHEMA_SLICE_DESCRIPTOR):
-            evtlog.log("Invalid NSTD syntax",
+            evtLOG.log("Invalid NSTD syntax",
                        "Invalid syntax in slice descriptor'{0}': {1}"
                        .format(slice.id, self._schema_validator.error_msg),
                        slice.id,
@@ -1237,13 +1237,13 @@ class Validator(object):
         :slice: slice to validate
         :return: True if integrity is correct, False otherwise
         """
-        log.info("Validating integrity of slice descriptor '{0}'"
+        LOG.info("Validating integrity of slice descriptor '{0}'"
                  .format(slice.id))
         slice.load_config_values()
 
         for subnet in slice.content.get("slice_ns_subnets"):
             if slice.check_subnet_id(subnet.get("id")):
-                evtlog.log("Replicate subnet id '{0}'"
+                evtLOG.log("Replicate subnet id '{0}'"
                            .format(subnet.get("id")),
                            "Error loading the subnet of "
                            "slice descriptor id='{0}'"
@@ -1255,7 +1255,7 @@ class Validator(object):
 
         for vld in slice.content.get("slice_vld"):
             if slice.check_vld_id(vld.get("id")):
-                evtlog.log("Replicate vld id '{0}'"
+                evtLOG.log("Replicate vld id '{0}'"
                            .format(vld.get("id")),
                            "Error loading the vld of "
                            "slice descriptor id='{0}'"
@@ -1275,21 +1275,21 @@ class Validator(object):
         :return: True if all validations were successful, False otherwise
         """
         if os.path.isdir(sla_path):
-            log.info("Validating sla descriptors in path '{0}'".format(sla_path))
+            LOG.info("Validating sla descriptors in path '{0}'".format(sla_path))
             sla_files = list_files(sla_path, self._dext)
             for sla in sla_files:
-                log.info("Detected file {0} order validation..."
+                LOG.info("Detected file {0} order validation..."
                          .format(sla))
                 if not self.validate_sla(sla):
                     return
             return True
 
-        log.info("Validating sla descriptor '{0}'".format(sla_path))
-        log.info("... syntax: {0}, integrity: {1}"
+        LOG.info("Validating sla descriptor '{0}'".format(sla_path))
+        LOG.info("... syntax: {0}, integrity: {1}"
                  .format(self._syntax, self._integrity))
         sla = self._storage.create_sla(sla_path)
         if not(sla) or sla.content is None:
-            evtlog.log("Invalid sla descriptor",
+            evtLOG.log("Invalid sla descriptor",
                        "Couldn't store SLAD of file '{0}'".format(sla_path),
                        sla_path,
                        'evt_sla_invalid_descriptor')
@@ -1307,10 +1307,10 @@ class Validator(object):
         :param sla: sla to validate
         :return: True if syntax is correct, None otherwise
         """
-        log.info("Validating syntax of sla descriptor '{0}'".format(sla.id))
+        LOG.info("Validating syntax of sla descriptor '{0}'".format(sla.id))
         if not self._schema_validator.validate(
                 sla.content, SchemaValidator.SCHEMA_SLA_DESCRIPTOR):
-            evtlog.log("Invalid SLAD syntax",
+            evtLOG.log("Invalid SLAD syntax",
                        "Invalid syntax in sla descriptor'{0}': {1}"
                        .format(sla.id, self._schema_validator.error_msg),
                        sla.id,
@@ -1324,7 +1324,7 @@ class Validator(object):
         :sla: sla to validate
         :return: True if integrity is correct, False otherwise
         """
-        log.info("Validating integrity of SLA descriptor '{0}'"
+        LOG.info("Validating integrity of SLA descriptor '{0}'"
                  .format(sla.id))
         sla.load_config_values()
         sla.load_service_values()
@@ -1341,21 +1341,21 @@ class Validator(object):
         :return: True if all validations were successful, False otherwise
         """
         if os.path.isdir(rp_path):
-            log.info("Validating runtime policy descriptors in path '{0}'".format(rp_path))
+            LOG.info("Validating runtime policy descriptors in path '{0}'".format(rp_path))
             rp_files = list_files(rp_path, self._dext)
             for rp in rp_files:
-                log.info("Detected file {0} order validation..."
+                LOG.info("Detected file {0} order validation..."
                          .format(rp))
                 if not self.validate_runtime_policy(rp):
                     return
             return True
 
-        log.info("Validating runtime policy descriptor '{0}'".format(rp_path))
-        log.info("... syntax: {0}, integrity: {1}"
+        LOG.info("Validating runtime policy descriptor '{0}'".format(rp_path))
+        LOG.info("... syntax: {0}, integrity: {1}"
                  .format(self._syntax, self._integrity))
         rp = self._storage.create_runtime_policy(rp_path)
         if not(rp) or rp.content is None:
-            evtlog.log("Invalid runtime policy descriptor",
+            evtLOG.log("Invalid runtime policy descriptor",
                        "Couldn't store RPD of file '{0}'".format(rp_path),
                        rp_path,
                        'evt_runtime_policy_invalid_descriptor')
@@ -1375,10 +1375,10 @@ class Validator(object):
         :param policy: runtime policy descriptor (RPD) to validate
         :return: True if syntax is correct, None otherwise
         """
-        log.info("Validating syntax of runtime policy descriptor '{0}'".format(rp.id))
+        LOG.info("Validating syntax of runtime policy descriptor '{0}'".format(rp.id))
         if not self._schema_validator.validate(
                 rp.content, SchemaValidator.SCHEMA_RP_DESCRIPTOR):
-            evtlog.log("Invalid RPD syntax",
+            evtLOG.log("Invalid RPD syntax",
                        "Invalid syntax in rp descriptor'{0}': {1}"
                        .format(rp.id, self._schema_validator.error_msg),
                        rp.id,
@@ -1392,6 +1392,6 @@ class Validator(object):
         :rp: rp to validate
         :return: True if integrity is correct, False otherwise
         """
-        log.info("Validating integrity of RP descriptor '{0}'"
+        LOG.info("Validating integrity of RP descriptor '{0}'"
                  .format(rp.id))
         return True
