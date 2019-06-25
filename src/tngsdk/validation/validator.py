@@ -340,11 +340,8 @@ class Validator(object):
             nsd_file = os.path.join(project_path, nsd_file)
             return self.validate_service(nsd_file)
         else:
-            evtLOG.log("No descriptors",
-                       "There are not 5GTANGO descriptors in this project ",
-                       project.project_root,
-                       'evt_project_no_descriptors')
-            return False
+            LOG.info("No descriptors. There are not 5GTANGO descriptors in this project ")
+            return True
 
     @staticmethod
     def _load_project_service_file(project):
