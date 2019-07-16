@@ -34,7 +34,7 @@ pip3 install git+https://github.com/sonata-nfv/tng-sdk-validation.git
 Manual installation is possible with:
 
 ```
-git clone git@github.com:sonata-nfv/tng-sdk-validate.git
+git clone git@github.com:sonata-nfv/tng-sdk-validation.git
 cd tng-sdk-validate
 sudo python3 setup install
 ```
