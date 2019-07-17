@@ -198,7 +198,7 @@ class TngSdkValidationTest(unittest.TestCase):
         self.assertEqual(validator.error_count, 0)
         self.assertEqual(validator.warning_count, 0)
 
-    def test_validate_service_syntax_invalid_unexpected_field(self):
+    def test_validate_service_syntax_nonexistent_descriptor(self):
         """
         Tests the incorrect validation of a service syntax with \
         a unexpected field in the nsd

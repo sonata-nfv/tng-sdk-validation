@@ -1,0 +1,68 @@
+descriptor_schema: https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/service-descriptor/nsd-schema.yml
+vendor: "quobis"
+name: "communication-pilot"
+version: "0.1"
+author: "Ana Pol @: QUOBIS"
+description: "Descriptor to package Communication Pilot"
+
+network_functions:
+  - vnf_id: "vnf_wac_01"
+    vnf_vendor: "quobis"
+    vnf_name: "wac-vnf_01"
+    vnf_version: "0.1"
+  - vnf_id: "vnf_wac_02"
+    vnf_vendor: "quobis"
+    vnf_name: "wac-vnf_02"
+    vnf_version: "0.1"
+  - vnf_id: "vnf_wac_03"
+    vnf_vendor: "quobis"
+    vnf_name: "wac-vnf_03"
+    vnf_version: "0.1"
+  - vnf_id: "vnf_wac_04"
+    vnf_vendor: "quobis"
+    vnf_name: "wac-vnf_04"
+    vnf_version: "0.1"
+  - vnf_id: "vnf_wac_05"
+    vnf_vendor: "quobis"
+    vnf_name: "wac-vnf_05"
+    vnf_version: "0.1"
+
+connection_points:
+  - id: "nscpmgmt"
+    interface: "ipv4"
+    type: "management"
+  - id: "nscpexternal"
+    interface: "ipv4"
+    type: "external"
+
+virtual_links:
+  - id: "vlmgmt_01"
+    connectivity_type: "E-LAN"
+    connection_points_reference:
+      - "vnf_wac_01:cpmgmt"
+      - "nscpmgmt"
+  - id: "vlmgmt_02"
+    connectivity_type: "E-LAN"
+    connection_points_reference:
+      - "vnf_wac_01:cpinternal"
+      - "vnf_wac_02:cpmgmt"
+  - id: "vlmgmt_03"
+    connectivity_type: "E-LAN"
+    connection_points_reference:
+      - "vnf_wac_02:cpinternal"
+      - "vnf_wac_03:cpmgmt"
+  - id: "vlmgmt_04"
+    connectivity_type: "E-LAN"
+    connection_points_reference:
+      - "vnf_wac_03:cpinternal"
+      - "vnf_wac_04:cpmgmt"
+  - id: "vlmgmt_05"
+    connectivity_type: "E-LAN"
+    connection_points_reference:
+      - "vnf_wac_04:cpinternal"
+      - "vnf_wac_05:cpmgmt"
+  - id: "vlinternal"
+    connectivity_type: "E-LAN"
+    connection_points_reference:
+      - "nscpexternal"
+      - "vnf_wac_05:cpinternal"

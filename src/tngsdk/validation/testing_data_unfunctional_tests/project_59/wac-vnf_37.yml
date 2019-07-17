@@ -1,0 +1,50 @@
+
+descriptor_schema: https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/function-descriptor/vnfd-schema.yml
+vendor: "quobis"
+name: "wac-vnf_37"
+version: "0.1"
+author: "Ana Pol :@ QUOBIS"
+description: "Web Application Controller"
+
+virtual_deployment_units:
+  - id: "vdu01"
+    vm_image: "http://www.google.es"
+    vm_image_format: "qcow2"
+    vm_image_md5: '77f226cd000d359ed4443b50da23c8b1'
+    resource_requirements:
+      cpu:
+        vcpus: 2
+      memory:
+        size: 4
+        size_unit: "GB"
+      storage:
+        size: 40
+        size_unit: "GB"
+    connection_points:
+      - id: "mgmt"
+        interface: "ipv4"
+        type: "management"
+      - id: "internal"
+        interface: "ipv4"
+        type: "internal"
+
+virtual_links:
+  - id: "vlmgmt"
+    connectivity_type: "E-Line"
+    connection_points_reference:
+      - "vdu01:mgmt"
+      - "cpmgmt"
+  - id: "vlinternal"
+    connectivity_type: "E-Line"
+    connection_points_reference:
+      - "vdu01:internal"
+      - "cpinternal"
+
+connection_points:
+  - id: "cpmgmt"
+    interface: "ipv4"
+    type: "management"
+  - id: "cpinternal"
+    interface: "ipv4"
+    type: "internal"
+

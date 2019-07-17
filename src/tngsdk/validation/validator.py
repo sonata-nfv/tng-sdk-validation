@@ -700,20 +700,6 @@ class Validator(object):
                        service.id,
                        'evt_nsd_stx_invalid')
             return
-        return True
-
-    def _validate_service_integrity(self, service):
-        """
-        Validate the integrity of a service (NS).
-        It checks for inconsistencies in the identifiers of connection
-        points, virtual links, etc.
-        :param service: service to validate
-        :return: True if integrity is correct
-        :param service:
-        :return:
-        """
-
-        LOG.info("Validating integrity of service descriptor '{0}'".format(service.id))
         # get referenced function descriptors (VNFDs)
         if not self._load_service_functions(service):
             evtLOG.log("Function not available",
@@ -731,6 +717,20 @@ class Validator(object):
                            service.id,
                            'evt_nsd_itg_function_invalid')
                 return
+        return True
+
+    def _validate_service_integrity(self, service):
+        """
+        Validate the integrity of a service (NS).
+        It checks for inconsistencies in the identifiers of connection
+        points, virtual links, etc.
+        :param service: service to validate
+        :return: True if integrity is correct
+        :param service:
+        :return:
+        """
+
+        LOG.info("Validating integrity of service descriptor '{0}'".format(service.id))
         # load service connection points
         if not service.load_connection_points():
             evtLOG.log("Bad section 'connection_points'",

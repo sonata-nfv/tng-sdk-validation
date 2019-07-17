@@ -1,0 +1,341 @@
+descriptor_extension: yml
+version: "0.5"
+files:
+  - path: comm-pilot-nsd.yml
+    type: application/vnd.5gtango.nsd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_01.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_02.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_03.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_04.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_05.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_06.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_07.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_08.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_09.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_10.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_11.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_12.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_13.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_14.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_15.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_16.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_17.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_18.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_19.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_20.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_21.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_22.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_23.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_24.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_25.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_26.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_27.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_28.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_29.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_30.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_31.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_32.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_33.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_34.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_35.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_36.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_37.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_38.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_39.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_40.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_41.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_42.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_43.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_44.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_45.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_46.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_47.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_48.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_49.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_50.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_51.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_52.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_53.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_54.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_55.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_56.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_57.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_58.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_59.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_60.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_61.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_62.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_63.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_64.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_65.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_66.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_67.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_68.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_69.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_70.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_71.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_72.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_73.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_74.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_75.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_76.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_77.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_78.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_79.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_80.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_81.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: wac-vnf_82.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+package:
+  description: Communication Pilot
+  maintainer: Ana Pol, Quobis, ana.pol@quobis.com
+  name: "communication-pilot"
+  vendor: "quobis"
+  version: "0.5"

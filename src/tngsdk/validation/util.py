@@ -108,7 +108,7 @@ def build_descriptor_id(vendor, name, version):
     :param version: descriptor version
     :return: descriptor id
     """
-    return vendor + '.' + name + '.' + version
+    return vendor + '.' + name + '.' + str(version)
 
 
 def list_files(path, extension):

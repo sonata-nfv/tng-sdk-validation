@@ -154,7 +154,7 @@ class TngSdkValidationCliTest(unittest.TestCase):
         result_validator = cli.dispatch(args, validator)
         self.assertEqual(result_validator.error_count, 0)
 
-    def test_cli_validation_service_syntax_ko_unexpected_field(self):
+    def test_cli_validation_service_syntax_nonexistent_descriptor(self):
         validator = Validator()
         input_args = ['--syntax', '--service',
                       SAMPLE_DIR + 'samples/services/invalid-syntax-tng/' +
