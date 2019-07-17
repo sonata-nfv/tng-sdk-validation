@@ -116,7 +116,7 @@ Runs the validator as a service that exposes a REST API.
 #### Bare metal
 
 ```
-tng-skd-validate --api
+tng-sdk-validate --api
 ```
 
 #### Docker-based
