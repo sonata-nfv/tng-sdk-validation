@@ -35,8 +35,8 @@ Manual installation is possible with:
 
 ```
 git clone git@github.com:sonata-nfv/tng-sdk-validation.git
-cd tng-sdk-validate
-sudo python3 setup install
+cd tng-sdk-validation
+sudo python3 setup.py install
 ```
 
 ## Hint
