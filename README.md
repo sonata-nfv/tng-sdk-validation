@@ -198,5 +198,5 @@ The following lead developers are responsible for this repository and have admin
 
 #### Feedback-Chanel
 
-* You may use the mailing list [tango-5g-wp4@lists.atosresearch.eu](mailto:tango-5g-wp4@lists.atosresearch.eu)
+- You may use the mailing list [sonata-dev@lists.atosresearch.eu](mailto:sonata-dev@lists.atosresearch.eu)
 * [GitHub issues](https://github.com/sonata-nfv/tng-sdk-validation/issues)
