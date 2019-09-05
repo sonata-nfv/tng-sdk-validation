@@ -32,9 +32,10 @@ pipeline {
         }
     }
     stage('Containers Publication') {
-      steps {
-        echo 'Publication of containers in local registry....'
-      }
+		steps {
+			echo 'Publishing docker image....'
+			sh 'docker push registry.sonata-nfv.eu:5000/tng-sdk-validation'
+		}
     }
     stage('Deployment in Integration') {
       steps {
