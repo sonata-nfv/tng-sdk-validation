@@ -40,24 +40,26 @@ pipeline {
         }
     }
     stage('Containers Publication') {
-      steps {
-        echo 'Publication of containers in local registry....'
-      }
+		steps {
+			echo 'Publishing docker image....'
+			sh 'docker push registry.sonata-nfv.eu:5000/tng-sdk-validation'
+		}
     }
-    stage('Deployment in Integration') {
-      steps {
-        echo 'Deploying in integration...'
-      }
+    stage('Promoting release v5.0') {
+        when {
+            branch 'v5.0'
+        }
+        stages {
+            stage('Generating release') {
+                steps {
+                    sh 'docker tag registry.sonata-nfv.eu:5000/tng-sdk-validation:latest registry.sonata-nfv.eu:5000/tng-sdk-validation:v5.0'
+                    sh 'docker tag registry.sonata-nfv.eu:5000/tng-sdk-validation:latest sonatanfv/tng-sdk-validation:v5.0'
+                    sh 'docker push registry.sonata-nfv.eu:5000/tng-sdk-validation:v5.0'
+                    sh 'docker push sonatanfv/tng-sdk-validation:v5.0'
+                }
+            }
+        }
     }
-    stage('Smoke Tests') {
-      steps {
-        echo 'Performing Smoke Tests....'
-      }
-    }
-    stage('Publish Results') {
-      steps {
-        echo 'Publish Results...'
-      }
-    }
+
   }
 }
