@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "angular": "^1.7.9",
-    "d3": "^4.7.3",
+    "d3": "^7.6.1",
     "flexboxgrid": "^6.3.1",
     "request": "^2.87.0"
   }
